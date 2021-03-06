@@ -18,4 +18,4 @@ In [this Dropbox folder](https://www.dropbox.com/sh/jsyrag7opfo7l7i/AAB1z7tumLuK
 
 # Quick Start Guide
 
-Check out this [Quick Start Guide](http://127.0.0.1:12640/session/Rvig.55c72a17766a.html) to get going with `conText`.
+Check out this [Quick Start Guide](http://127.0.0.1:13473/session/Rvig.58a7578d259a.html) to get going with `conText`.
