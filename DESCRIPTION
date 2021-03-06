@@ -1,0 +1,30 @@
+Package: conText
+Version: 0.1.0
+Title: a la Carte on Text (ConText) embedding regression
+Description: A regression framework for text embeddings developed by Rodriguez, Spirling and Stewart (2021).
+Authors@R: c(
+    person("Pedro", "Rodriguez", email = "pedro.rodriguez@Vanderbilt.Edu", role = c("aut", "cre", "cph"), comment = c(ORCID = "0000-0003-4762-4550")),
+    person("Arthur", "Spirling", email = "as9934@nyu.edu", role = "aut", comment = c(ORCID = "0000-0001-9959-1805")),
+    person("Brandon", "Stewart", email = "bms4@princeton.edu", role = "aut", comment = c(ORCID = "0000-0002-7657-3089"))
+    )
+License: GPL-3
+Depends:
+    R (>= 3.6.0)
+Imports:
+    dplyr,
+    Matrix (>= 1.2),
+    quanteda (>= 2.0.1),
+    text2vec (>= 0.6)
+URL: https://github.com/prodriguezsosa/EmbeddingRegression
+BugReports: https://github.com/prodriguezsosa/ConText/issues
+Maintainer: Pedro L. Rodriguez <pedro.rodriguez@Vanderbilt.Edu>
+Encoding: UTF-8
+LazyData: true
+VignetteBuilder: knitr
+Language: en-US
+RoxygenNote: 7.1.1
+Roxygen: list(markdown = TRUE)
+Suggests: 
+    knitr,
+    rmarkdown,
+    ggplot2
