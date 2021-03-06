@@ -14,4 +14,8 @@ To use conText you will need three datasets:
 2. A set of **pre-trained embeddings** (a V by D matrix) used to embed context words.
 3. A **transformation matrix** (D by D) specific to the pre-trained embeddings.
 
-In [this Dropbox folder](https://www.dropbox.com/sh/jsyrag7opfo7l7i/AAB1z7tumLuKihGu2-FDmhmKa?dl=0) we have included the three datasets we use in the Quick Start Guide along with their documentation. Due to memory constraints we could not include them directly in the package. We'll be adding other useful datasets to this folder in the near future.
+In [this Dropbox folder](https://www.dropbox.com/sh/jsyrag7opfo7l7i/AAB1z7tumLuKihGu2-FDmhmKa?dl=0) (see the /data folder) we have included the three datasets we use in the Quick Start Guide along with their documentation. Due to memory constraints we could not include them directly in the package. We'll be adding other useful datasets to this folder in the near future.
+
+# Quick Start Guide
+
+Check out this [Quick Start Guide](http://127.0.0.1:12640/session/Rvig.55c72a17766a.html) to get going with `conText`.
