@@ -1,6 +1,6 @@
 ---
 title: "Quick Start Guide"
-output: rmarkdown::html_document
+output: rmarkdown::github_document
 vignette: >
   %\VignetteIndexEntry{quickstart}
   %\VignetteEngine{knitr::rmarkdown}
