@@ -188,7 +188,7 @@ bootstrap_ols <- function(Y = NULL, X = NULL, stratify_by = NULL){
 
   # sample observations with replacement
   if(is.null(stratify_by)) X_bs <- dplyr::sample_n(X_bs, size = nrow(X_bs), replace = TRUE)else{
-    X_bs <- X_bs %>% dplyr::group_by(.[,stratify_by]) %>% dplyr::sample_n(size = dplyr::n(), replace = TRUE) %>% dplyr::ungroup()
+    X_bs <- X_bs %>% dplyr::group_by_at(stratify_by) %>% dplyr::sample_n(size = dplyr::n(), replace = TRUE) %>% dplyr::ungroup()
   }
 
   # subset Y to sampled observations
@@ -196,10 +196,6 @@ bootstrap_ols <- function(Y = NULL, X = NULL, stratify_by = NULL){
 
   # remove observation label
   X_bs <- X_bs[,-1]
-
-  # (TO CLEAN) group_by does not seem to work cleanly in the case of single stratification variable
-  # this line "cleans" it up
-  if(length(stratify_by) == 1) X_bs <- X_bs[,-which(colnames(X_bs) == '.[, stratify_by]')]
 
   # run ols
   ols_out <- run_ols(Y = Y_bs, X = X_bs)
