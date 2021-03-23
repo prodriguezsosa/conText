@@ -12,7 +12,7 @@ compute_transform <- function(context_fcm, pre_trained, vocab, weighting = 500){
   # INCLUDE ALL CHECKS HERE (data structure, dimensions etc.)
 
   # apply hard threshold if given
-  if(is.numeric(weighting)) vocab <- vocab %>% filter(term_count >= weighting)  # subset vocab with hard threshold
+  if(is.numeric(weighting)) vocab <- vocab %>% dplyr::filter(term_count >= weighting)  # subset vocab with hard threshold
 
   # find common vocab between context_fcm and pre-trained word vectors
   local_vocab <- intersect(colnames(context_fcm), rownames(pre_trained))
