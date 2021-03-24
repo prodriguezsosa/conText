@@ -47,16 +47,6 @@ DIM <- 300
 ITERS <- 100
 COUNT_MIN <- 10
 
-# ================================
-# define paths
-# ================================
-path_to_data <- '~/Dropbox/GitHub/large_data/conText/data/'
-
-# ================================
-# load data
-# ================================
-cr_corpus <- readRDS(paste0(path_to_data, 'cr_corpus.rds'))
-
 # shuffle text
 set.seed(42L)
 text <- sample(cr_corpus$speech)
@@ -105,7 +95,7 @@ saveRDS(word_vectors, file = paste0(path_to_data, "local_glove.rds"))
 
 # 2. Compute feature co-occurrence matrix
 
-Given our "local" embeddings, we next compute the feature co-occurrence matrix for our corpus. We do this using `quanteda`'s `fcm` function. Depending on the size of your corpus, this can take several minutes (a little over 10 mins on 2019 mac book pro for this corpus).
+Given our "local" embeddings, we next compute the feature co-occurrence matrix for our corpus. We do this using `quanteda`'s `fcm` function. Depending on the size of your corpus, this can take several minutes (just below 2 mins on 2019 mac book pro for this corpus).
 
 ```{r, eval = FALSE}
 #---------------------------------
@@ -118,7 +108,6 @@ fcm_cr <- fcm(cr_corpus$speech, context = 'window', count = 'frequency', window 
 
 # subset fcm to the vocabulary included in the embeddings
 fcm_cr <- fcm_select(fcm_cr, pattern = vocab_pruned$term, selection = 'keep')
-
 ```
 
 # 3. Estimate local transformation matrix
