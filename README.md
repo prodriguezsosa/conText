@@ -18,4 +18,4 @@ In [this Dropbox folder](https://www.dropbox.com/sh/jsyrag7opfo7l7i/AAB1z7tumLuK
 
 # Quick Start Guide
 
-Check out this [Quick Start Guide](https://github.com/prodriguezsosa/conText/blob/master/vignettes/quickstart.md) to get going with `conText`.
+Check out this [Quick Start Guide](https://github.com/prodriguezsosa/conText/blob/master/vignettes/quickstart.md) to get going with `conText`. If it makes sense to estimate your own embeddings and transformation matrix, *also* check out this [Quick Start Guide - Local Transform](https://github.com/prodriguezsosa/conText/blob/master/vignettes/quickstart_local_transform.md).
