@@ -62,7 +62,7 @@ conText <- function(formula, data, text_var = 'text', transform = TRUE, bootstra
   }else{
 
     # add intercept
-    context <- data %>% dplyr::mutate('(Intercept)' = 1) %>% dplyr::mutate(context = data[,text_var])
+    context <- data %>% dplyr::mutate('(Intercept)' = 1) %>% dplyr::mutate(context = pull(data, text_var))
 
   }
 
