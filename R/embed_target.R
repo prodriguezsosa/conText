@@ -28,7 +28,7 @@ embed_target <- function(context, pre_trained, transform_matrix, transform = TRU
   if(!(is.character(context)))stop("context must be a character vector.")
 
   # build context term-feature matrix
-  context_tfm <- quanteda::dfm(context)
+  context_tfm <- quanteda::dfm(quanteda::tokens(context))
   local_vocab <- intersect(colnames(context_tfm), rownames(pre_trained))  # common vocab between pretrained and contexts
   context_tfm <- quanteda::dfm_select(context_tfm, pattern = local_vocab)  # subset tfm to common vocab
   N <- Matrix::rowSums(context_tfm)

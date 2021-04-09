@@ -12,7 +12,7 @@
 get_local_vocab <- function(context, pre_trained){
 
   # build context term-feature matrix
-  context_tfm <- quanteda::dfm(context)
+  context_tfm <- quanteda::dfm(quanteda::tokens(context))
 
   # common vocab between pretrained and contexts
   local_vocab <- intersect(colnames(context_tfm), rownames(pre_trained))

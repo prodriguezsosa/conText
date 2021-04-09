@@ -33,8 +33,8 @@ get_context <- function(x, target, window = 6L, valuetype = "fixed", case_insens
   # get kwic for each element in target
   kwic_i <- lapply(target, function(i){
     if(grepl(' ', i)){ # check if the target is a phrase
-      kwic_i <- quanteda::kwic(x, pattern = quanteda::phrase(i), window = window, valuetype = valuetype, case_insensitive = case_insensitive)}else{ # get kwic given a phrase
-        kwic_i <- quanteda::kwic(x, pattern = i, window = window, valuetype = valuetype, case_insensitive = case_insensitive) # get kwic given a token
+      kwic_i <- quanteda::kwic(quanteda::tokens(x), pattern = quanteda::phrase(i), window = window, valuetype = valuetype, case_insensitive = case_insensitive)}else{ # get kwic given a phrase
+        kwic_i <- quanteda::kwic(quanteda::tokens(x), pattern = i, window = window, valuetype = valuetype, case_insensitive = case_insensitive) # get kwic given a token
       }})
 
   # bind kwics
@@ -43,7 +43,7 @@ get_context <- function(x, target, window = 6L, valuetype = "fixed", case_insens
   # combine texts to the left and right of the target word
   # pre/post are part of kwic's output
   if(nrow(kwic_i) > 0){
-    out <- kwic_i %>%
+    out <- as.data.frame(kwic_i) %>%
       dplyr::select(docname, keyword, pre, post) %>% # keep pre and post (see kwic documentation for info on values)
       dplyr::mutate(context = paste(pre, post, sep = " ")) %>% # combine pre and post into one variable named context
       dplyr::select(-c('pre', 'post')) %>% # drop pre & post
