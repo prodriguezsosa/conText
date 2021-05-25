@@ -2,17 +2,34 @@
 #'
 #' @param context vector of texts - `context`` variable in get_context output
 #' @param pre_trained a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions
+#' @param transform logical - if TRUE (default) apply the a la carte transformation, if FALSE ouput untransformed averaged embedding
 #' @param transform_matrix a D x D transformation matrix
 #' @param N number of contexts to return
 #' @param norm character = c("l2", "none") - set to 'l2' for cosine similarity and to 'none' for inner product (see ?sim2 in text2vec)
 #'
 #' @return character vector of contexts ordered by average similarity to all contexts
-#' @export
+#' @examples
+#' library(conText)
+#' library(dplyr)
 #'
-prototypical_context <- function(context, pre_trained, transform_matrix, N = 3, norm = 'l2'){
+#' # load data
+#' corpus <- sample_corpus
+#' pre_trained <- sample_glove
+#' transform_matrix <- khodakA
+#'
+#' # find contexts of immigration
+#' context_immigration <- get_context(x = corpus$speech, target = 'immigration',
+#'                                    window = 6, valuetype = "fixed", case_insensitive = TRUE,
+#'                                    hard_cut = FALSE, verbose = FALSE)
+#'
+#' # identify top N prototypical contexts and compute typicality score
+#' pt_context <- prototypical_context(context = context_immigration$context, pre_trained,
+#'                                    transform = TRUE, transform_matrix, N = 3, norm = 'l2')
+#' @export
+prototypical_context <- function(context, pre_trained, transform = TRUE, transform_matrix, N = 3, norm = 'l2'){
 
   # embed responses
-  embeds_out <- embed_target(context, pre_trained, transform_matrix, aggregate = FALSE)
+  embeds_out <- embed_target(context, pre_trained, transform_matrix, transform = transform, aggregate = FALSE, verbose = FALSE)
 
   # compute similarity matrix
   embeds_sim_matrix <- text2vec::sim2(embeds_out$target_embedding, embeds_out$target_embedding, method = 'cosine', norm = norm)

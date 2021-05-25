@@ -157,8 +157,8 @@ To run an embedding regression we use the `conText` function. First we specify t
 ```{r}
 # run conText regression
 model1 <- conText(formula = immigration ~ Republican + male, data = cr_corpus, 
-                  text_var = 'speech', transform = TRUE, bootstrap = TRUE, 
-                  num_bootstraps = 10, stratify_by = c('Republican', 'male'), 
+                  text_var = 'speech', transform = TRUE, transform_matrix = transform_matrix, 
+                  bootstrap = TRUE, num_bootstraps = 10, stratify_by = c('Republican', 'male'), 
                   permute = TRUE, num_permutations = 100,
                   getcontexts = TRUE, window = 6, valuetype = "fixed", 
                   case_insensitive = TRUE, hard_cut = FALSE, verbose = FALSE)
@@ -387,8 +387,8 @@ knitr::include_graphics('nns2.png')
 Lastly, we may be interested in identifying the most prototypical contexts within which a given term is used by each group. To do this we use the `prototypical_context` function.
 
 ```{r}
-republican_pr <- prototypical_context(context = contextR$context, pre_trained, transform_matrix, N = 3, norm = 'l2')
-democrat_pr <- prototypical_context(context = contextD$context, pre_trained, transform_matrix, N = 3, norm = 'l2')
+republican_pr <- prototypical_context(context = contextR$context, pre_trained, transform = TRUE, transform_matrix, N = 3, norm = 'l2')
+democrat_pr <- prototypical_context(context = contextD$context, pre_trained, transform = TRUE, transform_matrix, N = 3, norm = 'l2')
 ```
 
 ```{r, echo=FALSE}

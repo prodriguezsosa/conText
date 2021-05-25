@@ -50,3 +50,36 @@ a list with three elements, nns for group 1, nns for group 2 and nns_ratio compa
 \description{
 Contrast nearest neighbors
 }
+\examples{
+library(conText)
+library(dplyr)
+
+# load data
+corpus <- sample_corpus
+pre_trained <- sample_glove
+transform_matrix <- khodakA
+
+# find contexts for Republican speakers
+contextR <- get_context(x = corpus$speech[corpus$party == 'R'], target = 'immigration',
+                        window = 6, valuetype = "fixed", case_insensitive = TRUE,
+                        hard_cut = FALSE, verbose = FALSE)
+
+# find contexts for Democrat speakers
+contextD <- get_context(x = corpus$speech[corpus$party == 'D'], target = 'immigration',
+                        window = 6, valuetype = "fixed", case_insensitive = TRUE,
+                        hard_cut = FALSE, verbose = FALSE)
+
+# find local vocab (use it to define the candidate of nearest neighbors)
+local_vocab <- get_local_vocab(c(contextR$context, contextD$context), pre_trained)
+
+set.seed(42L)
+contrast_target <- contrast_nns(context1 = contextR$context, context2 = contextD$context,
+                               pre_trained, transform_matrix, transform = TRUE,
+                               bootstrap = TRUE, num_bootstraps = 20,
+                               permute = TRUE, num_permutations = 100,
+                               candidates = local_vocab, N = 20, norm = "l2")
+
+knitr::kable(head(contrast_target$nns1))
+knitr::kable(head(contrast_target$nns2))
+knitr::kable(head(contrast_target$nns_ratio))
+}

@@ -7,6 +7,7 @@
 prototypical_context(
   context,
   pre_trained,
+  transform = TRUE,
   transform_matrix,
   N = 3,
   norm = "l2"
@@ -16,6 +17,8 @@ prototypical_context(
 \item{context}{vector of texts - `context`` variable in get_context output}
 
 \item{pre_trained}{a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions}
+
+\item{transform}{logical - if TRUE (default) apply the a la carte transformation, if FALSE ouput untransformed averaged embedding}
 
 \item{transform_matrix}{a D x D transformation matrix}
 
@@ -28,4 +31,22 @@ character vector of contexts ordered by average similarity to all contexts
 }
 \description{
 Find prototypical contexts (most similar on average to the full set of contexts)
+}
+\examples{
+library(conText)
+library(dplyr)
+
+# load data
+corpus <- sample_corpus
+pre_trained <- sample_glove
+transform_matrix <- khodakA
+
+# find contexts of immigration
+context_immigration <- get_context(x = corpus$speech, target = 'immigration',
+                                   window = 6, valuetype = "fixed", case_insensitive = TRUE,
+                                   hard_cut = FALSE, verbose = FALSE)
+
+# identify top N prototypical contexts and compute typicality score
+pt_context <- prototypical_context(context = context_immigration$context, pre_trained,
+                                   transform = TRUE, transform_matrix, N = 3, norm = 'l2')
 }

@@ -20,6 +20,9 @@ bootstrap_similarity(
 
 \item{norm}{character = c("l2", "none") - set to 'l2' for cosine similarity and to 'none' for inner product (see ?sim2 in text2vec)}
 }
+\value{
+vector(s) of cosine similarities between alc embedding and nearest neighbor candidates
+}
 \description{
 Boostrap similarity vector
 }

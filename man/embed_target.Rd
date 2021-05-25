@@ -42,3 +42,21 @@ the local vocabulary. Keep track of which contexts were embedded and which were 
 \details{
 required packages: quanteda
 }
+\examples{
+library(conText)
+library(dplyr)
+
+# load data
+corpus <- sample_corpus
+pre_trained <- sample_glove
+transform_matrix <- khodakA
+
+# find contexts for term immigration
+context_immigration <- get_context(x = corpus$speech, target = 'immigration',
+                        window = 6, valuetype = "fixed", case_insensitive = TRUE,
+                        hard_cut = FALSE, verbose = FALSE)
+
+contexts_vectors <- embed_target(context = context_immigration$context, pre_trained,
+transform_matrix, transform = TRUE,
+aggregate = FALSE, verbose = FALSE)
+}

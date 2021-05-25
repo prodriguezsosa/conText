@@ -7,8 +7,23 @@
 #' @param pre_trained the pre-trained embeddings to be used to compute localized embeddings
 #'
 #' @return chr vector - vector of words in vocabulary
-#' @export
+#' @examples
+#' library(conText)
+#' library(dplyr)
 #'
+#' # load data
+#' corpus <- sample_corpus
+#' pre_trained <- sample_glove
+#' transform_matrix <- khodakA
+#'
+#' # find contexts of immigration
+#' context_immigration <- get_context(x = corpus$speech, target = 'immigration',
+#'                         window = 6, valuetype = "fixed", case_insensitive = TRUE,
+#'                         hard_cut = FALSE, verbose = FALSE)
+#'
+#' # find local vocab (use it to define the candidate of nearest neighbors)
+#' local_vocab <- get_local_vocab(context_immigration$context, pre_trained)
+#' @export
 get_local_vocab <- function(context, pre_trained){
 
   # build context term-feature matrix

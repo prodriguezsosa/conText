@@ -7,6 +7,7 @@
 #' @param data a data.frame containing the variables in the model
 #' @param text_var chr - name of variable with the text from which context will be extracted
 #' @param transform logiacl - if TRUE (default), apply ALC transformation, if FALSE simply average context embeddings
+#' @param transform_matrix square numeric matrix corresponding to the transformation matrix
 #' @param bootstrap logical - if TRUE, bootstrap regression - required to get standard errors for normed coefficients
 #' @param num_bootstraps numeric - number of bootstraps to use
 #' @param stratify_by chr vector - specifying variables to stratify by when bootstrapping
@@ -31,9 +32,34 @@
 #'
 #' @return list with two elements, `betas` = list of beta_cofficients (D dimensional vectors);
 #' `normed_betas` = tibble with the norm of the non-intercept coefficients, std.errors (given boostrap), empirical pvalue (given permute)
-#' @export
+#' @examples
+#' library(conText)
+#' library(dplyr)
 #'
-conText <- function(formula, data, text_var = 'text', transform = TRUE, bootstrap = TRUE, num_bootstraps = 20, stratify_by = NULL, permute = TRUE, num_permutations = 100, getcontexts = TRUE, window = 6, valuetype = "fixed", case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
+#' # load data
+#' corpus <- sample_corpus
+#' pre_trained <- sample_glove
+#' transform_matrix <- khodakA
+#'
+#' # add party indicator variable
+#' corpus <- corpus %>% mutate(Republican = if_else(party == 'R', 1, 0))
+#'
+#' # run conText
+#' model1 <- conText(formula = immigration ~ Republican,
+#'                   data = corpus,
+#'                   text_var = 'speech',
+#'                   transform = TRUE, transform_matrix = transform_matrix,
+#'                   bootstrap = TRUE, num_bootstraps = 10,
+#'                   stratify_by = 'Republican',
+#'                   permute = TRUE, num_permutations = 100,
+#'                   getcontexts = TRUE, window = 6, valuetype = "fixed",
+#'                   case_insensitive = FALSE,
+#'                   hard_cut = FALSE, verbose = FALSE)
+#'
+#' # norm of coefficients
+#' knitr::kable(model1$normed_betas)
+#' @export
+conText <- function(formula, data, text_var = 'text', transform = TRUE, transform_matrix, bootstrap = TRUE, num_bootstraps = 20, stratify_by = NULL, permute = TRUE, num_permutations = 100, getcontexts = TRUE, window = 6, valuetype = "fixed", case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
 
   # extract target word
   target <- as.character(formula[[2]])
@@ -45,15 +71,15 @@ conText <- function(formula, data, text_var = 'text', transform = TRUE, bootstra
   if(getcontexts){
 
   # subset data to where target is present (this step helps speed up the get_context function)
-  if(valuetype == 'fixed') target_present <- grep(target, data[,text_var], fixed = TRUE)
-  if(valuetype != 'fixed') target_present <- grep(target, data[,text_var], ignore.case = case_insensitive)
+  if(valuetype == 'fixed') target_present <- grep(target, dplyr::pull(data, text_var), fixed = TRUE)
+  if(valuetype != 'fixed') target_present <- grep(target, dplyr::pull(data, text_var), ignore.case = case_insensitive)
   data <- data[target_present,]
 
   # add document id variable (used for merging back with covariates)
   data <- data %>% dplyr::mutate(docname = paste0("text", 1:nrow(.)))
 
   # apply get_context function (see get_context documentation)
-  context <- get_context(x = data[,text_var], target = target, window = window, valuetype = valuetype, case_insensitive = case_insensitive, hard_cut = hard_cut, verbose = verbose)
+  context <- get_context(x = dplyr::pull(data, text_var), target = target, window = window, valuetype = valuetype, case_insensitive = case_insensitive, hard_cut = hard_cut, verbose = verbose)
 
   # merge with metadata
   context <- dplyr::left_join(context, data[,c("docname", covariates)], by = "docname") %>% dplyr::mutate('(Intercept)' = 1)
@@ -62,12 +88,12 @@ conText <- function(formula, data, text_var = 'text', transform = TRUE, bootstra
   }else{
 
     # add intercept
-    context <- data %>% dplyr::mutate('(Intercept)' = 1) %>% dplyr::mutate(context = pull(data, text_var))
+    context <- data %>% dplyr::mutate('(Intercept)' = 1) %>% dplyr::mutate(context = dplyr::pull(data, text_var))
 
   }
 
   # embed context to get dependent variable (note, aggregate is set to FALSE as we want an embedding for each instance)
-  embeds_out <- embed_target(context$context, pre_trained, transform_matrix, transform = transform, aggregate = FALSE, verbose)
+  embeds_out <- embed_target(context$context, pre_trained, transform_matrix = transform_matrix, transform = transform, aggregate = FALSE, verbose)
   Y <- embeds_out$target_embedding
   if(verbose) cat('total observations included in regression:', nrow(Y), '\n')
 

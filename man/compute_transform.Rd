@@ -21,3 +21,31 @@ matrix of numeric values - the D by D transformation matrix (D = number of dimen
 \description{
 compute transform matrix A
 }
+\examples{
+library(conText)
+library(text2vec)
+library(dplyr)
+library(quanteda)
+
+# load data
+transform_matrix <- khodakA
+pre_trained <- sample_glove
+cr_corpus <- sample_corpus
+
+# get word counts
+vocab <- space_tokenizer(cr_corpus$speech) \%>\%
+  itoken(progressbar = FALSE) \%>\%
+  create_vocabulary
+
+# use quanteda's fcm to create an fcm matrix
+fcm_cr <- fcm(tokens(cr_corpus$speech), context = 'window', count = 'frequency', window = 6,
+              weights = rep(1, 6), tri = FALSE)
+
+# subset fcm to the vocabulary included in the embeddings
+fcm_cr <- fcm_select(fcm_cr, pattern = vocab$term, selection = 'keep')
+
+# the higher the threshold specified in weighting arg,
+# the faster the code (see function for more details)
+transform_matrix <- compute_transform(context_fcm = fcm_cr, pre_trained = pre_trained,
+                                      vocab = vocab, weighting = 100)
+}

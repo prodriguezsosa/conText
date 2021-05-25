@@ -25,9 +25,18 @@
 #' it is the result of concatenating `pre` and `post` in the `kwic` function.
 #' `target` in the return data.frame is equivalent to `kwic`'s keyword,
 #' so it may not match the user-defined target exactly if `valuetype` is not fixed.
+#' @examples
+#'library(conText)
+#'library(dplyr)
 #'
+#' # load corpus
+#' corpus <- sample_corpus
+#'
+#' # get context words sorrounding the term immigration
+#' context_immigration <- get_context(x = corpus$speech, target = 'immigration',
+#'                                    window = 6, valuetype = "fixed", case_insensitive = FALSE,
+#'                                    hard_cut = FALSE, verbose = FALSE)
 #' @export
-#'
 get_context <- function(x, target, window = 6L, valuetype = "fixed", case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
 
   # get kwic for each element in target

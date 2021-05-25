@@ -9,6 +9,7 @@ conText(
   data,
   text_var = "text",
   transform = TRUE,
+  transform_matrix,
   bootstrap = TRUE,
   num_bootstraps = 20,
   stratify_by = NULL,
@@ -31,6 +32,8 @@ symbolic description of the model to be fitted.}
 \item{text_var}{chr - name of variable with the text from which context will be extracted}
 
 \item{transform}{logiacl - if TRUE (default), apply ALC transformation, if FALSE simply average context embeddings}
+
+\item{transform_matrix}{square numeric matrix corresponding to the transformation matrix}
 
 \item{bootstrap}{logical - if TRUE, bootstrap regression - required to get standard errors for normed coefficients}
 
@@ -70,4 +73,31 @@ list with two elements, \code{betas} = list of beta_cofficients (D dimensional v
 }
 \description{
 Estimate an embedding regression model
+}
+\examples{
+library(conText)
+library(dplyr)
+
+# load data
+corpus <- sample_corpus
+pre_trained <- sample_glove
+transform_matrix <- khodakA
+
+# add party indicator variable
+corpus <- corpus \%>\% mutate(Republican = if_else(party == 'R', 1, 0))
+
+# run conText
+model1 <- conText(formula = immigration ~ Republican,
+                  data = corpus,
+                  text_var = 'speech',
+                  transform = TRUE, transform_matrix = transform_matrix,
+                  bootstrap = TRUE, num_bootstraps = 10,
+                  stratify_by = 'Republican',
+                  permute = TRUE, num_permutations = 100,
+                  getcontexts = TRUE, window = 6, valuetype = "fixed",
+                  case_insensitive = FALSE,
+                  hard_cut = FALSE, verbose = FALSE)
+
+# norm of coefficients
+knitr::kable(model1$normed_betas)
 }

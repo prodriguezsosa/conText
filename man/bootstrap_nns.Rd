@@ -41,3 +41,33 @@ data.frame with nearest neighbor tokens, similarity (numeric value) and std.erro
 \description{
 Bootstrap nearest neighbors
 }
+\examples{
+library(conText)
+library(dplyr)
+
+# load data
+corpus <- sample_corpus
+pre_trained <- sample_glove
+transform_matrix <- khodakA
+
+# find contexts of immigration
+context_immigration <- get_context(x = corpus$speech,
+                                   target = 'immigration',
+                                   window = 6,
+                                   valuetype = "fixed",
+                                   case_insensitive = TRUE,
+                                   hard_cut = FALSE, verbose = FALSE)
+
+# find local vocab (use it to define the candidate of nearest neighbors)
+local_vocab <- get_local_vocab(context_immigration$context, pre_trained)
+
+set.seed(42L)
+nns_immigration <- bootstrap_nns(context = context_immigration$context,
+                                 pre_trained, transform_matrix,
+                                 transform = TRUE, candidates = local_vocab,
+                                 bootstrap = TRUE,
+                                 num_bootstraps = 20, N = 50, norm = "l2")
+
+# print output
+knitr::kable(head(nns_immigration))
+}
