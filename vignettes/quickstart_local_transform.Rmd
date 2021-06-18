@@ -47,10 +47,6 @@ DIM <- 300
 ITERS <- 100
 COUNT_MIN <- 10
 
-# shuffle text
-set.seed(42L)
-text <- sample(cr_corpus$speech)
-
 # ================================
 # create vocab
 # ================================
