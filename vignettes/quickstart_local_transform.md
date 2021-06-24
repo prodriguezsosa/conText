@@ -49,16 +49,6 @@ DIM <- 300
 ITERS <- 100
 COUNT_MIN <- 10
 
-# ================================ define paths ================================
-path_to_data <- "~/Dropbox/GitHub/large_data/conText/data/"
-
-# ================================ load data ================================
-cr_corpus <- readRDS(paste0(path_to_data, "cr_corpus.rds"))
-
-# shuffle text
-set.seed(42L)
-text <- sample(cr_corpus$speech)
-
 # ================================ create vocab ================================
 tokens <- space_tokenizer(text)
 it <- itoken(tokens, progressbar = FALSE)
@@ -91,8 +81,8 @@ saveRDS(word_vectors, file = paste0(path_to_data, "local_glove.rds"))
 
 Given our “local” embeddings, we next compute the feature co-occurrence
 matrix for our corpus. We do this using `quanteda`’s `fcm` function.
-Depending on the size of your corpus, this can take several minutes (a
-little over 10 mins on 2019 mac book pro for this corpus).
+Depending on the size of your corpus, this can take several minutes
+(just below 2 mins on 2019 mac book pro for this corpus).
 
 ``` r
 #---------------------------------
@@ -117,9 +107,9 @@ embeddings (i.e. our local embeddings), we can use `conText`’s
 #---------------------------------
 # compute local transform
 #---------------------------------
-# the higher the threshold specified in weighting arg, the faster the code (see
-# function for more details)
-transform_matrix <- compute_transform(context_fcm = fcm_cr, pre_trained = pre_trained, 
+# the higher the threshold specified in the weighting arg, the faster the code
+# (see function for more details)
+transform_matrix <- compute_transform(context_fcm = fcm_cr, pre_trained = word_vectors, 
     vocab = vocab_pruned, weighting = 1000)
 saveRDS(transform_matrix, paste0(path_to_data, "local_transform.rds"))
 ```
