@@ -187,7 +187,7 @@ original (pre-processed) corpus and `conText` will find all instances of
 the target word and their respective contexts. It’s important that you
 specify which variable in your `data` contains the text using
 `text_var`. In the case of our `cr_corpus` the text variable is labeled
-“speech”. Alternatively, if you want to embedded each document in its
+“speech”. Alternatively, if you want to embed each document in its
 entirety (e.g. open-ended responses in a survey), then you must use the
 label of the text variable as your dependent variable (e.g. `speech ~
 Republican + male`) and set `getcontexts = FALSE`. This will tell
