@@ -50,7 +50,7 @@ ITERS <- 100
 COUNT_MIN <- 10
 
 # ================================ create vocab ================================
-tokens <- space_tokenizer(text)
+tokens <- space_tokenizer(cr_corpus$speech)
 it <- itoken(tokens, progressbar = FALSE)
 vocab <- create_vocabulary(it)
 vocab_pruned <- prune_vocabulary(vocab, term_count_min = COUNT_MIN)  # keep only words that meet count threshold
@@ -90,8 +90,8 @@ Depending on the size of your corpus, this can take several minutes
 #---------------------------------
 
 # use quanteda's fcm to create an fcm matrix
-fcm_cr <- fcm(cr_corpus$speech, context = "window", count = "frequency", window = WINDOW_SIZE, 
-    weights = rep(1, WINDOW_SIZE), tri = FALSE)
+fcm_cr <- tokens(cr_corpus$speech) %>% fcm(context = "window", count = "frequency", 
+    window = WINDOW_SIZE, weights = rep(1, WINDOW_SIZE), tri = FALSE)
 
 # subset fcm to the vocabulary included in the embeddings
 fcm_cr <- fcm_select(fcm_cr, pattern = vocab_pruned$term, selection = "keep")
@@ -109,7 +109,7 @@ embeddings (i.e. our local embeddings), we can use `conText`’s
 #---------------------------------
 # the higher the threshold specified in the weighting arg, the faster the code
 # (see function for more details)
-local_transform <- compute_transform(context_fcm = fcm_cr, pre_trained = word_vectors, 
+local_transform <- compute_transform(context_fcm = fcm_cr, pre_trained = local_glove, 
     vocab = vocab_pruned, weighting = 1000)
 saveRDS(local_transform, paste0(path_to_data, "local_transform.rds"))
 ```
