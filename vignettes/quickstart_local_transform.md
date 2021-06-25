@@ -71,10 +71,10 @@ word_vectors_main <- glove$fit_transform(tcm, n_iter = ITERS, convergence_tol = 
 
 # ================================ get output ================================
 word_vectors_context <- glove$components
-word_vectors <- word_vectors_main + t(word_vectors_context)  # word vectors
+local_glove <- word_vectors_main + t(word_vectors_context)  # word vectors
 
 # ================================ save ================================
-saveRDS(word_vectors, file = paste0(path_to_data, "local_glove.rds"))
+saveRDS(local_glove, file = paste0(path_to_data, "local_glove.rds"))
 ```
 
 # 2\. Compute feature co-occurrence matrix
@@ -109,9 +109,9 @@ embeddings (i.e. our local embeddings), we can use `conText`’s
 #---------------------------------
 # the higher the threshold specified in the weighting arg, the faster the code
 # (see function for more details)
-transform_matrix <- compute_transform(context_fcm = fcm_cr, pre_trained = word_vectors, 
+local_transform <- compute_transform(context_fcm = fcm_cr, pre_trained = word_vectors, 
     vocab = vocab_pruned, weighting = 1000)
-saveRDS(transform_matrix, paste0(path_to_data, "local_transform.rds"))
+saveRDS(local_transform, paste0(path_to_data, "local_transform.rds"))
 ```
 
 # 4\. Check
