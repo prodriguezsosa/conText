@@ -13,7 +13,6 @@ knitr::opts_chunk$set(collapse = FALSE,
                       tidy = TRUE)
 ```
 
-
 # Setup
 
 
@@ -139,7 +138,7 @@ ggplot(plot_tibble, aes(x = x, y = y, color = group, shape = group)) +
 
 ```{r out.width = "100%", echo = FALSE}
 # outputs better in knitr than R-generated images
-knitr::include_graphics('single_instance.png')
+knitr::include_graphics('/Users/pedrorodriguez/Dropbox/GitHub/repositories/conText/vignettes/single_instance.png')
 ```
 
 # Embedding regression
@@ -157,7 +156,7 @@ To run an embedding regression we use the `conText` function. First we specify t
 ```{r}
 # run conText regression
 model1 <- conText(formula = immigration ~ Republican + male, data = cr_corpus, 
-                  text_var = 'speech', transform = TRUE, transform_matrix = transform_matrix, 
+                  text_var = 'speech', pre_trained = pre_trained, transform = TRUE, transform_matrix = transform_matrix, 
                   bootstrap = TRUE, num_bootstraps = 10, stratify_by = c('Republican', 'male'), 
                   permute = TRUE, num_permutations = 100,
                   getcontexts = TRUE, window = 6, valuetype = "fixed", 
@@ -197,7 +196,7 @@ ggplot(plot_tibble, aes(x = Coefficient, y = Normed_Estimate)) +
 
 ```{r out.width = "100%", echo = FALSE}
 # outputs better in knitr than R-generated images
-knitr::include_graphics('regression.png')
+knitr::include_graphics('/Users/pedrorodriguez/Dropbox/GitHub/repositories/conText/vignettes/regression.png')
 ```
 
 # Nearest neighbors
@@ -295,7 +294,7 @@ shared_nns <- intersect(nnsR$Term[1:N],nnsD$Term[1:N])
 
 # subset nns_ratio (output by contrast_nns) to the union of the top nearest neighbors
 nns_ratio <- contrast_target$nns_ratio %>%
-  filter(Term %in% top_nns) %>%
+  dplyr::filter(Term %in% top_nns) %>%
   mutate(group = case_when(Term %in% nnsR$Term[1:N] & !(Term %in% nnsD$Term[1:N]) ~ 'Republican',
                            !(Term %in% nnsR$Term[1:N]) & Term %in% nnsD$Term[1:N] ~ 'Democrat',
                            Term %in% shared_nns  ~ 'shared'),
@@ -344,7 +343,7 @@ ggplot() +
 
 ```{r out.width = "100%", echo = FALSE}
 # outputs better in knitr than R-generated images
-knitr::include_graphics('nns1.png')
+knitr::include_graphics('/Users/pedrorodriguez/Dropbox/GitHub/repositories/conText/vignettes/nns1.png')
 ```
 
 Below is alternative approach to visualizing these results.
@@ -379,7 +378,7 @@ ggplot() +
 
 ```{r out.width = "100%", echo = FALSE}
 # outputs better in knitr than R-generated images
-knitr::include_graphics('nns2.png')
+knitr::include_graphics('/Users/pedrorodriguez/Dropbox/GitHub/repositories/conText/vignettes/nns2.png')
 ```
 
 # Prototypical contexts:

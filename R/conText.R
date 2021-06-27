@@ -6,6 +6,7 @@
 #' symbolic description of the model to be fitted.
 #' @param data a data.frame containing the variables in the model
 #' @param text_var chr - name of variable with the text from which context will be extracted
+#' @param pre_trained a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions
 #' @param transform logiacl - if TRUE (default), apply ALC transformation, if FALSE simply average context embeddings
 #' @param transform_matrix square numeric matrix corresponding to the transformation matrix
 #' @param bootstrap logical - if TRUE, bootstrap regression - required to get standard errors for normed coefficients
@@ -48,6 +49,7 @@
 #' model1 <- conText(formula = immigration ~ Republican,
 #'                   data = corpus,
 #'                   text_var = 'speech',
+#'                   pre_trained = pre_trained,
 #'                   transform = TRUE, transform_matrix = transform_matrix,
 #'                   bootstrap = TRUE, num_bootstraps = 10,
 #'                   stratify_by = 'Republican',
@@ -59,7 +61,7 @@
 #' # norm of coefficients
 #' knitr::kable(model1$normed_betas)
 #' @export
-conText <- function(formula, data, text_var = 'text', transform = TRUE, transform_matrix, bootstrap = TRUE, num_bootstraps = 20, stratify_by = NULL, permute = TRUE, num_permutations = 100, getcontexts = TRUE, window = 6, valuetype = "fixed", case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
+conText <- function(formula, data, text_var = 'text', pre_trained, transform = TRUE, transform_matrix, bootstrap = TRUE, num_bootstraps = 20, stratify_by = NULL, permute = TRUE, num_permutations = 100, getcontexts = TRUE, window = 6, valuetype = "fixed", case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
 
   # extract target word
   target <- as.character(formula[[2]])
@@ -93,7 +95,7 @@ conText <- function(formula, data, text_var = 'text', transform = TRUE, transfor
   }
 
   # embed context to get dependent variable (note, aggregate is set to FALSE as we want an embedding for each instance)
-  embeds_out <- embed_target(context$context, pre_trained, transform_matrix = transform_matrix, transform = transform, aggregate = FALSE, verbose)
+  embeds_out <- embed_target(context$context, pre_trained = pre_trained, transform_matrix = transform_matrix, transform = transform, aggregate = FALSE, verbose)
   Y <- embeds_out$target_embedding
   if(verbose) cat('total observations included in regression:', nrow(Y), '\n')
 

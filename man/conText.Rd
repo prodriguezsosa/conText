@@ -8,6 +8,7 @@ conText(
   formula,
   data,
   text_var = "text",
+  pre_trained,
   transform = TRUE,
   transform_matrix,
   bootstrap = TRUE,
@@ -30,6 +31,8 @@ symbolic description of the model to be fitted.}
 \item{data}{a data.frame containing the variables in the model}
 
 \item{text_var}{chr - name of variable with the text from which context will be extracted}
+
+\item{pre_trained}{a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions}
 
 \item{transform}{logiacl - if TRUE (default), apply ALC transformation, if FALSE simply average context embeddings}
 
@@ -90,6 +93,7 @@ corpus <- corpus \%>\% mutate(Republican = if_else(party == 'R', 1, 0))
 model1 <- conText(formula = immigration ~ Republican,
                   data = corpus,
                   text_var = 'speech',
+                  pre_trained = pre_trained,
                   transform = TRUE, transform_matrix = transform_matrix,
                   bootstrap = TRUE, num_bootstraps = 10,
                   stratify_by = 'Republican',

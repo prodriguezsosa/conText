@@ -48,16 +48,16 @@ can use your own locally estimated alternatives.
 
 ``` r
 # set path to where you stored the required datasets
-path_to_data <- '~/Dropbox/GitHub/large_data/conText/data/'
+path_to_data <- "~/Dropbox/GitHub/large_data/conText/data/"
 
 # corpus
-cr_corpus <- readRDS(paste0(path_to_data, 'cr_corpus.rds'))
+cr_corpus <- readRDS(paste0(path_to_data, "cr_corpus.rds"))
 
 # (GloVe) pre-trained embeddings
-pre_trained <- readRDS(paste0(path_to_data, 'glove.rds'))
+pre_trained <- readRDS(paste0(path_to_data, "glove.rds"))
 
 # transformation matrix
-transform_matrix <- readRDS(paste0(path_to_data, 'khodakA.rds'))
+transform_matrix <- readRDS(paste0(path_to_data, "khodakA.rds"))
 ```
 
 # Single instance embeddings
@@ -77,17 +77,15 @@ immigrants`).
 #---------------------------------
 
 # find contexts for Republican speakers
-contextR <- get_context(x = cr_corpus$speech[cr_corpus$party == 'R'], target = 'immigration', 
-                        window = 6, valuetype = "fixed", case_insensitive = TRUE, 
-                        hard_cut = FALSE, verbose = FALSE)
+contextR <- get_context(x = cr_corpus$speech[cr_corpus$party == "R"], target = "immigration", 
+    window = 6, valuetype = "fixed", case_insensitive = TRUE, hard_cut = FALSE, verbose = FALSE)
 
 # find contexts for Democrat speakers
-contextD <- get_context(x = cr_corpus$speech[cr_corpus$party == 'D'], target = 'immigration', 
-                        window = 6, valuetype = "fixed", case_insensitive = TRUE, 
-                        hard_cut = FALSE, verbose = FALSE)
+contextD <- get_context(x = cr_corpus$speech[cr_corpus$party == "D"], target = "immigration", 
+    window = 6, valuetype = "fixed", case_insensitive = TRUE, hard_cut = FALSE, verbose = FALSE)
 
 # bind contexts
-contexts_corpus <- rbind(cbind(contextR, party = 'R'), cbind(contextD, party = 'D'))
+contexts_corpus <- rbind(cbind(contextR, party = "R"), cbind(contextD, party = "D"))
 ```
 
 To make it easy to visualize, we randomly sample 100 contexts from each
@@ -96,8 +94,8 @@ party.
 ``` r
 # sample 100 observations from each party (for visualization purposes)
 set.seed(42L)
-contexts_sample <- contexts_corpus %>% group_by(party) %>% 
-  sample_n(., size = 100, replace = FALSE) %>% ungroup()
+contexts_sample <- contexts_corpus %>% group_by(party) %>% sample_n(., size = 100, 
+    replace = FALSE) %>% ungroup()
 ```
 
 Next we use the function `embed_target` to embed each context seperately
@@ -111,8 +109,7 @@ embedding for every instance rather than an aggregate averaged embedding
 # embed each instance using a la carte
 #---------------------------------
 contexts_vectors <- embed_target(context = contexts_sample$context, pre_trained, 
-                                 transform_matrix, transform = TRUE, 
-                                 aggregate = FALSE, verbose = TRUE)
+    transform_matrix, transform = TRUE, aggregate = FALSE, verbose = TRUE)
 ```
 
 To plot this set of singl-instance 300 dimensional embeddings we use PCA
@@ -129,38 +126,32 @@ argument to `TRUE` in the `embed_target` function.
 contexts_pca <- prcomp(contexts_vectors$target_embedding, scale = TRUE)
 
 # first two pcs
-ind_coord <- as_tibble(contexts_pca$x[,1:2])
+ind_coord <- as_tibble(contexts_pca$x[, 1:2])
 
 # tibble for plotting
-plot_tibble <- tibble(x = ind_coord$PC1, y = ind_coord$PC2) %>% 
-  mutate(group = factor(contexts_sample$party, levels = c('D', 'R')))
+plot_tibble <- tibble(x = ind_coord$PC1, y = ind_coord$PC2) %>% mutate(group = factor(contexts_sample$party, 
+    levels = c("D", "R")))
 
 #---------------------------------
 # visualize
 #---------------------------------
-ggplot(plot_tibble, aes(x = x, y = y, color = group, shape = group)) +
-  geom_point(size = 2) +
-  geom_hline(yintercept = 0, linetype="dashed", color = "black", size = 0.5) +
-  geom_vline(xintercept = 0, linetype="dashed", color = "black", size = 0.5) +
-  scale_colour_manual(labels = c("Democrat", "Republican"),
-                      values = c("blue", "red")) +
-  scale_shape_manual(labels = c("Democrat", "Republican"),
-                     values = c(19, 17)) +
-  scale_x_continuous(name="PC1", limits = c(-20, 20), breaks = c(-20, -15, -10,-5,0,5,10, 20)) +
-  scale_y_continuous(name="PC2", limits = c(-15, 15), breaks = c(-15, -10,-5,0,5,10, 15)) +
-  theme(panel.background = element_blank(),
-        axis.text.x = element_text(size=16),
-        axis.text.y = element_text(size=16),
-        axis.title.y = element_text(size=16, margin = margin(t = 0, r = 15, b = 0, l = 15)),
-        axis.title.x = element_text(size=16, margin = margin(t = 15, r = 0, b = 15, l = 0)),
-        legend.text=element_text(size=16),
-        legend.title=element_blank(),
-        legend.key=element_blank(),
-        legend.position = "top",
-        legend.spacing.x = unit(0.25, 'cm'))
+ggplot(plot_tibble, aes(x = x, y = y, color = group, shape = group)) + geom_point(size = 2) + 
+    geom_hline(yintercept = 0, linetype = "dashed", color = "black", size = 0.5) + 
+    geom_vline(xintercept = 0, linetype = "dashed", color = "black", size = 0.5) + 
+    scale_colour_manual(labels = c("Democrat", "Republican"), values = c("blue", 
+        "red")) + scale_shape_manual(labels = c("Democrat", "Republican"), values = c(19, 
+    17)) + scale_x_continuous(name = "PC1", limits = c(-20, 20), breaks = c(-20, 
+    -15, -10, -5, 0, 5, 10, 20)) + scale_y_continuous(name = "PC2", limits = c(-15, 
+    15), breaks = c(-15, -10, -5, 0, 5, 10, 15)) + theme(panel.background = element_blank(), 
+    axis.text.x = element_text(size = 16), axis.text.y = element_text(size = 16), 
+    axis.title.y = element_text(size = 16, margin = margin(t = 0, r = 15, b = 0, 
+        l = 15)), axis.title.x = element_text(size = 16, margin = margin(t = 15, 
+        r = 0, b = 15, l = 0)), legend.text = element_text(size = 16), legend.title = element_blank(), 
+    legend.key = element_blank(), legend.position = "top", legend.spacing.x = unit(0.25, 
+        "cm"))
 ```
 
-<img src="single_instance.png" width="100%" />
+<img src="/Users/pedrorodriguez/Dropbox/GitHub/repositories/conText/vignettes/single_instance.png" width="100%" />
 
 # Embedding regression
 
@@ -173,8 +164,8 @@ independent variables).
 
 ``` r
 # add party and gender indicator variables
-cr_corpus <- cr_corpus %>% mutate(Republican = if_else(party == 'R', 1L, 0L), 
-                                  male = if_else(gender == "M", 1L, 0L))
+cr_corpus <- cr_corpus %>% mutate(Republican = if_else(party == "R", 1L, 0L), male = if_else(gender == 
+    "M", 1L, 0L))
 ```
 
 To run an embedding regression we use the `conText` function. First we
@@ -187,7 +178,7 @@ original (pre-processed) corpus and `conText` will find all instances of
 the target word and their respective contexts. It’s important that you
 specify which variable in your `data` contains the text using
 `text_var`. In the case of our `cr_corpus` the text variable is labeled
-“speech”. Alternatively, if you want to embed each document in its
+“speech”. Alternatively, if you want to embedded each document in its
 entirety (e.g. open-ended responses in a survey), then you must use the
 label of the text variable as your dependent variable (e.g. `speech ~
 Republican + male`) and set `getcontexts = FALSE`. This will tell
@@ -201,20 +192,19 @@ to the documentation.
 
 ``` r
 # run conText regression
-model1 <- conText(formula = immigration ~ Republican + male, data = cr_corpus, 
-                  text_var = 'speech', transform = TRUE, bootstrap = TRUE, 
-                  num_bootstraps = 10, stratify_by = c('Republican', 'male'), 
-                  permute = TRUE, num_permutations = 100,
-                  getcontexts = TRUE, window = 6, valuetype = "fixed", 
-                  case_insensitive = TRUE, hard_cut = FALSE, verbose = FALSE)
+model1 <- conText(formula = immigration ~ Republican + male, data = cr_corpus, text_var = "speech", 
+    pre_trained = pre_trained, transform = TRUE, transform_matrix = transform_matrix, 
+    bootstrap = TRUE, num_bootstraps = 10, stratify_by = c("Republican", "male"), 
+    permute = TRUE, num_permutations = 100, getcontexts = TRUE, window = 6, valuetype = "fixed", 
+    case_insensitive = TRUE, hard_cut = FALSE, verbose = FALSE)
 
 knitr::kable(model1$normed_betas)
 ```
 
 | Coefficient | Normed\_Estimate | Std.Error | Empirical\_Pvalue |
 | :---------- | ---------------: | --------: | ----------------: |
-| Republican  |        0.0331038 | 0.0002568 |                 0 |
-| male        |        0.0150970 | 0.0003913 |                 0 |
+| Republican  |        0.0330936 | 0.0002574 |                 0 |
+| male        |        0.0151128 | 0.0003986 |                 0 |
 
 `model1` is list with two elements: (1) `betas`, these are the estimated
 beta coefficients. We will use these below to find the a la carte
@@ -226,30 +216,21 @@ standard errors (given `bootstrap = TRUE`) and empirical p-values (given
 ``` r
 # coefficient plot
 plot_tibble <- model1$normed_betas %>% mutate(Coefficient = c("Republican", "male")) %>% 
-  mutate(Coefficient = factor(Coefficient, levels = Coefficient))
-ggplot(plot_tibble, aes(x = Coefficient, y = Normed_Estimate)) +
-  geom_bar(position = position_dodge(), stat="identity", width = 0.5) +
-  geom_errorbar(aes(ymin = Normed_Estimate - 1.96*Std.Error, 
-                    ymax =  Normed_Estimate + 1.96*Std.Error),
-                size=0.75,
-                width=.15,
-                position=position_dodge(.9)) +
-  ylim(0, 0.04) +
-  ylab('Norm of beta hats') +
-  # the stars here are based on the Empirical_Pvalue
-  geom_text(aes(label=c('***', '***')), position=position_dodge(width=0.9), 
-            hjust=0.5, vjust = -1, size = 8) +
-  theme(panel.background = element_blank(),
-        axis.text.x = element_text(size=16, vjust = 0.5, 
-                                   margin = margin(t = 15, r = 0, b = 15, l = 0)),
-        axis.text.y = element_text(size=16),
-        axis.title.y = element_text(size=18, margin = 
-                                      margin(t = 0, r = 15, b = 0, l = 15)),
-        axis.title.x = element_blank(),
-        plot.margin=unit(c(1,1,0,0),"cm"))
+    mutate(Coefficient = factor(Coefficient, levels = Coefficient))
+ggplot(plot_tibble, aes(x = Coefficient, y = Normed_Estimate)) + geom_bar(position = position_dodge(), 
+    stat = "identity", width = 0.5) + geom_errorbar(aes(ymin = Normed_Estimate - 
+    1.96 * Std.Error, ymax = Normed_Estimate + 1.96 * Std.Error), size = 0.75, width = 0.15, 
+    position = position_dodge(0.9)) + ylim(0, 0.04) + ylab("Norm of beta hats") + 
+    # the stars here are based on the Empirical_Pvalue
+geom_text(aes(label = c("***", "***")), position = position_dodge(width = 0.9), hjust = 0.5, 
+    vjust = -1, size = 8) + theme(panel.background = element_blank(), axis.text.x = element_text(size = 16, 
+    vjust = 0.5, margin = margin(t = 15, r = 0, b = 15, l = 0)), axis.text.y = element_text(size = 16), 
+    axis.title.y = element_text(size = 18, margin = margin(t = 0, r = 15, b = 0, 
+        l = 15)), axis.title.x = element_blank(), plot.margin = unit(c(1, 1, 0, 0), 
+        "cm"))
 ```
 
-<img src="regression.png" width="100%" />
+<img src="/Users/pedrorodriguez/Dropbox/GitHub/repositories/conText/vignettes/regression.png" width="100%" />
 
 # Nearest neighbors
 
@@ -277,10 +258,11 @@ found by simply adding the relevant coefficients.
 #---------------------------------
 # a. find_nns: use alc embeddings output by regression
 #---------------------------------
-alcDF <- model1$betas['(Intercept)',] # Democrat - female
-alcDM <- model1$betas['(Intercept)',] + model1$betas['male',] # Democrat - male
-alcRF <- model1$betas['(Intercept)',] + model1$betas['Republican',] # Republican - female
-alcRM <- model1$betas['(Intercept)',] + model1$betas['Republican',] + model1$betas['male',] # Republican - male
+alcDF <- model1$betas["(Intercept)", ]  # Democrat - female
+alcDM <- model1$betas["(Intercept)", ] + model1$betas["male", ]  # Democrat - male
+alcRF <- model1$betas["(Intercept)", ] + model1$betas["Republican", ]  # Republican - female
+alcRM <- model1$betas["(Intercept)", ] + model1$betas["Republican", ] + model1$betas["male", 
+    ]  # Republican - male
 ```
 
 Given each groups’ ALC embedding for “immigration” we can use the
@@ -288,12 +270,17 @@ function `find_nns` to output the top `N` neighbors.
 
 ``` r
 # nns
-nnsDF <- find_nns(target_embedding = alcDF, pre_trained, N = 10, candidates = local_vocab, norm = "l2")
-nnsDM <- find_nns(target_embedding = alcDM, pre_trained, N = 10, candidates = local_vocab, norm = "l2")
-nnsRF <- find_nns(target_embedding = alcRF, pre_trained, N = 10, candidates = local_vocab, norm = "l2")
-nnsRM <- find_nns(target_embedding = alcRM, pre_trained, N = 10, candidates = local_vocab, norm = "l2")
+nnsDF <- find_nns(target_embedding = alcDF, pre_trained, N = 10, candidates = local_vocab, 
+    norm = "l2")
+nnsDM <- find_nns(target_embedding = alcDM, pre_trained, N = 10, candidates = local_vocab, 
+    norm = "l2")
+nnsRF <- find_nns(target_embedding = alcRF, pre_trained, N = 10, candidates = local_vocab, 
+    norm = "l2")
+nnsRM <- find_nns(target_embedding = alcRM, pre_trained, N = 10, candidates = local_vocab, 
+    norm = "l2")
 
-knitr::kable(cbind('Dem-female' = nnsDF, 'Dem-male' = nnsDM, 'Rep-female' = nnsRF, 'Rep-male' = nnsRM))
+knitr::kable(cbind(`Dem-female` = nnsDF, `Dem-male` = nnsDM, `Rep-female` = nnsRF, 
+    `Rep-male` = nnsRM))
 ```
 
 | Dem-female  | Dem-male    | Rep-female     | Rep-male     |
@@ -304,8 +291,8 @@ knitr::kable(cbind('Dem-female' = nnsDF, 'Dem-male' = nnsDM, 'Rep-female' = nnsR
 | overhauling | overhaul    | enforcing      | enforcing    |
 | immigration | enact       | naturalization | enacted      |
 | reform      | enacting    | enforces       | legislation  |
-| overhaul    | reforming   | enforce        | legislations |
-| enacted     | entitlement | enacted        | illegals     |
+| overhaul    | reforming   | enforce        | illegals     |
+| enacted     | entitlement | enacted        | legislations |
 | entitlement | revamp      | regulations    | enforcement  |
 | reforming   | immigration | enacting       | enact        |
 
@@ -328,11 +315,11 @@ just the nearest neighbors).
 ``` r
 set.seed(42L)
 nnsR <- bootstrap_nns(context = contextR$context, pre_trained, transform_matrix, 
-                      transform = TRUE, candidates = local_vocab, bootstrap = TRUE, 
-                      num_bootstraps = 20, N = 50, norm = "l2")
+    transform = TRUE, candidates = local_vocab, bootstrap = TRUE, num_bootstraps = 20, 
+    N = 50, norm = "l2")
 nnsD <- bootstrap_nns(context = contextD$context, pre_trained, transform_matrix, 
-                      transform = TRUE, candidates = local_vocab, bootstrap = TRUE, 
-                      num_bootstraps = 20, N = 50, norm = "l2")
+    transform = TRUE, candidates = local_vocab, bootstrap = TRUE, num_bootstraps = 20, 
+    N = 50, norm = "l2")
 
 # print output
 knitr::kable(head(nnsD))
@@ -383,10 +370,8 @@ from \(1\). Note, the numerator in the ratio is defined by `context1`.
 set.seed(42L)
 N <- 30
 contrast_target <- contrast_nns(context1 = contextR$context, context2 = contextD$context, 
-                                pre_trained, transform_matrix, transform = TRUE, 
-                                bootstrap = TRUE, num_bootstraps = 20, 
-                                permute = TRUE, num_permutations = 100, 
-                                candidates = local_vocab, N = 20, norm = "l2")
+    pre_trained, transform_matrix, transform = TRUE, bootstrap = TRUE, num_bootstraps = 20, 
+    permute = TRUE, num_permutations = 100, candidates = local_vocab, N = 20, norm = "l2")
 ```
 
     ## starting bootstrapping 
@@ -453,25 +438,22 @@ nnsR <- contrast_target$nns1
 nnsD <- contrast_target$nns2
 
 # subset to the union of top N nearest neighbors for each party
-top_nns <- union(nnsR$Term[1:N],nnsD$Term[1:N])
+top_nns <- union(nnsR$Term[1:N], nnsD$Term[1:N])
 
 # identify which of these are shared
-shared_nns <- intersect(nnsR$Term[1:N],nnsD$Term[1:N])
+shared_nns <- intersect(nnsR$Term[1:N], nnsD$Term[1:N])
 
-# subset nns_ratio (output by contrast_nns) to the union of the top nearest neighbors
-nns_ratio <- contrast_target$nns_ratio %>%
-  filter(Term %in% top_nns) %>%
-  mutate(group = case_when(Term %in% nnsR$Term[1:N] & !(Term %in% nnsD$Term[1:N]) ~ 'Republican',
-                           !(Term %in% nnsR$Term[1:N]) & Term %in% nnsD$Term[1:N] ~ 'Democrat',
-                           Term %in% shared_nns  ~ 'shared'),
-         significant = if_else(Empirical_Pvalue < 0.01, 'yes', 'no'))
+# subset nns_ratio (output by contrast_nns) to the union of the top nearest
+# neighbors
+nns_ratio <- contrast_target$nns_ratio %>% dplyr::filter(Term %in% top_nns) %>% mutate(group = case_when(Term %in% 
+    nnsR$Term[1:N] & !(Term %in% nnsD$Term[1:N]) ~ "Republican", !(Term %in% nnsR$Term[1:N]) & 
+    Term %in% nnsD$Term[1:N] ~ "Democrat", Term %in% shared_nns ~ "shared"), significant = if_else(Empirical_Pvalue < 
+    0.01, "yes", "no"))
 
 # order Terms by Estimate
-nns_ratio <- nns_ratio %>% 
-  mutate(absdev = abs(1 - Estimate)) %>% 
-  arrange(-absdev) %>% 
-  mutate(tokenID = 1:nrow(.)) %>% 
-  mutate(Term_Sig = if_else(significant == 'yes', paste0(Term, "*"), Term))
+nns_ratio <- nns_ratio %>% mutate(absdev = abs(1 - Estimate)) %>% arrange(-absdev) %>% 
+    mutate(tokenID = 1:nrow(.)) %>% mutate(Term_Sig = if_else(significant == "yes", 
+    paste0(Term, "*"), Term))
 ```
 
 We can then plot these nearest neighbors, ranked on the \(y\) axis by
@@ -482,68 +464,44 @@ groups.
 
 ``` r
 # plot
-ggplot() +
-  geom_point(aes(x = Estimate, y = tokenID, color = group, shape = group), 
-             data = nns_ratio, size = 2) +
-  geom_vline(xintercept = 1, colour = 'black', linetype = "dashed", size = 0.5) +
-  geom_text(aes(x = Estimate, y = tokenID, label=Term_Sig), data = nns_ratio, 
-            hjust = if_else(nns_ratio$Estimate>1, -0.2, 1.2), vjust = 0.25, size = 5) +
-  annotate(geom = "text", x = c(0.5,1.5), y = c(55,55), 
-           label=c("more Democrat", "more Republican"), size = 6) +
-  scale_color_manual(values=c("black", "gray30", "gray60")) +
-  xlim(0,2) +
-  ylim(0,60) +
-  ylab('') +
-  xlab("cosine similarity ratio \n (Republican/Democrat)") +
-  theme(panel.background = element_blank(),
-        plot.title = element_text(size=18, hjust = 0.5, color = 'blue'),
-        axis.text.x = element_text(size=16),
-        axis.text.y = element_text(size=16),
-        axis.title.y = element_text(size=16, 
-                                    margin = margin(t = 0, r = 15, b = 0, l = 15)),
-        axis.title.x = element_text(size=16, 
-                                    margin = margin(t = 15, r = 0, b = 15, l = 0)),
-        legend.text=element_text(size=16),
-        legend.title=element_blank(),
-        legend.key=element_blank(),
-        legend.position = "top",
-        legend.spacing.x = unit(0.25, 'cm'),
-        plot.margin=unit(c(1,1,0,0),"cm"))
+ggplot() + geom_point(aes(x = Estimate, y = tokenID, color = group, shape = group), 
+    data = nns_ratio, size = 2) + geom_vline(xintercept = 1, colour = "black", linetype = "dashed", 
+    size = 0.5) + geom_text(aes(x = Estimate, y = tokenID, label = Term_Sig), data = nns_ratio, 
+    hjust = if_else(nns_ratio$Estimate > 1, -0.2, 1.2), vjust = 0.25, size = 5) + 
+    annotate(geom = "text", x = c(0.5, 1.5), y = c(55, 55), label = c("more Democrat", 
+        "more Republican"), size = 6) + scale_color_manual(values = c("black", "gray30", 
+    "gray60")) + xlim(0, 2) + ylim(0, 60) + ylab("") + xlab("cosine similarity ratio \n (Republican/Democrat)") + 
+    theme(panel.background = element_blank(), plot.title = element_text(size = 18, 
+        hjust = 0.5, color = "blue"), axis.text.x = element_text(size = 16), axis.text.y = element_text(size = 16), 
+        axis.title.y = element_text(size = 16, margin = margin(t = 0, r = 15, b = 0, 
+            l = 15)), axis.title.x = element_text(size = 16, margin = margin(t = 15, 
+            r = 0, b = 15, l = 0)), legend.text = element_text(size = 16), legend.title = element_blank(), 
+        legend.key = element_blank(), legend.position = "top", legend.spacing.x = unit(0.25, 
+            "cm"), plot.margin = unit(c(1, 1, 0, 0), "cm"))
 ```
 
-<img src="nns1.png" width="100%" />
+<img src="/Users/pedrorodriguez/Dropbox/GitHub/repositories/conText/vignettes/nns1.png" width="100%" />
 
 Below is alternative approach to visualizing these results.
 
 ``` r
 # another way of visualizing NNS
 nns_ratio$EstimateJitter <- jitter(nns_ratio$Estimate, amount = 0.5)
-nns_ratio <- nns_ratio %>% 
-  arrange(Estimate) %>%
-  mutate(EstimateJitter = Estimate + seq(0.2, 0.2*nrow(.), 0.2))
+nns_ratio <- nns_ratio %>% arrange(Estimate) %>% mutate(EstimateJitter = Estimate + 
+    seq(0.2, 0.2 * nrow(.), 0.2))
 
-ggplot() +
-  geom_point(aes(x = EstimateJitter, y = c(0), color = group, shape = group), 
-             data = nns_ratio, size = 3) +
-  scale_color_manual(values=c("black", "gray30", "gray60")) +
-  geom_text(aes(x = EstimateJitter, y = c(0), label=Term_Sig), 
-            data = nns_ratio, hjust = rep(c(-0.2, 1.2), length(nns_ratio$EstimateJitter)/2), 
-            vjust = 0.5, size = 4, angle = 90) +
-  theme(panel.background = element_blank(),
-        legend.text=element_text(size=14),
-        legend.title=element_blank(),
-        legend.key=element_blank(),
-        legend.position = "top",
-        axis.text.y = element_blank(),
-        axis.text.x = element_blank(),
-        axis.title.y = element_blank(),
-        axis.title.x = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        legend.spacing.x = unit(0.25, 'cm'))
+ggplot() + geom_point(aes(x = EstimateJitter, y = c(0), color = group, shape = group), 
+    data = nns_ratio, size = 3) + scale_color_manual(values = c("black", "gray30", 
+    "gray60")) + geom_text(aes(x = EstimateJitter, y = c(0), label = Term_Sig), data = nns_ratio, 
+    hjust = rep(c(-0.2, 1.2), length(nns_ratio$EstimateJitter)/2), vjust = 0.5, size = 4, 
+    angle = 90) + theme(panel.background = element_blank(), legend.text = element_text(size = 14), 
+    legend.title = element_blank(), legend.key = element_blank(), legend.position = "top", 
+    axis.text.y = element_blank(), axis.text.x = element_blank(), axis.title.y = element_blank(), 
+    axis.title.x = element_blank(), axis.ticks.y = element_blank(), axis.ticks.x = element_blank(), 
+    legend.spacing.x = unit(0.25, "cm"))
 ```
 
-<img src="nns2.png" width="100%" />
+<img src="/Users/pedrorodriguez/Dropbox/GitHub/repositories/conText/vignettes/nns2.png" width="100%" />
 
 # Prototypical contexts:
 
@@ -553,8 +511,10 @@ use the `prototypical_context`
 function.
 
 ``` r
-republican_pr <- prototypical_context(context = contextR$context, pre_trained, transform_matrix, N = 3, norm = 'l2')
-democrat_pr <- prototypical_context(context = contextD$context, pre_trained, transform_matrix, N = 3, norm = 'l2')
+republican_pr <- prototypical_context(context = contextR$context, pre_trained, transform = TRUE, 
+    transform_matrix, N = 3, norm = "l2")
+democrat_pr <- prototypical_context(context = contextD$context, pre_trained, transform = TRUE, 
+    transform_matrix, N = 3, norm = "l2")
 ```
 
     ## most prototypical contexts for Republican speakers
