@@ -151,7 +151,7 @@ ggplot(plot_tibble, aes(x = x, y = y, color = group, shape = group)) + geom_poin
         "cm"))
 ```
 
-<img src="/Users/pedrorodriguez/Dropbox/GitHub/repositories/conText/vignettes/single_instance.png" width="100%" />
+<img src="single_instance.png" width="100%" />
 
 # Embedding regression
 
@@ -230,7 +230,7 @@ geom_text(aes(label = c("***", "***")), position = position_dodge(width = 0.9), 
         "cm"))
 ```
 
-<img src="/Users/pedrorodriguez/Dropbox/GitHub/repositories/conText/vignettes/regression.png" width="100%" />
+<img src="regression.png" width="100%" />
 
 # Nearest neighbors
 
@@ -480,7 +480,7 @@ ggplot() + geom_point(aes(x = Estimate, y = tokenID, color = group, shape = grou
             "cm"), plot.margin = unit(c(1, 1, 0, 0), "cm"))
 ```
 
-<img src="/Users/pedrorodriguez/Dropbox/GitHub/repositories/conText/vignettes/nns1.png" width="100%" />
+<img src="nns1.png" width="100%" />
 
 Below is alternative approach to visualizing these results.
 
@@ -501,7 +501,7 @@ ggplot() + geom_point(aes(x = EstimateJitter, y = c(0), color = group, shape = g
     legend.spacing.x = unit(0.25, "cm"))
 ```
 
-<img src="/Users/pedrorodriguez/Dropbox/GitHub/repositories/conText/vignettes/nns2.png" width="100%" />
+<img src="nns2.png" width="100%" />
 
 # Prototypical contexts:
 
