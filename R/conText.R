@@ -63,6 +63,9 @@
 #' @export
 conText <- function(formula, data, text_var = 'text', pre_trained, transform = TRUE, transform_matrix, bootstrap = TRUE, num_bootstraps = 20, stratify_by = NULL, permute = TRUE, num_permutations = 100, getcontexts = TRUE, window = 6, valuetype = "fixed", case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
 
+  # warnings
+  if(!transform & !is.null(transform_matrix)) warning("Warning: transform = FALSE means transform_matrix argument was ignored. If that was not your intention, use transform = TRUE.")
+
   # extract target word
   target <- as.character(formula[[2]])
 
