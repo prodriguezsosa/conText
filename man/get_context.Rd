@@ -18,8 +18,7 @@ get_context(
 \item{x}{a character vector - this is the set of documents (corpus) of interest}
 
 \item{target}{a character vector - these are the target words whose contexts we want to evaluate
-This vector may include a single token, a phrase or multiple tokens and/or phrases.
-For phrases, use quanteda's \code{phrase()} e.g. \code{target = phrase("New York")}.}
+This vector may include a single token, a phrase or multiple tokens and/or phrases.}
 
 \item{window}{integer - defines the size of a context (words around the target)}
 

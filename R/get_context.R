@@ -8,7 +8,6 @@
 #' @param x a character vector - this is the set of documents (corpus) of interest
 #' @param target a character vector - these are the target words whose contexts we want to evaluate
 #' This vector may include a single token, a phrase or multiple tokens and/or phrases.
-#' For phrases, use quanteda's `phrase()` e.g. `target = phrase("New York")`.
 #' @param window integer - defines the size of a context (words around the target)
 #' @param hard_cut logical - if TRUE then the text must have window x 2 tokens,
 #' if FALSE it can have window x 2 or fewer (e.g. if a doc begins with a target word,
@@ -39,6 +38,9 @@
 #'                                    hard_cut = FALSE, verbose = FALSE)
 #' @export
 get_context <- function(x, target, window = 6L, valuetype = "fixed", case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
+
+  # check for phrases in targets and apply phrase() given a phrase
+  if(any(grepl(' ', target))) target[grepl(' ', target)] <- phrase(target[grepl(' ', target)])
 
   # get kwic for each element in target
   kwic_i <- quanteda::kwic(quanteda::tokens(x), pattern = target, window = window, valuetype = valuetype, case_insensitive = case_insensitive) # get kwic given a phrase
