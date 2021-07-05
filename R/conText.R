@@ -7,7 +7,7 @@
 #' @param data a data.frame containing the variables in the model
 #' @param text_var chr - name of variable with the text from which context will be extracted
 #' @param pre_trained a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions
-#' @param transform logical - if TRUE (default), apply ALC transformation, if FALSE simply average context embeddings
+#' @param transform logical - if TRUE (default), apply ALC transformation, if FALSE simply average context embeddings. If transform = TRUE, you must provide a transform_matrix.
 #' @param transform_matrix square numeric matrix corresponding to the transformation matrix
 #' @param bootstrap logical - if TRUE, bootstrap regression - required to get standard errors for normed coefficients
 #' @param num_bootstraps numeric - number of bootstraps to use
