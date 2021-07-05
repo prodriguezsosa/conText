@@ -34,7 +34,7 @@ symbolic description of the model to be fitted.}
 
 \item{pre_trained}{a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions}
 
-\item{transform}{logiacl - if TRUE (default), apply ALC transformation, if FALSE simply average context embeddings}
+\item{transform}{logical - if TRUE (default), apply ALC transformation, if FALSE simply average context embeddings}
 
 \item{transform_matrix}{square numeric matrix corresponding to the transformation matrix}
 
