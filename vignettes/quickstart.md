@@ -356,15 +356,15 @@ provide the set of contexts, obtained with `get_context`, for each
 group. `contrast_nns` will compute an ALC embedding for each group, and
 compare ranking of nearest neighbors by taking the ratio of cosine
 similarites. The ratio is informative of how much a given nearest
-neighbor is characteristic of one group. A ratio of \(1\) for a given
+neighbor is characteristic of one group. A ratio of 1 for a given
 nearest neighbor indicates no difference between the two groups, while
-significant deviations from \(1\) indicate the nearest neighbor is more
+significant deviations from 1 indicate the nearest neighbor is more
 characteristic of one of the two groups. If `bootstrap = TRUE`, this
 process will be repeated `num_bootstraps` times, sampling with
 replacement, to obtain standard erros around the cosine similarities for
 each group along with the ratio of these. If `permute = TRUE` then
 permutation will be used to identify ratios that significantly deviate
-from \(1\). Note, the numerator in the ratio is defined by `context1`.
+from 1. Note, the numerator in the ratio is defined by `context1`.
 
 ``` r
 set.seed(42L)
