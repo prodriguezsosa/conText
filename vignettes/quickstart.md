@@ -54,10 +54,10 @@ path_to_data <- "~/Dropbox/GitHub/large_data/conText/data/"
 cr_corpus <- readRDS(paste0(path_to_data, "cr_corpus.rds"))
 
 # (GloVe) pre-trained embeddings
-pre_trained <- readRDS(paste0(path_to_data, "glove.rds"))
+congress_pretrained_mat <- readRDS(paste0(path_to_data, "glove.rds"))
 
 # transformation matrix
-transform_matrix <- readRDS(paste0(path_to_data, "khodakA.rds"))
+congress_transform_mat <- readRDS(paste0(path_to_data, "khodakA.rds"))
 ```
 
 # Single instance embeddings
@@ -108,8 +108,9 @@ embedding for every instance rather than an aggregate averaged embedding
 #---------------------------------
 # embed each instance using a la carte
 #---------------------------------
-contexts_vectors <- embed_target(context = contexts_sample$context, pre_trained, 
-    transform_matrix, transform = TRUE, aggregate = FALSE, verbose = TRUE)
+contexts_vectors <- embed_target(context = contexts_sample$context, pre_trained = congress_pretrained_mat, 
+    transform_matrix = congress_transform_mat, transform = TRUE, aggregate = FALSE, 
+    verbose = TRUE)
 ```
 
 To plot this set of singl-instance 300 dimensional embeddings we use PCA
@@ -151,7 +152,7 @@ ggplot(plot_tibble, aes(x = x, y = y, color = group, shape = group)) + geom_poin
         "cm"))
 ```
 
-<img src="single_instance.png" width="100%" />
+<img src="/Users/pedrorodriguez/Dropbox/GitHub/repositories/conText/vignettes/single_instance.png" width="100%" />
 
 # Embedding regression
 
@@ -193,7 +194,7 @@ to the documentation.
 ``` r
 # run conText regression
 model1 <- conText(formula = immigration ~ Republican + male, data = cr_corpus, text_var = "speech", 
-    pre_trained = pre_trained, transform = TRUE, transform_matrix = transform_matrix, 
+    pre_trained = congress_pretrained_mat, transform = TRUE, transform_matrix = congress_transform_mat, 
     bootstrap = TRUE, num_bootstraps = 10, stratify_by = c("Republican", "male"), 
     permute = TRUE, num_permutations = 100, getcontexts = TRUE, window = 6, valuetype = "fixed", 
     case_insensitive = TRUE, hard_cut = FALSE, verbose = FALSE)
@@ -230,7 +231,7 @@ geom_text(aes(label = c("***", "***")), position = position_dodge(width = 0.9), 
         "cm"))
 ```
 
-<img src="regression.png" width="100%" />
+<img src="/Users/pedrorodriguez/Dropbox/GitHub/repositories/conText/vignettes/regression.png" width="100%" />
 
 # Nearest neighbors
 
@@ -245,7 +246,7 @@ local vocabulary using the function `get_local_vocab`.
 #---------------------------------
 # get local vocab (we'll use it to define the candidates for nns)
 #---------------------------------
-local_vocab <- get_local_vocab(c(contextR$context, contextD$context), pre_trained)
+local_vocab <- get_local_vocab(c(contextR$context, contextD$context), pre_trained = congress_pretrained_mat)
 ```
 
 ## 1\. `find_nns`: use alc embeddings output by regression
@@ -270,14 +271,14 @@ function `find_nns` to output the top `N` neighbors.
 
 ``` r
 # nns
-nnsDF <- find_nns(target_embedding = alcDF, pre_trained, N = 10, candidates = local_vocab, 
-    norm = "l2")
-nnsDM <- find_nns(target_embedding = alcDM, pre_trained, N = 10, candidates = local_vocab, 
-    norm = "l2")
-nnsRF <- find_nns(target_embedding = alcRF, pre_trained, N = 10, candidates = local_vocab, 
-    norm = "l2")
-nnsRM <- find_nns(target_embedding = alcRM, pre_trained, N = 10, candidates = local_vocab, 
-    norm = "l2")
+nnsDF <- find_nns(target_embedding = alcDF, pre_trained = congress_pretrained_mat, 
+    N = 10, candidates = local_vocab, norm = "l2")
+nnsDM <- find_nns(target_embedding = alcDM, pre_trained = congress_pretrained_mat, 
+    N = 10, candidates = local_vocab, norm = "l2")
+nnsRF <- find_nns(target_embedding = alcRF, pre_trained = congress_pretrained_mat, 
+    N = 10, candidates = local_vocab, norm = "l2")
+nnsRM <- find_nns(target_embedding = alcRM, pre_trained = congress_pretrained_mat, 
+    N = 10, candidates = local_vocab, norm = "l2")
 
 knitr::kable(cbind(`Dem-female` = nnsDF, `Dem-male` = nnsDM, `Rep-female` = nnsRF, 
     `Rep-male` = nnsRM))
@@ -314,12 +315,12 @@ just the nearest neighbors).
 
 ``` r
 set.seed(42L)
-nnsR <- bootstrap_nns(context = contextR$context, pre_trained, transform_matrix, 
-    transform = TRUE, candidates = local_vocab, bootstrap = TRUE, num_bootstraps = 20, 
-    N = 50, norm = "l2")
-nnsD <- bootstrap_nns(context = contextD$context, pre_trained, transform_matrix, 
-    transform = TRUE, candidates = local_vocab, bootstrap = TRUE, num_bootstraps = 20, 
-    N = 50, norm = "l2")
+nnsR <- bootstrap_nns(context = contextR$context, pre_trained = congress_pretrained_mat, 
+    transform_matrix = congress_transform_mat, transform = TRUE, candidates = local_vocab, 
+    bootstrap = TRUE, num_bootstraps = 20, N = 50, norm = "l2")
+nnsD <- bootstrap_nns(context = contextD$context, pre_trained = congress_pretrained_mat, 
+    transform_matrix = congress_transform_mat, transform = TRUE, candidates = local_vocab, 
+    bootstrap = TRUE, num_bootstraps = 20, N = 50, norm = "l2")
 
 # print output
 knitr::kable(head(nnsD))
@@ -370,8 +371,9 @@ from 1. Note, the numerator in the ratio is defined by `context1`.
 set.seed(42L)
 N <- 30
 contrast_target <- contrast_nns(context1 = contextR$context, context2 = contextD$context, 
-    pre_trained, transform_matrix, transform = TRUE, bootstrap = TRUE, num_bootstraps = 20, 
-    permute = TRUE, num_permutations = 100, candidates = local_vocab, N = 20, norm = "l2")
+    pre_trained = congress_pretrained_mat, transform_matrix = congress_transform_mat, 
+    transform = TRUE, bootstrap = TRUE, num_bootstraps = 20, permute = TRUE, num_permutations = 100, 
+    candidates = local_vocab, N = 20, norm = "l2")
 ```
 
     ## starting bootstrapping 
@@ -480,7 +482,7 @@ ggplot() + geom_point(aes(x = Estimate, y = tokenID, color = group, shape = grou
             "cm"), plot.margin = unit(c(1, 1, 0, 0), "cm"))
 ```
 
-<img src="nns1.png" width="100%" />
+<img src="/Users/pedrorodriguez/Dropbox/GitHub/repositories/conText/vignettes/nns1.png" width="100%" />
 
 Below is alternative approach to visualizing these results.
 
@@ -501,7 +503,7 @@ ggplot() + geom_point(aes(x = EstimateJitter, y = c(0), color = group, shape = g
     legend.spacing.x = unit(0.25, "cm"))
 ```
 
-<img src="nns2.png" width="100%" />
+<img src="/Users/pedrorodriguez/Dropbox/GitHub/repositories/conText/vignettes/nns2.png" width="100%" />
 
 # Prototypical contexts:
 
@@ -511,10 +513,10 @@ use the `prototypical_context`
 function.
 
 ``` r
-republican_pr <- prototypical_context(context = contextR$context, pre_trained, transform = TRUE, 
-    transform_matrix, N = 3, norm = "l2")
-democrat_pr <- prototypical_context(context = contextD$context, pre_trained, transform = TRUE, 
-    transform_matrix, N = 3, norm = "l2")
+republican_pr <- prototypical_context(context = contextR$context, pre_trained = congress_pretrained_mat, 
+    transform = TRUE, transform_matrix = congress_transform_mat, N = 3, norm = "l2")
+democrat_pr <- prototypical_context(context = contextD$context, pre_trained = congress_pretrained_mat, 
+    transform = TRUE, transform_matrix = congress_transform_mat, N = 3, norm = "l2")
 ```
 
     ## most prototypical contexts for Republican speakers
