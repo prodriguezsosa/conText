@@ -384,7 +384,7 @@ contrast_target <- contrast_nns(context1 = contextR$context, context2 = contextD
 This function outputs a list with three elements: `nns1` and `nns2` are
 equivalent to the ouputs of `bootstrap_nns`. The third element,
 `nns_ratio`, is a dataframe with the full set of candidate nearest
-neighbors order by the ratio of cosine similarities, their standard
+neighbors ordered by the ratio of cosine similarities, their standard
 errors and empirical p-value.
 
 ``` r
