@@ -10,7 +10,6 @@
 #' @param permute logical - if TRUE, compute empirical p-values using permutation test
 #' @param num_permutations numeric - number of permutations to use
 #' @param candidates character vector defining the candidates for nearest neighbors - e.g. output from `get_local_vocab`
-#' @param N number of nearest neighbors to return
 #' @param norm character = c("l2", "none") - set to 'l2' for cosine similarity and to 'none' for inner product (see ?sim2 in text2vec)
 #'
 #' @return a list with three elements, nns for group 1, nns for group 2 and nns_ratio comparing with ratios of similarities between the two groups
@@ -41,13 +40,13 @@
 #'                                pre_trained, transform_matrix, transform = TRUE,
 #'                                bootstrap = TRUE, num_bootstraps = 20,
 #'                                permute = TRUE, num_permutations = 100,
-#'                                candidates = local_vocab, N = 20, norm = "l2")
+#'                                candidates = local_vocab, norm = "l2")
 #'
 #' knitr::kable(head(contrast_target$nns1))
 #' knitr::kable(head(contrast_target$nns2))
 #' knitr::kable(head(contrast_target$nns_ratio))
 #' @export
-contrast_nns <- function(context1 = NULL, context2 = NULL, pre_trained = NULL, transform_matrix = NULL, transform = TRUE, bootstrap = TRUE, num_bootstraps = 20, permute = TRUE, num_permutations = 100, candidates = NULL, N = 50, norm = "l2"){
+contrast_nns <- function(context1 = NULL, context2 = NULL, pre_trained = NULL, transform_matrix = NULL, transform = TRUE, bootstrap = TRUE, num_bootstraps = 20, permute = TRUE, num_permutations = 100, candidates = NULL, norm = "l2"){
 
   # compute single instance embeddings
   embeds_out1 <- embed_target(context = context1, pre_trained, transform_matrix, aggregate = FALSE, verbose = FALSE)
