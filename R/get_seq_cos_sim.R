@@ -95,7 +95,7 @@ get_seq_cos_sim <- function(x,
   for (i in seq_along(veclist)) {
     target_embedding = veclist[[i]][["target_embedding"]]
 
-    # replace with cosine similarities for candidates with NA when target embedding NULL
+    # replace cosine similarities for candidate words with NA when target embedding NULL
     if(is.null(target_embedding)){
       cos_sim <- as.vector(rep(NA, length(candidates)))
     }else{
