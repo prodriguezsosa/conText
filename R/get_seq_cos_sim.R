@@ -1,9 +1,8 @@
 #' Calculate cosine similarities between target word and candidates words over
-#' time using ALC embedding approach
+#' sequenced variable using ALC embedding approach
 #'
 #' @param x a character vector - this is the set of documents (corpus) of interest
-#' @param timevar name of variable in corpus defining time unit within which to calculate similarities
-#' @param textvar name of variable in corpus from which the text comes (e.g., "tweet" in dataset of tweets)
+#' @param seqvar ordered variable such as list of dates or ordered iseology scores
 #' @param target a character vector - target word
 #' @param candidates character vector defining vocabulary to subset conmparison to
 #' @param pre_trained a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions
@@ -23,20 +22,17 @@
 #' @export
 #'
 #' @examples
-#'library(conText)
-#'library(dplyr)
-#'
 #' # load corpus
 #' corpus <- sample_corpus
 #' pre_trained <- sample_glove
 #' transform_matrix <- khodakA
 #'
-#' # gen time var
+#' # gen sequence var (here: year)
 #' corpus$year <- rep(2011:2014, each = 250)
-#' cos_simsdf <- get_ts_cos_sim(x = corpus, timevar = "year", textvar = "speech", target = "equal", candidates = c("and", "the"), pre_trained = pre_trained, transform_matrix = transform_matrix)
-get_ts_cos_sim <- function(x,
-                           timevar,
-                           textvar,
+#' seqvar <- corpus$year
+#' cos_simsdf <- get_ts_cos_sim(x = corpus$speech, seqvar = seqvar, target = "equal", candidates = c("and", "the"), pre_trained = pre_trained, transform_matrix = transform_matrix)
+get_seq_cos_sim <- function(x,
+                           seqvar,
                            target,
                            candidates,
                            pre_trained,
@@ -47,18 +43,16 @@ get_ts_cos_sim <- function(x,
                            hard_cut = FALSE,
                            verbose = TRUE) {
 
-  timevec <- unique(x[[timevar]])
-  timevec <- sort(timevec)
-
   veclist <- list()
+  seqvals <- unique(seqvar)
 
-  for (i in seq_along(timevec)) {
-    timevecunit = timevec[[i]]
+  for (i in seq_along(seqvals)) {
+    seqval = seqvals[[i]]
 
-    # get context words for target
+    # get context words for target within sequence var
     contextftu <-
       get_context(
-        x = subset(x[[textvar]], x[[timevar]] == timevecunit),
+        x = x[which(seqvar==seqval)], #subset corpus to observations for unit in sequence
         target = target,
         window = window,
         valuetype = valuetype,
@@ -84,6 +78,7 @@ get_ts_cos_sim <- function(x,
           e
       )
     if (inherits(error, 'error')) {
+      warning("No instances of target found in corpus; replacing with NULL")
       veclist[[i]] <- list(
         target_embedding = NULL,
         local_vocab = NULL,
@@ -93,28 +88,23 @@ get_ts_cos_sim <- function(x,
     }
   }
 
+  # get cosine similarities
+
   cos_simsdf <- data.frame()
   cos_sims <- vector()
 
   for (i in seq_along(veclist)) {
     target_embedding = veclist[[i]][["target_embedding"]]
 
-    # get cosine similarities
-    # trycatch for errors when zero instances; replaced with NA
-    error <-
-      tryCatch(
-        cos_sim <- find_cos_sim(
-          target_embedding = target_embedding,
-          pre_trained,
-          candidates = candidates,
-          norm = "l2"
-        ),
-        error = function(e)
-          e
-      )
-
-    if (inherits(error, 'error')) {
+    # replace with cosine similarities for candidates with NA when target embedding NULL
+    if(is.null(target_embedding)){
       cos_sim <- as.vector(rep(NA, length(candidates)))
+    }else{
+      cos_sim <- find_cos_sim(
+        target_embedding = target_embedding,
+        pre_trained,
+        candidates = candidates,
+        norm = "l2")
     }
 
     cos_sim <- as.vector(cos_sim)
@@ -128,7 +118,8 @@ get_ts_cos_sim <- function(x,
     names(cos_simsdf)[i] <- paste0(cname)
   }
 
-  cos_simsdf <- cbind(cos_simsdf, timevec)
+  cos_simsdf <- cbind(cos_simsdf, seqvals)
+  names(cos_simsdf)[names(cos_simsdf) == "seqvals"] <- "seqvar"
 
   return(cos_simsdf)
 }
@@ -148,19 +139,52 @@ find_cos_sim <- function(target_embedding,
                          candidates,
                          norm = "l2")
 {
-  if (length(candidates) == 1)
-    cos_sim <- text2vec::sim2(
-      x = matrix(pre_trained[candidates,], nrow = 1),
-      y = matrix(target_embedding, nrow = 1),
-      method = "cosine",
-      norm = norm
+  if (length(candidates) == 1){
+    error <- tryCatch(
+      cos_sim <- text2vec::sim2(
+        x = matrix(pre_trained[candidates, ], nrow = 1),
+        y = matrix(target_embedding, nrow = 1),
+        method = "cosine",
+        norm = norm
+      ),
+
+      error = function(e)
+        e
     )
-  if (length(candidates) > 1)
-    cos_sim <- text2vec::sim2(
-      x = pre_trained[candidates,],
-      y = matrix(target_embedding, nrow = 1),
-      method = "cosine",
-      norm = norm
-    )
-  return(cos_sim)
+    if (inherits(error, 'error')) {
+      warning("No instances of candidate: '",
+              candidates,
+              "' found in pre-trained embeddings")
+      cos_sim <- as.vector(rep(NA, 1))
+      return(cos_sim)
+    }
+    row.names(cos_sim) <- candidates
+    return(cos_sim)}else{
+
+      if (length(candidates) > 1)
+        cos_sim <- vector()
+      for (i in seq_along(candidates)) {
+        candidate = candidates[[i]]
+        error <-
+          tryCatch(
+            cos_sim_i <- text2vec::sim2(
+              x = matrix(pre_trained[candidate, ], nrow = 1),
+              y = matrix(target_embedding, nrow = 1),
+              method = "cosine",
+              norm = norm
+            ),
+            error = function(e)
+              e
+          )
+        if (inherits(error, 'error')) {
+          warning("No instances of candidate: '",
+                  candidate,
+                  "' found in pre-trained embeddings")
+          cos_sim_i <- as.vector(rep(NA, 1))
+        }
+        cos_sim <- rbind(cos_sim, cos_sim_i)
+      }
+
+      row.names(cos_sim) <- candidates
+      return(cos_sim)}
 }
