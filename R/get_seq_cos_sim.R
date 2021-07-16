@@ -84,7 +84,6 @@ get_seq_cos_sim <- function(x,
         local_vocab = NULL,
         obs_included = NULL
       )
-      next
     }
   }
 
