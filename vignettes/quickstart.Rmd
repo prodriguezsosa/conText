@@ -273,7 +273,7 @@ contrast_target <- contrast_nns(context1 = contextR$context, context2 = contextD
                                 candidates = local_vocab, norm = "l2")
 ```
 
-This function outputs a list with three elements: `nns1` and `nns2` are equivalent to the ouputs of `bootstrap_nns`. The third element, `nns_ratio`, is a dataframe with the full set of candidate nearest neighbors order by the ratio of cosine similarities, their standard errors and empirical p-value.
+This function outputs a list with three elements: `nns1` and `nns2` are equivalent to the ouputs of `bootstrap_nns`. The third element, `nns_ratio`, is a dataframe with the full set of candidate nearest neighbors ordered by the ratio of cosine similarities, their standard errors and empirical p-value.
 
 ```{r}
 knitr::kable(head(contrast_target$nns1))
