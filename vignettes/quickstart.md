@@ -357,23 +357,22 @@ provide the set of contexts, obtained with `get_context`, for each
 group. `contrast_nns` will compute an ALC embedding for each group, and
 compare ranking of nearest neighbors by taking the ratio of cosine
 similarites. The ratio is informative of how much a given nearest
-neighbor is characteristic of one group. A ratio of 1 for a given
+neighbor is characteristic of one group. A ratio of \(1\) for a given
 nearest neighbor indicates no difference between the two groups, while
-significant deviations from 1 indicate the nearest neighbor is more
+significant deviations from \(1\) indicate the nearest neighbor is more
 characteristic of one of the two groups. If `bootstrap = TRUE`, this
 process will be repeated `num_bootstraps` times, sampling with
 replacement, to obtain standard erros around the cosine similarities for
 each group along with the ratio of these. If `permute = TRUE` then
 permutation will be used to identify ratios that significantly deviate
-from 1. Note, the numerator in the ratio is defined by `context1`.
+from \(1\). Note, the numerator in the ratio is defined by `context1`.
 
 ``` r
 set.seed(42L)
-N <- 30
 contrast_target <- contrast_nns(context1 = contextR$context, context2 = contextD$context, 
     pre_trained = congress_pretrained_mat, transform_matrix = congress_transform_mat, 
     transform = TRUE, bootstrap = TRUE, num_bootstraps = 20, permute = TRUE, num_permutations = 100, 
-    candidates = local_vocab, N = 20, norm = "l2")
+    candidates = local_vocab, norm = "l2")
 ```
 
     ## starting bootstrapping 
@@ -384,7 +383,7 @@ contrast_target <- contrast_nns(context1 = contextR$context, context2 = contextD
 This function outputs a list with three elements: `nns1` and `nns2` are
 equivalent to the ouputs of `bootstrap_nns`. The third element,
 `nns_ratio`, is a dataframe with the full set of candidate nearest
-neighbors ordered by the ratio of cosine similarities, their standard
+neighbors order by the ratio of cosine similarities, their standard
 errors and empirical p-value.
 
 ``` r
@@ -431,10 +430,12 @@ highest ratios are not part of the set of top nearest neighbors for each
 party, and instead will tend to be low-frequency words that by chance
 are mentioned by one group and not the other, yet are not all that
 informative. We suggest sub-setting the `nns_ratio` dataframe to the
-union of the top \(N\) nearest neighbors for each party as
-below.
+union of the top \(N\) nearest neighbors for each party as below.
 
 ``` r
+# define top N of interest
+N <- 30
+
 # first get each party's nearest neighbors (output by the contrast_nns function)
 nnsR <- contrast_target$nns1
 nnsD <- contrast_target$nns2

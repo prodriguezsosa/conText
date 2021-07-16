@@ -15,7 +15,6 @@ contrast_nns(
   permute = TRUE,
   num_permutations = 100,
   candidates = NULL,
-  N = 50,
   norm = "l2"
 )
 }
@@ -39,8 +38,6 @@ contrast_nns(
 \item{num_permutations}{numeric - number of permutations to use}
 
 \item{candidates}{character vector defining the candidates for nearest neighbors - e.g. output from \code{get_local_vocab}}
-
-\item{N}{number of nearest neighbors to return}
 
 \item{norm}{character = c("l2", "none") - set to 'l2' for cosine similarity and to 'none' for inner product (see ?sim2 in text2vec)}
 }
@@ -77,7 +74,7 @@ contrast_target <- contrast_nns(context1 = contextR$context, context2 = contextD
                                pre_trained, transform_matrix, transform = TRUE,
                                bootstrap = TRUE, num_bootstraps = 20,
                                permute = TRUE, num_permutations = 100,
-                               candidates = local_vocab, N = 20, norm = "l2")
+                               candidates = local_vocab, norm = "l2")
 
 knitr::kable(head(contrast_target$nns1))
 knitr::kable(head(contrast_target$nns2))
