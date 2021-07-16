@@ -40,7 +40,7 @@
 get_context <- function(x, target, window = 6L, valuetype = "fixed", case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
 
   # check for phrases in targets and apply phrase() given a phrase
-  if(any(grepl(' ', target))) target[grepl(' ', target)] <- phrase(target[grepl(' ', target)])
+  if(any(grepl(' ', target))) target[grepl(' ', target)] <- quanteda::phrase(target[grepl(' ', target)])
 
   # get kwic for each element in target
   kwic_i <- quanteda::kwic(quanteda::tokens(x), pattern = target, window = window, valuetype = valuetype, case_insensitive = case_insensitive) # get kwic given a phrase
