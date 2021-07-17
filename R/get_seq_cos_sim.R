@@ -30,7 +30,7 @@
 #' # gen sequence var (here: year)
 #' corpus$year <- rep(2011:2014, each = 250)
 #' seqvar <- corpus$year
-#' cos_simsdf <- get_ts_cos_sim(x = corpus$speech, seqvar = seqvar, target = "equal", candidates = c("and", "the"), pre_trained = pre_trained, transform_matrix = transform_matrix)
+#' cos_simsdf <- get_seq_cos_sim(x = corpus$speech, seqvar = seqvar, target = "equal", candidates = c("and", "the"), pre_trained = pre_trained, transform_matrix = transform_matrix)
 get_seq_cos_sim <- function(x,
                            seqvar,
                            target,
