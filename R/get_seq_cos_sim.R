@@ -22,15 +22,14 @@
 #' @export
 #'
 #' @examples
-#' # load corpus
-#' corpus <- sample_corpus
-#' pre_trained <- sample_glove
-#' transform_matrix <- khodakA
+#' # load sample data
+#' sample_corpus <- sample_corpus
+#' sample_glove <- sample_glove
+#' khodakA <- khodakA
 #'
 #' # gen sequence var (here: year)
-#' corpus$year <- rep(2011:2014, each = 250)
-#' seqvar <- corpus$year
-#' cos_simsdf <- get_seq_cos_sim(x = corpus$speech, seqvar = seqvar, target = "equal", candidates = c("and", "the"), pre_trained = pre_trained, transform_matrix = transform_matrix)
+#' sample_corpus$year <- rep(2011:2014, each = 250)
+#' cos_simsdf <- get_seq_cos_sim(x = sample_corpus$speech, seqvar = sample_corpus$year, target = "equal", candidates = c("and", "the"), pre_trained = sample_glove, transform_matrix = khodakA)
 get_seq_cos_sim <- function(x,
                            seqvar,
                            target,
