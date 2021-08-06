@@ -3,7 +3,7 @@
 #' @param context_fcm a quanteda symmetrical fcm
 #' @param pre_trained matrix of numeric values - pretrained embeddings
 #' @param vocab the output of text2vec's create_vocabulary (or an equivalent)
-#' @param weighting none = all words are weighted by their frequency count; log = weight by the log of the frequency count; a numeric = threshold based weighting (= 1 if token count meets threshold, 0 ow); use log for small corpora, numeric threshold for larger corpora
+#' @param weighting NULL = no weighting; log = weight by the log of the frequency count; a numeric = threshold based weighting (= 1 if token count meets threshold, 0 ow); use log for small corpora, numeric threshold for larger corpora
 #' @return matrix of numeric values - the D by D transformation matrix (D = number of dimensions of the embeddings space)
 #' @examples
 #' library(conText)
@@ -36,8 +36,6 @@
 
 compute_transform <- function(context_fcm, pre_trained, vocab, weighting = 500){
 
-  # INCLUDE ALL CHECKS HERE (data structure, dimensions etc.)
-
   # apply hard threshold if given
   if(is.numeric(weighting)){vocab <- vocab %>% dplyr::filter(term_count >= weighting & term %in% rownames(pre_trained))}else{
     vocab <- vocab %>% dplyr::filter(term %in% rownames(pre_trained))
@@ -57,13 +55,16 @@ compute_transform <- function(context_fcm, pre_trained, vocab, weighting = 500){
   context_embeddings <- sweep(context_embeddings, MARGIN = 1, 1/vocab$term_count, '*')
 
   # weight function
-  alpha <- matrix(0, nrow = nrow(context_embeddings), ncol = nrow(context_embeddings)) # create weight matrix to be modified
-  if(weighting == 'none' | is.numeric(weighting)) diag(alpha) <- 1 # given weighting is numeric, the vocab is subset above hence can simply apply same function as `none` here
+  alpha <- Matrix::Matrix(nrow = nrow(context_embeddings), ncol = nrow(context_embeddings), data=0, sparse=T) # initialize weight matrix to be modified
+  if(is.null(weighting) | is.numeric(weighting)) diag(alpha) <- 1 # given weighting is numeric, the vocab is subset above hence can simply apply same function as `none` here
   if(weighting == 'log') diag(alpha) <- log(vocab$term_count) # weight by log of token count
-  rownames(alpha) <- rownames(context_embeddings)
 
   # solve for transformation matrix (just a weighted regression)
-  transform_matrix <- solve(t(context_embeddings)%*%alpha%*%context_embeddings)%*%t(context_embeddings)%*%alpha%*%pre_trained[rownames(context_embeddings),]
+  # following lm, we use qr decomposition, faster and more stable
+  # useful discussion: https://www.theissaclee.com/post/linearqrandchol/
+  wx = sqrt(alpha)%*%context_embeddings
+  wy = sqrt(alpha)%*%pre_trained
+  transform_matrix <- qr.solve(wx, wy)
 
   return(as.matrix(t(transform_matrix)))
 }
