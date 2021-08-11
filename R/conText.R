@@ -5,7 +5,7 @@
 #' @param formula (from lm function) an object of class "formula" (or one that can be coerced to that class): a
 #' symbolic description of the model to be fitted.
 #' @param data a data.frame containing the variables in the model
-#' @param text_var chr - name of variable with the text from which context will be extracted
+#' @param text_var chr - name of the text variable in data from which context will be extracted
 #' @param pre_trained a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions
 #' @param transform logical - if TRUE (default), apply ALC transformation, if FALSE simply average context embeddings. If transform = TRUE, you must provide a transform_matrix.
 #' @param transform_matrix square numeric matrix corresponding to the transformation matrix
@@ -14,7 +14,6 @@
 #' @param stratify_by chr vector - specifying variables to stratify by when bootstrapping
 #' @param permute logical - if TRUE, compute empirical p-values using permutation test
 #' @param num_permutations numeric - number of permutations to use
-#' @param getcontexts logical - if TRUE, apply get_context function to get context around target word (Y in formula)
 #' @param window integer - defines the size of a context (words around the target)
 #' See conText documentation for get_context.
 #' @param hard_cut logical - if TRUE then the text must have window x 2 tokens,
@@ -54,14 +53,14 @@
 #'                   bootstrap = TRUE, num_bootstraps = 10,
 #'                   stratify_by = 'Republican',
 #'                   permute = TRUE, num_permutations = 100,
-#'                   getcontexts = TRUE, window = 6, valuetype = "fixed",
+#'                   window = 6, valuetype = "fixed",
 #'                   case_insensitive = FALSE,
 #'                   hard_cut = FALSE, verbose = FALSE)
 #'
 #' # norm of coefficients
 #' knitr::kable(model1$normed_betas)
 #' @export
-conText <- function(formula, data, text_var = 'text', pre_trained, transform = TRUE, transform_matrix, bootstrap = TRUE, num_bootstraps = 20, stratify_by = NULL, permute = TRUE, num_permutations = 100, getcontexts = TRUE, window = 6, valuetype = "fixed", case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
+conText <- function(formula, data, text_var = 'text', pre_trained, transform = TRUE, transform_matrix, bootstrap = TRUE, num_bootstraps = 20, stratify_by = NULL, permute = TRUE, num_permutations = 100, window = 6, valuetype = "fixed", case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
 
   # warnings
   if(!transform & !is.null(transform_matrix)) warning("Warning: transform = FALSE means transform_matrix argument was ignored. If that was not your intention, use transform = TRUE.")
@@ -70,26 +69,27 @@ conText <- function(formula, data, text_var = 'text', pre_trained, transform = T
   target <- as.character(formula[[2]])
 
   # extract covariates
-  covariates <- attr(terms(formula), which = "term.labels")
+  if(as.character(formula[[3]]) == "."){covariates <- setdiff(colnames(data), text_var)}else{ # follows lm convention, if DV = ., regress on all variables in data
+  covariates <- attr(terms(formula), which = "term.labels")}
 
-  # if getcontexts is specified, get context around target word
-  if(getcontexts){
+  # mirror lm convention: if DV is "." then full text is embedded, ow find and embed the context around DV
+  if(target != "."){
 
-  # subset data to where target is present (this step helps speed up the get_context function)
-  if(valuetype == 'fixed') target_present <- grep(target, dplyr::pull(data, text_var), fixed = TRUE)
-  if(valuetype != 'fixed') target_present <- grep(target, dplyr::pull(data, text_var), ignore.case = case_insensitive)
-  data <- data[target_present,]
+    # subset data to where target is present (this step helps speed up the get_context function)
+    if(valuetype == 'fixed') target_present <- grep(target, dplyr::pull(data, text_var), fixed = TRUE)
+    if(valuetype != 'fixed') target_present <- grep(target, dplyr::pull(data, text_var), ignore.case = case_insensitive)
+    data <- data[target_present,]
 
-  # add document id variable (used for merging back with covariates)
-  data <- data %>% dplyr::mutate(docname = paste0("text", 1:nrow(.)))
+    # add document id variable (used for merging back with covariates)
+    data <- data %>% dplyr::mutate(docname = paste0("text", 1:nrow(.)))
 
-  # apply get_context function (see get_context documentation)
-  context <- get_context(x = dplyr::pull(data, text_var), target = target, window = window, valuetype = valuetype, case_insensitive = case_insensitive, hard_cut = hard_cut, verbose = verbose)
+    # apply get_context function (see get_context documentation)
+    context <- get_context(x = dplyr::pull(data, text_var), target = target, window = window, valuetype = valuetype, case_insensitive = case_insensitive, hard_cut = hard_cut, verbose = verbose)
 
-  # merge with metadata
-  context <- dplyr::left_join(context, data[,c("docname", covariates)], by = "docname") %>% dplyr::mutate('(Intercept)' = 1)
+    # merge with metadata
+    context <- dplyr::left_join(context, data[,c("docname", covariates)], by = "docname") %>% dplyr::mutate('(Intercept)' = 1)
 
-  # otherwise take the full text as the context to be embedded
+    # otherwise take the full text as the context to be embedded
   }else{
 
     # add intercept
