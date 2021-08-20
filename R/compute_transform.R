@@ -3,7 +3,7 @@
 #' @param context_fcm a quanteda symmetrical fcm
 #' @param pre_trained matrix of numeric values - pretrained embeddings
 #' @param vocab the output of text2vec's create_vocabulary (or an equivalent)
-#' @param weighting NULL = no weighting; log = weight by the log of the frequency count; a numeric = threshold based weighting (= 1 if token count meets threshold, 0 ow); use log for small corpora, numeric threshold for larger corpora
+#' @param weighting 1 = no weighting; log = weight by the log of the frequency count; a numeric = threshold based weighting (= 1 if token count meets threshold, 0 ow); use log for small corpora, numeric threshold for larger corpora
 #' @return matrix of numeric values - the D by D transformation matrix (D = number of dimensions of the embeddings space)
 #' @examples
 #' library(conText)

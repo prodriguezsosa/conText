@@ -13,7 +13,7 @@ compute_transform(context_fcm, pre_trained, vocab, weighting = 500)
 
 \item{vocab}{the output of text2vec's create_vocabulary (or an equivalent)}
 
-\item{weighting}{none = all words are weighted by their frequency count; log = weight by the log of the frequency count; a numeric = threshold based weighting (= 1 if token count meets threshold, 0 ow); use log for small corpora, numeric threshold for larger corpora}
+\item{weighting}{1 = no weighting; log = weight by the log of the frequency count; a numeric = threshold based weighting (= 1 if token count meets threshold, 0 ow); use log for small corpora, numeric threshold for larger corpora}
 }
 \value{
 matrix of numeric values - the D by D transformation matrix (D = number of dimensions of the embeddings space)
