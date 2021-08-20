@@ -56,7 +56,7 @@ compute_transform <- function(context_fcm, pre_trained, vocab, weighting = 500){
 
   # weight function
   alpha <- Matrix::Matrix(nrow = nrow(context_embeddings), ncol = nrow(context_embeddings), data=0, sparse=T) # initialize weight matrix to be modified
-  if(is.null(weighting) | is.numeric(weighting)) diag(alpha) <- 1 # given weighting is numeric, the vocab is subset above hence can simply apply same function as `none` here
+  if(is.numeric(weighting)) diag(alpha) <- 1 # given weighting is numeric, the vocab is subset above hence can simply apply same function as `none` here
   if(weighting == 'log') diag(alpha) <- log(vocab$term_count) # weight by log of token count
 
   # solve for transformation matrix (just a weighted regression)
