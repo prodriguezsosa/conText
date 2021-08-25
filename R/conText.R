@@ -69,7 +69,7 @@ conText <- function(formula, data, text_var = 'text', pre_trained, transform = T
   target <- as.character(formula[[2]])
 
   # extract covariates
-  if(as.character(formula[[3]]) == "."){covariates <- setdiff(colnames(data), text_var)}else{ # follows lm convention, if DV = ., regress on all variables in data
+  if(as.character(formula[[3]])[1] == "."){covariates <- setdiff(colnames(data), text_var)}else{ # follows lm convention, if DV = ., regress on all variables in data
   covariates <- attr(terms(formula), which = "term.labels")}
 
   # mirror lm convention: if DV is "." then full text is embedded, ow find and embed the context around DV
