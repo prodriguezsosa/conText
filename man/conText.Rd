@@ -6,102 +6,100 @@
 \usage{
 conText(
   formula,
-  data,
-  text_var = "text",
+  corpus,
   pre_trained,
   transform = TRUE,
   transform_matrix,
+  features = character(0),
   bootstrap = TRUE,
   num_bootstraps = 20,
-  stratify_by = NULL,
+  stratify = TRUE,
   permute = TRUE,
   num_permutations = 100,
-  getcontexts = TRUE,
   window = 6,
   valuetype = "fixed",
   case_insensitive = TRUE,
-  hard_cut = FALSE,
   verbose = TRUE
 )
 }
 \arguments{
-\item{formula}{(from lm function) an object of class "formula" (or one that can be coerced to that class): a
-symbolic description of the model to be fitted.}
+\item{formula}{a symbolic description of the model to be fitted}
 
-\item{data}{a data.frame containing the variables in the model}
+\item{corpus}{a quanteda \code{corpus}}
 
-\item{text_var}{chr - name of variable with the text from which context will be extracted}
+\item{pre_trained}{a F x D matrix of numeric values corresponding to pretrained embeddings
+F = number of features and D = embedding dimensions.
+rownames(pre_trained) = set of features for which there is a pre-trained embedding}
 
-\item{pre_trained}{a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions}
+\item{transform}{(logical) if TRUE (default) apply the \link{a la carte} transformation, if FALSE ouput untransformed averaged embedding}
 
-\item{transform}{logical - if TRUE (default), apply ALC transformation, if FALSE simply average context embeddings. If transform = TRUE, you must provide a transform_matrix.}
+\item{transform_matrix}{a D x D matrix of numeric values corresponding to the `a la carte`` transformation matrix}
 
-\item{transform_matrix}{square numeric matrix corresponding to the transformation matrix}
+\item{features}{(character) a character vector of features to use when computing embedding}
 
-\item{bootstrap}{logical - if TRUE, bootstrap regression - required to get standard errors for normed coefficients}
+\item{bootstrap}{(logical) if TRUE, bootstrap regression - required to get standard errors for normed coefficients}
 
-\item{num_bootstraps}{numeric - number of bootstraps to use}
+\item{num_bootstraps}{(numeric) number of bootstraps to use}
 
-\item{stratify_by}{chr vector - specifying variables to stratify by when bootstrapping}
+\item{stratify}{(logical) if TRUE, stratify by covariates when bootstrapping}
 
-\item{permute}{logical - if TRUE, compute empirical p-values using permutation test}
+\item{permute}{(logical) if TRUE, compute empirical p-values using permutation test}
 
-\item{num_permutations}{numeric - number of permutations to use}
+\item{num_permutations}{(numeric) number of permutations to use}
 
-\item{getcontexts}{logical - if TRUE, apply get_context function to get context around target word (Y in formula)}
+\item{window}{the number of context words to be displayed around the keyword}
 
-\item{window}{integer - defines the size of a context (words around the target)
-See conText documentation for get_context.}
+\item{valuetype}{the type of pattern matching: \code{"glob"} for "glob"-style
+wildcard expressions; \code{"regex"} for regular expressions; or \code{"fixed"} for
+exact matching. See \link[quanteda]{valuetype} for details.}
 
-\item{valuetype}{the type of pattern matching: "glob" for "glob"-style wildcard expressions;
-"regex" for regular expressions; or "fixed" for exact matching.
-See quanteda's documentation for the kwic function.
-See conText documentation for get_context.}
+\item{case_insensitive}{logical; if \code{TRUE}, ignore case when matching a
+\code{pattern} or \link[quanteda]{dictionary} values}
 
-\item{case_insensitive}{logical - if TRUE, ignore case when matching the target.
-if valuetype = 'fixed' then this argument is ignored
-See quanteda's documentation for the kwic function.
-See conText documentation for get_context.}
-
-\item{hard_cut}{logical - if TRUE then the text must have window x 2 tokens,
-if FALSE it can have window x 2 or fewer (e.g. if a doc begins with a target word,
-then text will have window tokens rather than window x 2).
-See conText documentation for get_context.}
-
-\item{verbose}{print comments}
+\item{verbose}{logical - report the documents/features that had no overlap with the provided pre-trained embeddings}
 }
 \value{
-list with two elements, \code{betas} = list of beta_cofficients (D dimensional vectors);
-\code{normed_betas} = tibble with the norm of the non-intercept coefficients, std.errors (given boostrap), empirical pvalue (given permute)
+a \linkS4class{conText} object
 }
 \description{
 Estimate an embedding regression model
 }
 \examples{
-library(conText)
-library(dplyr)
 
-# load data
-corpus <- sample_corpus
-pre_trained <- sample_glove
-transform_matrix <- khodakA
-
-# add party indicator variable
-corpus <- corpus \%>\% mutate(Republican = if_else(party == 'R', 1, 0))
-
-# run conText
-model1 <- conText(formula = immigration ~ Republican,
-                  data = corpus,
-                  text_var = 'speech',
-                  pre_trained = pre_trained,
-                  transform = TRUE, transform_matrix = transform_matrix,
+## given a target word
+model1 <- conText(formula = immigration ~ party, # equivalent to: immigration ~ . (since party is the only covariate in this corpus)
+                  corpus = cr_corpus_sample,
+                  pre_trained = glove_subset,
+                  transform = TRUE, transform_matrix = khodakA,
                   bootstrap = TRUE, num_bootstraps = 10,
-                  stratify_by = 'Republican',
+                  stratify = TRUE,
                   permute = TRUE, num_permutations = 100,
-                  getcontexts = TRUE, window = 6, valuetype = "fixed",
-                  case_insensitive = FALSE,
-                  hard_cut = FALSE, verbose = FALSE)
+                  window = 6, valuetype = "fixed",
+                  case_insensitive = TRUE,
+                  verbose = TRUE)
 
-# norm of coefficients
-knitr::kable(model1$normed_betas)
+# the party covariate is automatically "dummified"
+rownames(model1)
+
+# the beta coefficient in this case corresponds to the alc embedding
+# of immigration for Republican party speeches
+model1[,1:5]
+
+# (normed) coefficient table
+model1@normed_cofficients
+
+## embedding full documents, not just a target word
+
+model1 <- conText(formula = . ~ party,
+                  corpus = cr_corpus_sample,
+                  pre_trained = glove_subset,
+                  transform = TRUE, transform_matrix = khodakA,
+                  bootstrap = TRUE, num_bootstraps = 10,
+                  stratify = TRUE,
+                  permute = TRUE, num_permutations = 100,
+                  window = 6, valuetype = "fixed",
+                  case_insensitive = TRUE,
+                  verbose = TRUE)
+
 }
+\keyword{conText}

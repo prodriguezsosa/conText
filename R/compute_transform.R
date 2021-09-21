@@ -1,63 +1,50 @@
-#' compute transform matrix A
+#' compute transformation matrix A
 #'
-#' @param context_fcm a quanteda symmetrical fcm
-#' @param pre_trained matrix of numeric values - pretrained embeddings
-#' @param vocab the output of text2vec's create_vocabulary (or an equivalent)
-#' @param weighting NULL = no weighting; log = weight by the log of the frequency count; a numeric = threshold based weighting (= 1 if token count meets threshold, 0 ow); use log for small corpora, numeric threshold for larger corpora
-#' @return matrix of numeric values - the D by D transformation matrix (D = number of dimensions of the embeddings space)
-#' @examples
-#' library(conText)
-#' library(text2vec)
-#' library(dplyr)
-#' library(quanteda)
+#' @param x a `fcm`
+#' @param pre_trained a `dgTMatrix-class` matrix of word vectors
+#' @param weighting 1 = no weighting; log = weight by the log of the frequency count; a numeric = threshold based weighting (= 1 if token count meets threshold, 0 ow); use log for small corpora, numeric threshold for larger corpora
 #'
-#' # load data
-#' transform_matrix <- khodakA
-#' pre_trained <- sample_glove
-#' cr_corpus <- sample_corpus
-#'
-#' # get word counts
-#' vocab <- space_tokenizer(cr_corpus$speech) %>%
-#'   itoken(progressbar = FALSE) %>%
-#'   create_vocabulary
-#'
-#' # use quanteda's fcm to create an fcm matrix
-#' fcm_cr <- fcm(tokens(cr_corpus$speech), context = 'window', count = 'frequency', window = 6,
-#'               weights = rep(1, 6), tri = FALSE)
-#'
-#' # subset fcm to the vocabulary included in the embeddings
-#' fcm_cr <- fcm_select(fcm_cr, pattern = vocab$term, selection = 'keep')
-#'
-#' # the higher the threshold specified in weighting arg,
-#' # the faster the code (see function for more details)
-#' transform_matrix <- compute_transform(context_fcm = fcm_cr, pre_trained = pre_trained,
-#'                                       vocab = vocab, weighting = 100)
+#' @return a `dgTMatrix-class` D x D (D = word vector dimensions)
 #' @export
+#' @rdname compute_transform
+#' @keywords compute_transform
+#' @examples
+#'
+#' # note, cr_sample_corpus is too small to produce sensical word vectors
+#'
+#' # tokenize
+#' cr_toks <- tokens(cr_corpus_sample)
+#'
+#' # construct feature-co-occurrence matrix
+#' cr_fcm <- fcm(cr_toks, context = "window", window = 6, count = "weighted", weights = 1 / (1:6), tri = FALSE)
+#'
+#' # you will generally want to estimate a new (corpus-specific) GloVe model
+#' # given the (small) size of our cr_corpus_sample we will use glove_subset instead
+#' # see the Quick Start Guide to see a full example
+#'
+#' # estimate transform
+#' cr_transform <- compute_transform(x = cr_fcm, pre_trained = glove_subset, weighting = 'log')
+compute_transform <- function(x, pre_trained, weighting = 500){
 
-compute_transform <- function(context_fcm, pre_trained, vocab, weighting = 500){
+  # compute un-transformed additive embedding
+  context_embeddings <- fem(x = x, pre_trained = pre_trained, transform_matrix, transform = FALSE, verbose = FALSE)
 
-  # apply hard threshold if given
-  if(is.numeric(weighting)){vocab <- vocab %>% dplyr::filter(term_count >= weighting & term %in% rownames(pre_trained))}else{
-    vocab <- vocab %>% dplyr::filter(term %in% rownames(pre_trained))
-    }
+  # extract feature frequency from fcm object
+  feature_frequency <- x@meta$object$margin
+  feature_frequency <- feature_frequency[intersect(names(feature_frequency), attr(context_embeddings, 'features'))]
+  if(weighting == 'log') feature_frequency <- feature_frequency[feature_frequency >= 1] # avoig negatives when taking logs
 
-  # subset pre-trained word vectors to common vocab
-  pre_trained <- pre_trained[vocab$term,]
+  # apply weighting if given
+  if(is.numeric(weighting)) feature_frequency <- feature_frequency[feature_frequency >= weighting]
 
-  # subset context_fcm to tokens to be embedded (rows) and contexts to include (columns)
-  context_fcm <- context_fcm[vocab$term, vocab$term]
+  # make sure featuers are in the same order
+  context_embeddings <- context_embeddings[names(feature_frequency),]
+  pre_trained <- pre_trained[names(feature_frequency),]
 
-  # multiply context counts by corresponding pre_trained embeddings
-  if(!all.equal(rownames(pre_trained), colnames(context_fcm)))stop("check order")
-  context_embeddings <- context_fcm%*%pre_trained
-
-  # divide by number of contexts to get average additive embedding for each token of interest
-  context_embeddings <- sweep(context_embeddings, MARGIN = 1, 1/vocab$term_count, '*')
-
-  # weight function
+  # weighting function
   alpha <- Matrix::Matrix(nrow = nrow(context_embeddings), ncol = nrow(context_embeddings), data=0, sparse=T) # initialize weight matrix to be modified
-  if(is.null(weighting) | is.numeric(weighting)) diag(alpha) <- 1 # given weighting is numeric, the vocab is subset above hence can simply apply same function as `none` here
-  if(weighting == 'log') diag(alpha) <- log(vocab$term_count) # weight by log of token count
+  if(is.numeric(weighting)) diag(alpha) <- 1 # threshold is applied above, hence can simply multiply by 1
+  if(weighting == 'log') diag(alpha) <- log(feature_frequency) # weight by log of token count
 
   # solve for transformation matrix (just a weighted regression)
   # following lm, we use qr decomposition, faster and more stable
@@ -66,5 +53,5 @@ compute_transform <- function(context_fcm, pre_trained, vocab, weighting = 500){
   wy = sqrt(alpha)%*%pre_trained
   transform_matrix <- qr.solve(wx, wy)
 
-  return(as.matrix(t(transform_matrix)))
+  return(t(transform_matrix))
 }

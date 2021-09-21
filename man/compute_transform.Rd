@@ -2,50 +2,29 @@
 % Please edit documentation in R/compute_transform.R
 \name{compute_transform}
 \alias{compute_transform}
-\title{compute transform matrix A}
+\title{compute transformation matrix A}
 \usage{
-compute_transform(context_fcm, pre_trained, vocab, weighting = 500)
+compute_transform(x, pre_trained, weighting = 500)
 }
 \arguments{
-\item{context_fcm}{a quanteda symmetrical fcm}
+\item{x}{a \code{fcm}}
 
-\item{pre_trained}{matrix of numeric values - pretrained embeddings}
+\item{pre_trained}{a \code{dgTMatrix-class} matrix of word vectors}
 
-\item{vocab}{the output of text2vec's create_vocabulary (or an equivalent)}
-
-\item{weighting}{none = all words are weighted by their frequency count; log = weight by the log of the frequency count; a numeric = threshold based weighting (= 1 if token count meets threshold, 0 ow); use log for small corpora, numeric threshold for larger corpora}
+\item{weighting}{1 = no weighting; log = weight by the log of the frequency count; a numeric = threshold based weighting (= 1 if token count meets threshold, 0 ow); use log for small corpora, numeric threshold for larger corpora}
 }
 \value{
-matrix of numeric values - the D by D transformation matrix (D = number of dimensions of the embeddings space)
+a \code{dgTMatrix-class} D x D (D = word vector dimensions)
 }
 \description{
-compute transform matrix A
+compute transformation matrix A
 }
 \examples{
-library(conText)
-library(text2vec)
-library(dplyr)
-library(quanteda)
 
-# load data
-transform_matrix <- khodakA
-pre_trained <- sample_glove
-cr_corpus <- sample_corpus
-
-# get word counts
-vocab <- space_tokenizer(cr_corpus$speech) \%>\%
-  itoken(progressbar = FALSE) \%>\%
-  create_vocabulary
-
-# use quanteda's fcm to create an fcm matrix
-fcm_cr <- fcm(tokens(cr_corpus$speech), context = 'window', count = 'frequency', window = 6,
-              weights = rep(1, 6), tri = FALSE)
-
-# subset fcm to the vocabulary included in the embeddings
-fcm_cr <- fcm_select(fcm_cr, pattern = vocab$term, selection = 'keep')
-
-# the higher the threshold specified in weighting arg,
-# the faster the code (see function for more details)
-transform_matrix <- compute_transform(context_fcm = fcm_cr, pre_trained = pre_trained,
-                                      vocab = vocab, weighting = 100)
+# note, cr_corpus_sample is too small to produce sensical word vectors
+features <- prune_features(cr_corpus_sample, frequency_min = 5) \%>\% .$feature # subset features
+cr_fcm <- create_fcm(x = cr_corpus_sample, window = 6L, target = features, features_keep = features) # create feature co-occurrence matrix
+cr_glove <- compute_glove(x = cr_fcm, rank = 300, x_max = 10, n_iter = 10) # estimate local glove embeddings
+cr_transform <- compute_transform(x = cr_fcm, pre_trained = cr_glove, weighting = 'log') # estimate local transform
 }
+\keyword{compute_transform}

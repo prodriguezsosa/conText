@@ -2,114 +2,129 @@
 #'
 #' Estimate an embedding regression model
 #'
-#' @param formula (from lm function) an object of class "formula" (or one that can be coerced to that class): a
-#' symbolic description of the model to be fitted.
-#' @param data a data.frame containing the variables in the model
-#' @param text_var chr - name of the text variable in data from which context will be extracted
-#' @param pre_trained a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions
-#' @param transform logical - if TRUE (default), apply ALC transformation, if FALSE simply average context embeddings. If transform = TRUE, you must provide a transform_matrix.
-#' @param transform_matrix square numeric matrix corresponding to the transformation matrix
-#' @param bootstrap logical - if TRUE, bootstrap regression - required to get standard errors for normed coefficients
-#' @param num_bootstraps numeric - number of bootstraps to use
-#' @param stratify_by chr vector - specifying variables to stratify by when bootstrapping
-#' @param permute logical - if TRUE, compute empirical p-values using permutation test
-#' @param num_permutations numeric - number of permutations to use
-#' @param window integer - defines the size of a context (words around the target)
-#' See conText documentation for get_context.
-#' @param hard_cut logical - if TRUE then the text must have window x 2 tokens,
-#' if FALSE it can have window x 2 or fewer (e.g. if a doc begins with a target word,
-#' then text will have window tokens rather than window x 2).
-#' See conText documentation for get_context.
-#' @param valuetype the type of pattern matching: "glob" for "glob"-style wildcard expressions;
-#' "regex" for regular expressions; or "fixed" for exact matching.
-#' See quanteda's documentation for the kwic function.
-#' See conText documentation for get_context.
-#' @param case_insensitive logical - if TRUE, ignore case when matching the target.
-#' if valuetype = 'fixed' then this argument is ignored
-#' See quanteda's documentation for the kwic function.
-#' See conText documentation for get_context.
-#' @param verbose print comments
+#' @param formula a symbolic description of the model to be fitted
+#' @param corpus a quanteda `corpus`
+#' @inheritParams dem
+#' @param bootstrap (logical) if TRUE, bootstrap regression - required to get standard errors for normed coefficients
+#' @param num_bootstraps (numeric) number of bootstraps to use
+#' @param stratify (logical) if TRUE, stratify by covariates when bootstrapping
+#' @param permute (logical) if TRUE, compute empirical p-values using permutation test
+#' @param num_permutations (numeric) number of permutations to use
+#' @inheritParams corpus_context
 #'
-#' @return list with two elements, `betas` = list of beta_cofficients (D dimensional vectors);
-#' `normed_betas` = tibble with the norm of the non-intercept coefficients, std.errors (given boostrap), empirical pvalue (given permute)
+#' @return a [conText-class] object
+#' @export
+#' @rdname conText
+#' @keywords conText
 #' @examples
-#' library(conText)
-#' library(dplyr)
 #'
-#' # load data
-#' corpus <- sample_corpus
-#' pre_trained <- sample_glove
-#' transform_matrix <- khodakA
-#'
-#' # add party indicator variable
-#' corpus <- corpus %>% mutate(Republican = if_else(party == 'R', 1, 0))
-#'
-#' # run conText
-#' model1 <- conText(formula = immigration ~ Republican,
-#'                   data = corpus,
-#'                   text_var = 'speech',
-#'                   pre_trained = pre_trained,
-#'                   transform = TRUE, transform_matrix = transform_matrix,
+#' ## given the target word "immigration"
+#' model1 <- conText(formula = immigration ~ party + gender,
+#'                   corpus = cr_sample_corpus,
+#'                   pre_trained = glove_subset,
+#'                   transform = TRUE, transform_matrix = khodakA,
 #'                   bootstrap = TRUE, num_bootstraps = 10,
-#'                   stratify_by = 'Republican',
+#'                   stratify = TRUE,
 #'                   permute = TRUE, num_permutations = 100,
 #'                   window = 6, valuetype = "fixed",
-#'                   case_insensitive = FALSE,
-#'                   hard_cut = FALSE, verbose = FALSE)
+#'                   case_insensitive = TRUE,
+#'                   verbose = TRUE)
 #'
-#' # norm of coefficients
-#' knitr::kable(model1$normed_betas)
-#' @export
-conText <- function(formula, data, text_var = 'text', pre_trained, transform = TRUE, transform_matrix, bootstrap = TRUE, num_bootstraps = 20, stratify_by = NULL, permute = TRUE, num_permutations = 100, window = 6, valuetype = "fixed", case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
+#' # notice, non-binary covariates are automatically "dummified"
+#' rownames(model1)
+#'
+#' # the beta coefficient 'partyR' in this case corresponds to the alc embedding
+#' # of "immigration" for Republican party speeches
+#'
+#' # (normed) coefficient table
+#' model1@normed_cofficients
+#'
+#' ## embedding full documents, not just a target word
+#'
+#' model1 <- conText(formula = . ~ ideology,
+#'                   corpus = anes2016_sample_corpus,
+#'                   pre_trained = glove_subset,
+#'                   transform = TRUE, transform_matrix = khodakA,
+#'                   bootstrap = TRUE, num_bootstraps = 10,
+#'                   stratify = TRUE,
+#'                   permute = TRUE, num_permutations = 100,
+#'                   window = 6, valuetype = "fixed",
+#'                   case_insensitive = TRUE,
+#'                   verbose = TRUE)
+#'
+conText <- function(formula, corpus, pre_trained, transform = TRUE, transform_matrix, bootstrap = TRUE, num_bootstraps = 20, stratify = TRUE, permute = TRUE, num_permutations = 100, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
 
-  # warnings
+  # initial checks
+  if(class(corpus)[1] != "corpus") stop("corpus must be of class corpus")
   if(!transform & !is.null(transform_matrix)) warning("Warning: transform = FALSE means transform_matrix argument was ignored. If that was not your intention, use transform = TRUE.")
 
-  # extract target word
+  # extract dependent variable
   target <- as.character(formula[[2]])
-
-  # extract covariates
-  if(as.character(formula[[3]]) == "."){covariates <- setdiff(colnames(data), text_var)}else{ # follows lm convention, if DV = ., regress on all variables in data
-  covariates <- attr(terms(formula), which = "term.labels")}
 
   # mirror lm convention: if DV is "." then full text is embedded, ow find and embed the context around DV
   if(target != "."){
 
-    # subset data to where target is present (this step helps speed up the get_context function)
-    if(valuetype == 'fixed') target_present <- grep(target, dplyr::pull(data, text_var), fixed = TRUE)
-    if(valuetype != 'fixed') target_present <- grep(target, dplyr::pull(data, text_var), ignore.case = case_insensitive)
-    data <- data[target_present,]
+    # create a corpus of contexts
+    context <- corpus_context(x = corpus, pattern = target, window = window, valuetype = valuetype, case_insensitive = case_insensitive, hard_cut = FALSE, exclude_pattern = TRUE, verbose = verbose)
 
-    # add document id variable (used for merging back with covariates)
-    data <- data %>% dplyr::mutate(docname = paste0("text", 1:nrow(.)))
-
-    # apply get_context function (see get_context documentation)
-    context <- get_context(x = dplyr::pull(data, text_var), target = target, window = window, valuetype = valuetype, case_insensitive = case_insensitive, hard_cut = hard_cut, verbose = verbose)
-
-    # merge with metadata
-    context <- dplyr::left_join(context, data[,c("docname", covariates)], by = "docname") %>% dplyr::mutate('(Intercept)' = 1)
-
-    # otherwise take the full text as the context to be embedded
   }else{
-
-    # add intercept
-    context <- data %>% dplyr::mutate('(Intercept)' = 1) %>% dplyr::mutate(context = dplyr::pull(data, text_var))
-
+    context <- corpus
   }
 
-  # embed context to get dependent variable (note, aggregate is set to FALSE as we want an embedding for each instance)
-  embeds_out <- embed_target(context$context, pre_trained = pre_trained, transform_matrix = transform_matrix, transform = transform, aggregate = FALSE, verbose)
-  Y <- embeds_out$target_embedding
+  #----------------------
+  # COVARIATES
+  #----------------------
+
+  # extract covariates names
+  docvars <- quanteda::docvars(context)
+  if(as.character(formula[[3]])[1] == "."){covariates <- setdiff(names(docvars),"session_id")}else{ # follows lm convention, if DV = ., regress on all variables in corpus
+    covariates <- attr(terms(formula), which = "term.labels")
+    if(any(!(covariates %in% names(docvars))))stop("one or more of the covariates could not be found in the data.")
+  }
+
+  # select covariates
+  cov_vars <- docvars %>% dplyr::select(all_of(covariates))
+
+  # check covariates are binary dummy variables
+  indicator_check <- apply(cov_vars, 2, function(i) all((class(i) %in% c('integer', 'numeric')) & (length(setdiff(i, c(0,1))) == 0)))
+
+  # if there are non-indicator variables
+  if(!all(indicator_check)){
+    non_indicator_vars <- names(which(indicator_check == FALSE))
+
+    # check whether they can be "dummified" (i.e. must be character or factor variables)
+    class_check <- sapply(dplyr::tibble(cov_vars[,non_indicator_vars]), function(i) is.character(i) | is.factor(i))
+
+    # if they can be "dummified", do so (see: https://cran.r-project.org/web/packages/fastDummies/fastDummies.pdf)
+    if(!all(class_check))stop("covariates must be either a binary indicator variable (0/1s), a character variable or a factor variable")
+    cov_vars <- fastDummies::dummy_cols(cov_vars, select_columns = non_indicator_vars, remove_first_dummy = TRUE, remove_selected_columns = TRUE, ignore_na = TRUE)
+  }
+
+  # add intercept
+  cov_vars <- cov_vars %>% dplyr::mutate('(Intercept)' = 1)
+
+  # tokenize texts
+  context_toks <- tokens(context)
+
+  # create document-feature matrix
+  context_dfm <- dfm(context_toks, tolower = FALSE)
+
+  # subset features
+  #if(length(features) > 0) context_dfm <- dfm_keep(context_dfm, pattern = features, selection = 'keep', valuetype = 'fixed', case_insensitive = FALSE)
+
+  # embed context to get dependent variable
+  context_dem <- dem(x = context_dfm, pre_trained = pre_trained, transform_matrix = transform_matrix, transform = transform, verbose = verbose)
+  Y <- context_dem
   if(verbose) cat('total observations included in regression:', nrow(Y), '\n')
 
   # regressors
-  X <- context[embeds_out$obs_included,c('(Intercept)', covariates)]
+  X <- cov_vars
 
   # run full sample ols
   full_sample_out <- run_ols(Y = Y, X = X)
 
   # outputs
-  beta_cofficients <- full_sample_out$betas
+  beta_coefficients <- full_sample_out$betas
   norm_tibble <- dplyr::tibble(Coefficient = names(full_sample_out$normed_betas), Normed_Estimate = unname(full_sample_out$normed_betas))
 
   # -------------------
@@ -121,7 +136,7 @@ conText <- function(formula, data, text_var = 'text', pre_trained, transform = T
     if(verbose) cat('starting bootstrapping \n')
 
     # bootstrapped ols
-    bootstrap_out <- replicate(num_bootstraps, bootstrap_ols(Y = Y, X = X, stratify_by = stratify_by), simplify = FALSE)
+    bootstrap_out <- replicate(num_bootstraps, bootstrap_ols(Y = Y, X = X, stratify = stratify), simplify = FALSE)
 
     # average betas
     betas <- lapply(bootstrap_out, '[[', 'betas')
@@ -134,7 +149,7 @@ conText <- function(formula, data, text_var = 'text', pre_trained, transform = T
     bs_normed_betas <- dplyr::tibble(Coefficient = names(mean_normed_betas), Normed_Estimate = unname(mean_normed_betas), Std.Error = unname(stderror_normed_betas))
 
     # output
-    beta_cofficients <- bs_betas
+    beta_coefficients <- bs_betas
     norm_tibble <- bs_normed_betas
 
     # notice
@@ -166,10 +181,20 @@ conText <- function(formula, data, text_var = 'text', pre_trained, transform = T
   }
 
   # -------------------
-  # output
+  # build conText object
   # -------------------
+  result <- build_conText(Class = 'conText',
+                          x_conText = beta_coefficients,
+                          normed_cofficients = norm_tibble,
+                          features = context_dem@features,
+                          Dimnames = list(
+                            rows = rownames(beta_coefficients),
+                            columns = NULL))
 
-  return(list(betas = beta_cofficients, normed_betas = norm_tibble))
+  # print the normed coefficient table
+  print(norm_tibble)
+
+  return(result)
 }
 
 # -----------------------------
@@ -185,7 +210,7 @@ conText <- function(formula, data, text_var = 'text', pre_trained, transform = T
 #' @param Y vector of regression model's dependent variable (embedded context)
 #' @param X data.frame of model independent variables (covariates)
 #'
-#' @return list with two elements, `betas` = list of beta_cofficients (D dimensional vectors);
+#' @return list with two elements, `betas` = list of beta_coefficients (D dimensional vectors);
 #' `normed_betas` = tibble with the norm of the non-intercept coefficients
 #'
 permute_ols <- function(Y = NULL, X = NULL){
@@ -207,19 +232,19 @@ permute_ols <- function(Y = NULL, X = NULL){
 #'
 #' @param Y vector of regression model's dependent variable (embedded context)
 #' @param X data.frame of model independent variables (covariates)
-#' @param stratify_by covariates to stratify when bootstrapping
+#' @param stratify covariates to stratify when bootstrapping
 #'
-#' @return list with two elements, `betas` = list of beta_cofficients (D dimensional vectors);
+#' @return list with two elements, `betas` = list of beta_coefficients (D dimensional vectors);
 #' `normed_betas` = tibble with the norm of the non-intercept coefficients
 #'
-bootstrap_ols <- function(Y = NULL, X = NULL, stratify_by = NULL){
+bootstrap_ols <- function(Y = NULL, X = NULL, stratify = NULL){
 
   # label instances
   X_bs <- cbind(obs = 1:nrow(X), X)
 
   # sample observations with replacement
-  if(is.null(stratify_by)) X_bs <- dplyr::sample_n(X_bs, size = nrow(X_bs), replace = TRUE)else{
-    X_bs <- X_bs %>% dplyr::group_by_at(stratify_by) %>% dplyr::sample_n(size = dplyr::n(), replace = TRUE) %>% dplyr::ungroup()
+  if(stratify) X_bs <- X_bs %>% dplyr::group_by_at(setdiff(names(X), "(Intercept)")) %>% dplyr::sample_n(size = dplyr::n(), replace = TRUE) %>% dplyr::ungroup() else{
+    X_bs <- dplyr::sample_n(X_bs, size = nrow(X_bs), replace = TRUE)
   }
 
   # subset Y to sampled observations
@@ -242,7 +267,7 @@ bootstrap_ols <- function(Y = NULL, X = NULL, stratify_by = NULL){
 #' @param Y vector of regression model's dependent variable (embedded context)
 #' @param X data.frame of model independent variables (covariates)
 #'
-#' @return list with two elements, `betas` = list of beta_cofficients (D dimensional vectors);
+#' @return list with two elements, `betas` = list of beta_coefficients (D dimensional vectors);
 #' `normed_betas` = tibble with the norm of the non-intercept coefficients
 #'
 run_ols <- function(Y = NULL, X = NULL){
