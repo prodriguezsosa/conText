@@ -5,31 +5,36 @@
 \title{Contrast nearest neighbors}
 \usage{
 contrast_nns(
-  context1 = NULL,
-  context2 = NULL,
+  x,
+  groups = NULL,
   pre_trained = NULL,
-  transform_matrix = NULL,
   transform = TRUE,
+  transform_matrix = NULL,
   bootstrap = TRUE,
   num_bootstraps = 20,
   permute = TRUE,
   num_permutations = 100,
   candidates = NULL,
-  norm = "l2"
+  N = 20,
+  verbose = TRUE
 )
 }
 \arguments{
-\item{context1}{context vector for group 1 - `context`` variable in get_context output}
+\item{x}{(quanteda) corpus}
 
-\item{context2}{context vector for group 2 - `context`` variable in get_context output}
+\item{groups}{a variable with two unique values (can be numeric, factor, character)}
 
-\item{pre_trained}{a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions}
+\item{pre_trained}{a F x D matrix of numeric values corresponding to pretrained embeddings
+F = number of features and D = embedding dimensions.
+rownames(pre_trained) = set of features for which there is a pre-trained embedding}
 
-\item{transform_matrix}{a D x D transformation matrix}
+\item{transform}{(logical) if TRUE (default) apply the \verb{a la carte} transformation,
+if FALSE ouput untransformed averaged embedding}
 
-\item{transform}{logical - if TRUE (default) apply the a la carte transformation, if FALSE ouput untransformed averaged embedding}
+\item{transform_matrix}{a D x D matrix of numeric values corresponding
+to the `a la carte`` transformation matrix}
 
-\item{bootstrap}{logical - if TRUE, bootstrap cosine similarity - required to get standard errors cosine similarity of nearest neighbors}
+\item{bootstrap}{logical - if TRUE, bootstrap cosine similarity ratio - required to get standard errors around cosine similarity ratios}
 
 \item{num_bootstraps}{numeric - number of bootstraps to use}
 
@@ -37,46 +42,41 @@ contrast_nns(
 
 \item{num_permutations}{numeric - number of permutations to use}
 
-\item{candidates}{character vector defining the candidates for nearest neighbors - e.g. output from \code{get_local_vocab}}
+\item{candidates}{character vector defining the candidates for nearest neighbors}
 
-\item{norm}{character = c("l2", "none") - set to 'l2' for cosine similarity and to 'none' for inner product (see ?sim2 in text2vec)}
+\item{N}{numeric (default is NULL). If defined,then nearest neighbors are subset to the union of the N neighbors of each group}
+
+\item{verbose}{logical - report the documents/features that had
+no overlap with the provided pre-trained embeddings}
 }
 \value{
-a list with three elements, nns for group 1, nns for group 2 and nns_ratio comparing with ratios of similarities between the two groups
+a \code{data.frame} with following columns:
+\item{\code{feature}}{(character) vector of features from the candidate set,
+one instance for each target.}
+\item{\code{value}}{(numeric) ratio of cosine similarities
+(mean of boostraps if boostrap = TRUE).}
+\item{\code{std.error}}{(numeric) sd/srt(num_bootstrap) of bootstrapped ratio
+of cosine similarities if bootstrap = TRUE, if FALSE, column is dropped.}
+\item{\code{p.value}}{(numeric) empirical p-value.}
 }
 \description{
 Contrast nearest neighbors
 }
 \examples{
-library(conText)
-library(dplyr)
 
-# load data
-corpus <- sample_corpus
-pre_trained <- sample_glove
-transform_matrix <- khodakA
+library(quanteda)
 
-# find contexts for Republican speakers
-contextR <- get_context(x = corpus$speech[corpus$party == 'R'], target = 'immigration',
-                        window = 6, valuetype = "fixed", case_insensitive = TRUE,
-                        hard_cut = FALSE, verbose = FALSE)
-
-# find contexts for Democrat speakers
-contextD <- get_context(x = corpus$speech[corpus$party == 'D'], target = 'immigration',
-                        window = 6, valuetype = "fixed", case_insensitive = TRUE,
-                        hard_cut = FALSE, verbose = FALSE)
-
-# find local vocab (use it to define the candidate of nearest neighbors)
-local_vocab <- get_local_vocab(c(contextR$context, contextD$context), pre_trained)
+immig_corpus <- corpus_context(x = cr_sample_corpus,
+pattern = "immigration", window = 6L, verbose = TRUE)
 
 set.seed(42L)
-contrast_target <- contrast_nns(context1 = contextR$context, context2 = contextD$context,
-                               pre_trained, transform_matrix, transform = TRUE,
-                               bootstrap = TRUE, num_bootstraps = 20,
-                               permute = TRUE, num_permutations = 100,
-                               candidates = local_vocab, norm = "l2")
-
-knitr::kable(head(contrast_target$nns1))
-knitr::kable(head(contrast_target$nns2))
-knitr::kable(head(contrast_target$nns_ratio))
+party_nns <- contrast_nns(x = immig_corpus,
+groups = docvars(immig_corpus, 'party'),
+pre_trained = glove_subset,
+transform = TRUE, transform_matrix = khodakA,
+bootstrap = TRUE, num_bootstraps = 10,
+permute = TRUE, num_permutations = 100,
+candidates = NULL, N = 20,
+verbose = FALSE)
 }
+\keyword{contrast_nns}

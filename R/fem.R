@@ -9,42 +9,51 @@
 #' to obtain the corresponding `a la carte` embeddings.
 #' (see eq 2: https://arxiv.org/pdf/1805.05388.pdf)
 #'
-#' @param x a [fcm-class] object
+#' @param x a `fcm-class` object
 #' @param pre_trained a F x D matrix of numeric values corresponding to pretrained embeddings
 #' F = number of features and D = embedding dimensions.
 #' rownames(pre_trained) = set of features for which there is a pre-trained embedding
-#' @param transform (logical) if TRUE (default) apply the [a la carte] transformation, if FALSE ouput untransformed averaged embedding
+#' @param transform (logical) if TRUE (default) apply the `a la carte` transformation, if FALSE ouput untransformed averaged embedding
 #' @param transform_matrix a D x D matrix of numeric values corresponding to the `a la carte`` transformation matrix
 #' @param verbose logical - report the documents/features that had no overlap with the provided pre-trained embeddings
 #'
-#' @return a [fem-class] object
+#' @return a `fem-class` object
 #' @export
 #' @rdname fem
 #' @keywords fem
 #' @examples
 #'
+#' library(quanteda)
+#'
 #' ## embed all features
 #'
 #' #' # tokenize text
-#' cr_toks <- tokenize(cr_sample_corpus)
+#' cr_toks <- tokens(cr_sample_corpus)
 #'
 #' # construct document-feature-matrix
-#' cr_fcm <- fcm(cr_toks, context = "window", window = 6, count = "weighted", weights = 1 / (1:6), tri = FALSE) # set tri = FALSE to work with fem
+#' cr_fcm <- fcm(cr_toks, context = "window", window = 6,
+#' count = "weighted", weights = 1 / (1:6), tri = FALSE)
+#' # set tri = FALSE to work with fem
 #'
 #' # construct feature-embedding-matrix
-#' cr_fem <- fem(cr_fcm, pre_trained = glove_subset, transform = TRUE, transform_matrix = khodakA, verbose = TRUE)
+#' cr_fem <- fem(cr_fcm, pre_trained = glove_subset,
+#' transform = TRUE, transform_matrix = khodakA, verbose = FALSE)
 #' dim(cr_fem)
 #'
 #' ## embed specific target features
 #'
-#' feats <- c('immigration', 'welfare')
+#' feats <- c('immigration', 'immigrants')
 #'
 #' # create feature co-occurrence matrix for features of interest
-#' cr_fcm <- tokens_select(cr_toks, pattern = feats, padding = TRUE) %>% # set padding = TRUE here to avoid making non-adjecnt words adjacent
-#' fcm(cr_toks, context = "window", window = 6, count = "weighted", weights = 1 / (1:6), tri = FALSE) # set tri = FALSE to work with fem and dem
+#' cr_fcm <- tokens_select(cr_toks, pattern = feats, padding = TRUE) %>%
+#' # set padding = TRUE here to avoid making non-adjecnt words adjacent
+#' fcm(context = "window", window = 6,
+#' count = "weighted", weights = 1 / (1:6), tri = FALSE)
+#' # set tri = FALSE to work with fem and dem
 #'
 #' # construct feature-embedding-matrix
-#' cr_fem <- fem(cr_fcm, pre_trained = glove_subset, transform = TRUE, transform_matrix = khodakA, verbose = TRUE)
+#' cr_fem <- fem(cr_fcm, pre_trained = glove_subset,
+#' transform = TRUE, transform_matrix = khodakA, verbose = FALSE)
 #' dim(cr_fem)
 fem <- function(x, pre_trained, transform = TRUE, transform_matrix, verbose = TRUE){
 

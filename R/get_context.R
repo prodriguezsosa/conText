@@ -26,14 +26,8 @@
 #' `target` in the return data.frame is equivalent to `kwic`'s keyword,
 #' so it may not match the user-defined target exactly if `valuetype` is not fixed.
 #' @examples
-#'library(conText)
-#'library(dplyr)
-#'
-#' # load corpus
-#' corpus <- sample_corpus
-#'
 #' # get context words sorrounding the term immigration
-#' context_immigration <- get_context(x = corpus$speech, target = 'immigration',
+#' context_immigration <- get_context(x = cr_sample_corpus, target = 'immigration',
 #'                                    window = 6, valuetype = "fixed", case_insensitive = FALSE,
 #'                                    hard_cut = FALSE, verbose = FALSE)
 #' @export
@@ -41,6 +35,15 @@ get_context <- function(x, target, window = 6L, valuetype = "fixed", case_insens
 
   # check for phrases in targets and apply phrase() given a phrase
   if(any(grepl(' ', target))) target[grepl(' ', target)] <- quanteda::phrase(target[grepl(' ', target)])
+
+  # subset to documents where pattern is present (speeds up tokens() significantly)
+  pattern_present <- stringr::str_detect(x, paste(stringr::regex(target, ignore_case = case_insensitive), collapse = '|'))
+
+  # stop if no instances are found
+  if(!any(pattern_present))stop("no instances of pattern found in corpus")
+
+  # subset corpus
+  x <- x[pattern_present]
 
   # get kwic for each element in target
   kwic_i <- quanteda::kwic(quanteda::tokens(x), pattern = target, window = window, valuetype = valuetype, case_insensitive = case_insensitive) # get kwic given a phrase

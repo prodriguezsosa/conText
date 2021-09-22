@@ -1,9 +1,21 @@
 Quick Start Guide
 ================
 
+# Preliminaries
+
+**conText** was designed to work closely with
+[quanteda](https://quanteda.io), as such most functions will expect a
+quanteda object such as a *corpus*, *tokens* or *dfm*/*fcm*. To make the
+most of **conText**, we recommend that you familirize yourself with some
+of quanteda’s basic functionalities [Quick Start
+Guide](https://quanteda.io/articles/quickstart.html).
+
 # Setup
 
-## Installation
+## Installing the package
+
+Since **conText** is not *yet* available on CRAN you will need to
+install it directly from GitHub.
 
 ``` r
 devtools::install_github("prodriguezsosa/conText")
@@ -12,367 +24,334 @@ devtools::install_github("prodriguezsosa/conText")
 ## Load package
 
 ``` r
-library(conText)
-library(dplyr)
-library(ggplot2)
+library("conText")
 ```
 
-# Datasets
+# Data
 
-To use conText you will need three datasets:
+To use **conText** you will need three datasets:
 
-1.  A corpus with the text and corresponding metadata you want to
-    evaluate.
-2.  A set of pre-trained embeddings used to embed context words.
-3.  A transformation matrix \(A\) specific to the pre-trained
-    embeddings.
+1.  A (quanteda) **corpus** with the documents and corresponding
+    document variables (covariates) you want to evaluate.
+2.  A set of (GloVe) **pre-trained embeddings**.
+3.  A **transformation matrix** specific to the pre-trained embeddings.
 
-In [this Dropbox
-folder](https://www.dropbox.com/sh/jsyrag7opfo7l7i/AAB1z7tumLuKihGu2-FDmhmKa?dl=0)
-we have included the three datasets we use in this Quick Start Guide
-along with their documentation. These include: first, `cr_corpus`, a
-subset –sessions 111th - 114th– of the [Congressional Record
-corpus](https://data.stanford.edu/congress_text), daily edition. We did
-some minor pre-processing to the data, specifically: removing non-alpha
-characters, removing one to two letter words (e.g. of), and lowercasing.
-Second, `glove`, the 300-dimensional GloVe pre-trained embeddings
-provided by [Pennington et
-al.](https://nlp.stanford.edu/projects/glove/). Third, `khodakA`, the
-transformation matrix \(A\) computed by Khodak et al (2018) specific to
-the 300-dimensional GloVe embeddings. In this guide we will use these
-three datasets to explore how Congressional Democrats and Republicans
-differ (during that period) in their understanding of “immigration”.
-Note, while the easiest way to use `conText` is to use the provided
-GloVe embeddings (`glove`) and transformation matrix (`khodakA`), you
-can use your own locally estimated alternatives.
+The **conText** package includes two sample corpora `cr_sample_corpus`
+–a sample of the U.S. Congressional Records (Sessions 111th - 114th)–
+and `anes2016_sample_corpus` –a sample of the ANES 2016 open-ended
+question on “most important isssues facing the country”–; a subset of
+[Stanford NLP’s](https://nlp.stanford.edu/projects/glove/)
+300-dimensional GloVe embeddings, `glove_subset`; and a transformation
+matrix ,`khodakA`, computed by [Khodak et
+al.](https://arxiv.org/abs/1805.05388) for the aforementioned GloVe
+300-dimensional embeddings (see documentation for details). For the
+following guide we will be using the full versions of these datasets
+which we’ve made available
+[here](https://www.dropbox.com/sh/6dfr3i6no6nzvm0/AADqk6HFTvZJGNyu3FuO62kGa?dl=0).
+
+## Load data
 
 ``` r
-# set path to where you stored the required datasets
+# other libraries
+library(quanteda)
+library(dplyr)
+
+# path to data set this path to wherever you stored the data files
 path_to_data <- "~/Dropbox/GitHub/large_data/conText/data/"
 
-# corpus
-cr_corpus <- readRDS(paste0(path_to_data, "cr_corpus.rds"))
+## load data
 
-# (GloVe) pre-trained embeddings
-congress_pretrained_mat <- readRDS(paste0(path_to_data, "glove.rds"))
+# full GloVe 300
+glove_wvs <- readRDS(paste0(path_to_data, "glove.rds"))
 
-# transformation matrix
-congress_transform_mat <- readRDS(paste0(path_to_data, "khodakA.rds"))
+# transformation matrix fro GloVe 300
+khodakA <- readRDS(paste0(path_to_data, "khodakA.rds"))
+
+# U.S. Congressional Record Sessions 111th - 114th (Obama years)
+cr <- readRDS(paste0(path_to_data, "congressional_record.rds"))
+cr <- cr %>% distinct(speech, .keep_all = TRUE)  # remove duplicate speeches
+
+# sample corpus
+set.seed(2021L)
+cr_sample <- cr %>% sample_n(size = 10000)
+
+## build corpora
+cr_corpus <- corpus(cr_sample$speech, docvars = cr_sample[, c("party", "gender")])
 ```
 
-# Single instance embeddings
+# The building blocks of `a la carte` embeddings
 
-We begin by embedding and plotting single instances of contexts around
-“immigration” (e.g. “will try once again enact comprehensive
-\[immigration\] reforms that have eluded the past”). To do so we first
-use the function `get_context` to find all the contexts in which
-immigration is mentioned by party. Note, the `target` argument may
-include a single token (as in this example), a phrase or multiple tokens
-(e.g. `c('immigration', 'immigrants')`) and/or phrases (e.g. `illegal
-immigrants`).
+## 1\. Build a corpus of contexts
+
+Suppose we are interested in the semantics sorrounding the word
+*immigration* in the U.S. Congress during the Obama years (sessions
+111th - 114th). To explore this we will use our Congressional Record
+corpus, `cr_corpus`. We begin by identifying all instances of the
+**target** term –*immigration*– in our corpus and, for each instance,
+store it’s context– the N words (N = 6 in this example) preceding and
+following the instance. We can do this in one step using the
+`conText::corpus_context` function. Notice, both the input, `x`, and the
+output are a quanteda `corpus-object`. Moreover, each document in
+`immig_corpus` –a context arround an instance of *immigration*– inherits
+the document variables (`docvars`) of the document from whence it came
+and can be retrieved using `docvars`.
 
 ``` r
-#---------------------------------
-# build context corpus
-#---------------------------------
-
-# find contexts for Republican speakers
-contextR <- get_context(x = cr_corpus$speech[cr_corpus$party == "R"], target = "immigration", 
-    window = 6, valuetype = "fixed", case_insensitive = TRUE, hard_cut = FALSE, verbose = FALSE)
-
-# find contexts for Democrat speakers
-contextD <- get_context(x = cr_corpus$speech[cr_corpus$party == "D"], target = "immigration", 
-    window = 6, valuetype = "fixed", case_insensitive = TRUE, hard_cut = FALSE, verbose = FALSE)
-
-# bind contexts
-contexts_corpus <- rbind(cbind(contextR, party = "R"), cbind(contextD, party = "D"))
+# build a corpus of contexts sorrounding the target term 'immigration'
+immig_corpus <- corpus_context(x = cr_corpus, pattern = "immigration", window = 6L)
 ```
 
-To make it easy to visualize, we randomly sample 100 contexts from each
-party.
+    ## 520 instances of immigration found.
 
 ``` r
-# sample 100 observations from each party (for visualization purposes)
-set.seed(42L)
-contexts_sample <- contexts_corpus %>% group_by(party) %>% sample_n(., size = 100, 
-    replace = FALSE) %>% ungroup()
+summary(immig_corpus, n = 3)
 ```
 
-Next we use the function `embed_target` to embed each context seperately
-using the a la carte (ALC) transformation. Notice in this case we’ve set
-the `aggregate` argument to `FALSE`, this indicates that we want an
-embedding for every instance rather than an aggregate averaged embedding
-– the latter would be the equivalent of the a la carte embedding.
+    ## Corpus consisting of 520 documents, showing 3 documents:
+    ## 
+    ##   Text Types Tokens Sentences     keyword     pattern party gender
+    ##  text1    11     12         1 immigration immigration     R      M
+    ##  text2    12     12         1 immigration immigration     R      M
+    ##  text3    12     12         1 immigration immigration     R      M
+
+## 2\. Build a document-feature-matrix
+
+Given a corpus of contexts, we next build it’s corresponding
+document-feature-matrix, namely a matrix where each row represents a
+given document’s vector of feature counts. We do this using quanteda’s
+`dfm` function.
 
 ``` r
-#---------------------------------
-# embed each instance using a la carte
-#---------------------------------
-contexts_vectors <- embed_target(context = contexts_sample$context, pre_trained = congress_pretrained_mat, 
-    transform_matrix = congress_transform_mat, transform = TRUE, aggregate = FALSE, 
+# tokenize texts
+immig_toks <- tokens(immig_corpus)
+
+# create document-feature matrix
+immig_dfm <- dfm(immig_toks)
+immig_dfm[1:3, 1:3]
+```
+
+    ## Document-feature matrix of: 3 documents, 3 features (66.67% sparse) and 4 docvars.
+    ##        features
+    ## docs    president obama recently
+    ##   text1         1     1        1
+    ##   text2         0     0        0
+    ##   text3         0     0        0
+
+## 3\. Build a document-embedding-matrix
+
+Given a `dfm`, a set of pre-trained embeddings, and a corresponding
+transformation matrix, we can proceed to embed each document (context)
+`a la carte`. We embed any given document by multiplying each of it’s
+feature counts with its corresponding pre-trained feature-embedding,
+(column) summing the resulting vectors, and multiplying by the
+transformation matrix. We do so using `conText::dem`–`dem` standing for
+*document-embedding-matrix*. Keep in mind, if a given document has no
+features that overlap with the pre-trained embeddings provided, said
+document will be dropped.
+
+``` r
+# create document-embedding matrix using a la carte
+immig_dem <- dem(x = immig_dfm, pre_trained = glove_wvs, transform = TRUE, transform_matrix = khodakA, 
     verbose = TRUE)
+
+# you can see which documents where not embedded (in this example all documents
+# are embedded) setdiff(docnames(immig_dfm), immig_dem@Dimnames$rows)
+
+# to see the features that were used in creating the embeddings
+head(immig_dem@features)
 ```
 
-To plot this set of singl-instance 300 dimensional embeddings we use PCA
-and the first two components. Each observation on this plot represents
-an embedded context in which the term “immigration” was mentioned. While
-Democrat and Republican instances do intermingle, we can already notice
-some clustering by party. If we were to take the average of the set of
-instances for each party, we’d get each parties’ a la carte embedding
-for “immigration” – this is equivalente to setting the `aggregate`
-argument to `TRUE` in the `embed_target` function.
+    ## [1] "president" "obama"     "recently"  "announced" "executive" "action"
+
+## 4\. Average over document embeddings
+
+We now have an ALC embedding for each context of `immigration` in our
+Congressional Record corpus. To get a single embedding for immigration,
+we can simply take the (column) average. However, we are often
+interested in exploring semantic differences as a function of covariates
+–e.g. party. To do so we simply average within a grouping variable
+defined by the covariates. We do this using `conText::dem_group` (very
+similar in flavor to quanteda’s `dfm_group`). Notice, a `dem-class`
+object inherits all the document variables from the `dfm` used to
+compute it.
 
 ``` r
-# find principal components using pca
-contexts_pca <- prcomp(contexts_vectors$target_embedding, scale = TRUE)
-
-# first two pcs
-ind_coord <- as_tibble(contexts_pca$x[, 1:2])
-
-# tibble for plotting
-plot_tibble <- tibble(x = ind_coord$PC1, y = ind_coord$PC2) %>% mutate(group = factor(contexts_sample$party, 
-    levels = c("D", "R")))
-
-#---------------------------------
-# visualize
-#---------------------------------
-ggplot(plot_tibble, aes(x = x, y = y, color = group, shape = group)) + geom_point(size = 2) + 
-    geom_hline(yintercept = 0, linetype = "dashed", color = "black", size = 0.5) + 
-    geom_vline(xintercept = 0, linetype = "dashed", color = "black", size = 0.5) + 
-    scale_colour_manual(labels = c("Democrat", "Republican"), values = c("blue", 
-        "red")) + scale_shape_manual(labels = c("Democrat", "Republican"), values = c(19, 
-    17)) + scale_x_continuous(name = "PC1", limits = c(-20, 20), breaks = c(-20, 
-    -15, -10, -5, 0, 5, 10, 20)) + scale_y_continuous(name = "PC2", limits = c(-15, 
-    15), breaks = c(-15, -10, -5, 0, 5, 10, 15)) + theme(panel.background = element_blank(), 
-    axis.text.x = element_text(size = 16), axis.text.y = element_text(size = 16), 
-    axis.title.y = element_text(size = 16, margin = margin(t = 0, r = 15, b = 0, 
-        l = 15)), axis.title.x = element_text(size = 16, margin = margin(t = 15, 
-        r = 0, b = 15, l = 0)), legend.text = element_text(size = 16), legend.title = element_blank(), 
-    legend.key = element_blank(), legend.position = "top", legend.spacing.x = unit(0.25, 
-        "cm"))
+# to get a single 'corpus-wide' embedding, take the column average
+immig_wv <- colMeans(immig_dem)
+length(immig_wv)
 ```
 
-<img src="https://github.com/prodriguezsosa/conText/blob/master/vignettes/single_instance.png" width="100%" />
-
-# Embedding regression
-
-We noted above that contexts around “immigration” seem to cluster by
-party. We can more formally quantify this with embedding regression. In
-quantifying the difference as a function of party, we will also control
-for gender. First, we need to create indicator variables for our set of
-covariates (the `conText` function currently only allows binary
-independent variables).
+    ## [1] 300
 
 ``` r
-# add party and gender indicator variables
-cr_corpus <- cr_corpus %>% mutate(Republican = if_else(party == "R", 1L, 0L), male = if_else(gender == 
-    "M", 1L, 0L))
+# to get group-specific embeddings, average within party
+immig_wv_party <- dem_group(immig_dem, groups = immig_dem@docvars$party)
+dim(immig_wv_party)
 ```
 
-To run an embedding regression we use the `conText` function. First we
-specify the formula consisting of the target word of interest,
-“immigration” and the set of covariates (again, these must be binary
-indicator variables). Notice, the `conText` function calls the
-`get_context` function automatically, so you do not need to create a
-corpus of contexts before running `conText`, simply provide it with the
-original (pre-processed) corpus and `conText` will find all instances of
-the target word and their respective contexts. It’s important that you
-specify which variable in your `data` contains the text using
-`text_var`. In the case of our `cr_corpus` the text variable is labeled
-“speech”. Alternatively, if you want to embedded each document in its
-entirety (e.g. open-ended responses in a survey), then you must use the
-label of the text variable as your dependent variable (e.g. `speech ~
-Republican + male`) and set `getcontexts = FALSE`. This will tell
-`conText` to skip the step of searching for contexts around a target
-word and simply embed the full document. This can be useful if you want
-to explore differences in open-ended responses (see paper for an
-example) or if you want more complex contexts consisting of multiple
-words and/or phrases, in which case you’d need to get those using
-`get_context` first. For more information on each argument, we refer you
-to the documentation.
+    ## [1]   2 300
 
 ``` r
-# run conText regression
-model1 <- conText(formula = immigration ~ Republican + male, data = cr_corpus, text_var = "speech", 
-    pre_trained = congress_pretrained_mat, transform = TRUE, transform_matrix = congress_transform_mat, 
-    bootstrap = TRUE, num_bootstraps = 10, stratify_by = c("Republican", "male"), 
-    permute = TRUE, num_permutations = 100, getcontexts = TRUE, window = 6, valuetype = "fixed", 
-    case_insensitive = TRUE, hard_cut = FALSE, verbose = FALSE)
-
-knitr::kable(model1$normed_betas)
+# the first 5 dimensions of each party's dense vector representation (embedding)
+# of 'immigration'
+immig_wv_party[, 1:5]
 ```
 
-| Coefficient | Normed\_Estimate | Std.Error | Empirical\_Pvalue |
-| :---------- | ---------------: | --------: | ----------------: |
-| Republican  |        0.0330936 | 0.0002574 |                 0 |
-| male        |        0.0151128 | 0.0003986 |                 0 |
+    ## 2 x 5 sparse Matrix of class "dgCMatrix"
+    ##                                                              
+    ## D -0.008220030 -0.015602337 -0.03313222 0.04601158 0.01922102
+    ## R  0.008403035 -0.007154615 -0.02150319 0.04856440 0.00241099
 
-`model1` is list with two elements: (1) `betas`, these are the estimated
-beta coefficients. We will use these below to find the a la carte
-embeddings for each group. (2) `normed_betas`, these are the norms of
-the beta coefficients (excluding the intercept) along with their
-standard errors (given `bootstrap = TRUE`) and empirical p-values (given
-`permute = T`). We plot `normed_betas` below.
+## 5\. Comparing group embeddings
+
+Given each party’s embeddings, we can explore their differences using.
+We can evaluate differences in nearest neighbors –features with the
+highest cosine-similarity a given embedding– using `conText::nns()` or
+explore their cosine similarity with specific features of interest using
+`conText::cos_sim()`. Notice, below we limit the set of candidate
+nearest neighbors to the set of features in our corpus.
 
 ``` r
-# coefficient plot
-plot_tibble <- model1$normed_betas %>% mutate(Coefficient = c("Republican", "male")) %>% 
-    mutate(Coefficient = factor(Coefficient, levels = Coefficient))
-ggplot(plot_tibble, aes(x = Coefficient, y = Normed_Estimate)) + geom_bar(position = position_dodge(), 
-    stat = "identity", width = 0.5) + geom_errorbar(aes(ymin = Normed_Estimate - 
-    1.96 * Std.Error, ymax = Normed_Estimate + 1.96 * Std.Error), size = 0.75, width = 0.15, 
-    position = position_dodge(0.9)) + ylim(0, 0.04) + ylab("Norm of beta hats") + 
-    # the stars here are based on the Empirical_Pvalue
-geom_text(aes(label = c("***", "***")), position = position_dodge(width = 0.9), hjust = 0.5, 
-    vjust = -1, size = 8) + theme(panel.background = element_blank(), axis.text.x = element_text(size = 16, 
-    vjust = 0.5, margin = margin(t = 15, r = 0, b = 15, l = 0)), axis.text.y = element_text(size = 16), 
-    axis.title.y = element_text(size = 18, margin = margin(t = 0, r = 15, b = 0, 
-        l = 15)), axis.title.x = element_blank(), plot.margin = unit(c(1, 1, 0, 0), 
-        "cm"))
+# find nearest neighbors for overall immigraiton embedding
+nns(immig_wv, pre_trained = glove_wvs, N = 5, candidates = immig_dem@features)
 ```
 
-<img src="https://github.com/prodriguezsosa/conText/blob/master/vignettes/regression.png" width="100%" />
-
-# Nearest neighbors
-
-`conText` provides three ways of exploring nearest neighbors. For all we
-will first limit the candidates to nearest neighbors to the vocabulary
-present in our corpus. This usually results in cleaner, more sensible
-nearest neighbors than when including the full \(400000\) tokens in the
-GloVe pre-trained embeddings as candidates. To do this we first find the
-local vocabulary using the function `get_local_vocab`.
+    ## # A tibble: 5 x 4
+    ##   target feature      rank value
+    ##   <lgl>  <chr>       <int> <dbl>
+    ## 1 NA     legislation     1 0.478
+    ## 2 NA     enacting        2 0.469
+    ## 3 NA     immigration     3 0.450
+    ## 4 NA     reform          4 0.449
+    ## 5 NA     enacted         5 0.442
 
 ``` r
-#---------------------------------
-# get local vocab (we'll use it to define the candidates for nns)
-#---------------------------------
-local_vocab <- get_local_vocab(c(contextR$context, contextD$context), pre_trained = congress_pretrained_mat)
+# find nearest neighbors by party
+nns(immig_wv_party, pre_trained = glove_wvs, N = 5, candidates = immig_dem@features)
 ```
 
-## 1\. `find_nns`: use alc embeddings output by regression
-
-Our first approach to exploring nearest neighbors is to use the
-coefficients output by `conText`. Each groups’ ALC embedding can be
-found by simply adding the relevant coefficients.
+    ## # A tibble: 10 x 4
+    ##    target feature      rank value
+    ##    <fct>  <chr>       <int> <dbl>
+    ##  1 D      reform          1 0.501
+    ##  2 D      legislation     2 0.476
+    ##  3 D      reforming       3 0.460
+    ##  4 D      enacting        4 0.457
+    ##  5 D      reforms         5 0.421
+    ##  6 R      immigration     1 0.476
+    ##  7 R      enacted         2 0.456
+    ##  8 R      laws            3 0.454
+    ##  9 R      enacting        4 0.450
+    ## 10 R      legislation     5 0.443
 
 ``` r
-#---------------------------------
-# a. find_nns: use alc embeddings output by regression
-#---------------------------------
-alcDF <- model1$betas["(Intercept)", ]  # Democrat - female
-alcDM <- model1$betas["(Intercept)", ] + model1$betas["male", ]  # Democrat - male
-alcRF <- model1$betas["(Intercept)", ] + model1$betas["Republican", ]  # Republican - female
-alcRM <- model1$betas["(Intercept)", ] + model1$betas["Republican", ] + model1$betas["male", 
-    ]  # Republican - male
+# compute the cosine similarity between each party's embedding and a specific set
+# of features
+cos_sim(immig_wv_party, pre_trained = glove_wvs, features = c("reform", "enforcement"))
 ```
 
-Given each groups’ ALC embedding for “immigration” we can use the
-function `find_nns` to output the top `N` neighbors.
+    ##   target     feature     value
+    ## 1      D      reform 0.5007252
+    ## 2      R      reform 0.3381023
+    ## 3      D enforcement 0.2767213
+    ## 4      R enforcement 0.3876106
+
+# Wrapper functions
+
+The above functions give users a lot of flexibility. However, it can be
+cumbersome to write each step separately every time we want to analyze a
+given target term. To facilitate this process `conText` includes three
+(for now) wrapper functions that allow you to do the above analysis and
+others with one line of code. An added advantage of the wrapper
+functions is that they make it easy to apply boostrapping –peform the
+analysis over random samples (with replacement) of the corpus and
+averaging. We being with `conText::get_nns`, a wrapper function to
+compare nearest neighbors between groups. Again, we limit the candidates
+to the set of features in our corpus.
 
 ``` r
-# nns
-nnsDF <- find_nns(target_embedding = alcDF, pre_trained = congress_pretrained_mat, 
-    N = 10, candidates = local_vocab, norm = "l2")
-nnsDM <- find_nns(target_embedding = alcDM, pre_trained = congress_pretrained_mat, 
-    N = 10, candidates = local_vocab, norm = "l2")
-nnsRF <- find_nns(target_embedding = alcRF, pre_trained = congress_pretrained_mat, 
-    N = 10, candidates = local_vocab, norm = "l2")
-nnsRM <- find_nns(target_embedding = alcRM, pre_trained = congress_pretrained_mat, 
-    N = 10, candidates = local_vocab, norm = "l2")
+# get local vocabulary (the intersect between features in the corpus and
+# pre-trained embeddings)
+local_vocab <- get_local_vocab(immig_corpus, pre_trained = glove_wvs)
 
-knitr::kable(cbind(`Dem-female` = nnsDF, `Dem-male` = nnsDM, `Rep-female` = nnsRF, 
-    `Rep-male` = nnsRM))
+# set seed to replicate sampling
+set.seed(2021L)
+
+# compare nearest neighbors between groups
+get_nns(x = immig_corpus, N = 10, groups = docvars(immig_corpus, "party"), candidates = local_vocab, 
+    pre_trained = glove_wvs, transform = TRUE, transform_matrix = khodakA, bootstrap = TRUE, 
+    num_bootstraps = 10)
 ```
 
-| Dem-female  | Dem-male    | Rep-female     | Rep-male     |
-| :---------- | :---------- | :------------- | :----------- |
-| legislation | reform      | immigration    | immigration  |
-| enacting    | overhauling | laws           | laws         |
-| enact       | legislation | enforcement    | enacting     |
-| overhauling | overhaul    | enforcing      | enforcing    |
-| immigration | enact       | naturalization | enacted      |
-| reform      | enacting    | enforces       | legislation  |
-| overhaul    | reforming   | enforce        | illegals     |
-| enacted     | entitlement | enacted        | legislations |
-| entitlement | revamp      | regulations    | enforcement  |
-| reforming   | immigration | enacting       | enact        |
+    ## # A tibble: 20 x 5
+    ##    target feature         rank value std.error
+    ##    <fct>  <chr>          <int> <dbl>     <dbl>
+    ##  1 D      reform             1 0.499   0.00406
+    ##  2 D      legislation        2 0.475   0.00397
+    ##  3 D      reforming          3 0.460   0.00233
+    ##  4 D      enacting           4 0.456   0.00261
+    ##  5 D      reforms            5 0.418   0.00400
+    ##  6 D      enacted            6 0.407   0.00396
+    ##  7 D      immigration        7 0.405   0.00365
+    ##  8 D      bipartisan         8 0.403   0.00477
+    ##  9 D      priorities         9 0.366   0.00200
+    ## 10 D      amendments        10 0.363   0.00437
+    ## 11 R      immigration        1 0.471   0.00380
+    ## 12 R      enacted            2 0.454   0.00337
+    ## 13 R      laws               3 0.448   0.00417
+    ## 14 R      enacting           4 0.445   0.00409
+    ## 15 R      legislation        5 0.441   0.00457
+    ## 16 R      naturalization     6 0.405   0.00411
+    ## 17 R      undocumented       7 0.397   0.00316
+    ## 18 R      enforcing          8 0.390   0.00323
+    ## 19 R      regulations        9 0.389   0.00424
+    ## 20 R      enforce           10 0.385   0.00314
 
-## 2\. `bootstrap_nns`: bootstrap nearest neighbors
-
-The `bootstrap_nns` function requires you provide it with the set of
-contexts to use for bootstrapping. We got these using the `get_context`
-function above. Sampling with replacement from this set, `bootstrap_nns`
-will compute multiple (defined by `num_bootstraps`) ALC embeddings and
-for each compute its cosine similarity with the set of candidate nearest
-neighbors (the embeddings for these are those found in the pre-trained
-embeddings). The output will then include the set of nearest neighbors,
-along with their averaged cosine similarity with the target word and
-their standard errors. If `bootstrap` is set to `FALSE`, the output will
-just include the set of nearest neighbors and their respective cosine
-similarity with the target word (note, the difference in this case with
-`find_nns` is that the latter does not report the cosine similarities,
-just the nearest neighbors).
+Similarly, we can evaluate how similar each group’s embedding is to a
+set of features of interest using `conText::get_cos_sim`.
 
 ``` r
-set.seed(42L)
-nnsR <- bootstrap_nns(context = contextR$context, pre_trained = congress_pretrained_mat, 
-    transform_matrix = congress_transform_mat, transform = TRUE, candidates = local_vocab, 
-    bootstrap = TRUE, num_bootstraps = 20, N = 50, norm = "l2")
-nnsD <- bootstrap_nns(context = contextD$context, pre_trained = congress_pretrained_mat, 
-    transform_matrix = congress_transform_mat, transform = TRUE, candidates = local_vocab, 
-    bootstrap = TRUE, num_bootstraps = 20, N = 50, norm = "l2")
+# set seed to replicate sampling
+set.seed(2021L)
 
-# print output
-knitr::kable(head(nnsD))
+# compute the cosine similarity between each group's embedding and a specific set
+# of features
+get_cos_sim(x = immig_corpus, groups = docvars(immig_corpus, "party"), features = c("reform", 
+    "enforce"), pre_trained = glove_wvs, transform = TRUE, transform_matrix = khodakA, 
+    verbose = FALSE)
 ```
 
-| Term        |  Estimate | Std.Error |
-| :---------- | --------: | --------: |
-| reform      | 0.5279948 | 0.0006338 |
-| overhauling | 0.5228246 | 0.0005372 |
-| legislation | 0.5175039 | 0.0006885 |
-| overhaul    | 0.5027943 | 0.0005302 |
-| enact       | 0.4951832 | 0.0004612 |
-| enacting    | 0.4928773 | 0.0005154 |
+    ##   target feature     value
+    ## 1      D  reform 0.5007252
+    ## 2      R  reform 0.3381023
+    ## 3      D enforce 0.2853419
+    ## 4      R enforce 0.3898058
 
-``` r
-knitr::kable(head(nnsR))
-```
-
-| Term        |  Estimate | Std.Error |
-| :---------- | --------: | --------: |
-| immigration | 0.5056083 | 0.0006459 |
-| laws        | 0.4921165 | 0.0009925 |
-| enacting    | 0.4585830 | 0.0007630 |
-| enforcing   | 0.4473162 | 0.0009387 |
-| enacted     | 0.4462357 | 0.0008392 |
-| legislation | 0.4425685 | 0.0007689 |
-
-## 3\. `contrast_nns`: contrast the nearest neighbors of two groups
-
-The thrid approach to exploring nearest neighbors, `contrast_nns`, is
-useful if we are comparing two groups and want to identify the terms
-that are significantly different between the two. In this case we
-provide the set of contexts, obtained with `get_context`, for each
-group. `contrast_nns` will compute an ALC embedding for each group, and
-compare ranking of nearest neighbors by taking the ratio of cosine
-similarites. The ratio is informative of how much a given nearest
-neighbor is characteristic of one group. A ratio of \(1\) for a given
-nearest neighbor indicates no difference between the two groups, while
-significant deviations from \(1\) indicate the nearest neighbor is more
-characteristic of one of the two groups. If `bootstrap = TRUE`, this
+The third wrapper function is `conText::contrast_nns`. This wrapper
+function is useful if we are comparing two groups and want to identify
+the terms that are significantly distinctive to each group.
+`contrast_nns` will compute an ALC embedding for each group, identify
+the union of the top N nearest neighbors and, for this set, compute the
+ratio cosine similarities. This ratio is informative of how much a given
+nearest neighbor is characteristic of one group. A ratio of \(1\) for a
+given nearest neighbor indicates no difference between the two groups,
+while significant deviations from \(1\) indicate the nearest neighbor is
+more distinctive to one of the two groups. If `bootstrap = TRUE`, this
 process will be repeated `num_bootstraps` times, sampling with
 replacement, to obtain standard erros around the cosine similarities for
 each group along with the ratio of these. If `permute = TRUE` then
 permutation will be used to identify ratios that significantly deviate
-from \(1\). Note, the numerator in the ratio is defined by `context1`.
+from \(1\).
 
 ``` r
-set.seed(42L)
-contrast_target <- contrast_nns(context1 = contextR$context, context2 = contextD$context, 
-    pre_trained = congress_pretrained_mat, transform_matrix = congress_transform_mat, 
-    transform = TRUE, bootstrap = TRUE, num_bootstraps = 20, permute = TRUE, num_permutations = 100, 
-    candidates = local_vocab, norm = "l2")
+# set seed to replicate sampling
+set.seed(2021L)
+
+# compute ratio
+cnns_df <- contrast_nns(x = immig_corpus, groups = docvars(immig_corpus, "party"), 
+    pre_trained = glove_wvs, transform = TRUE, transform_matrix = khodakA, bootstrap = TRUE, 
+    num_bootstraps = 20, permute = TRUE, num_permutations = 100, candidates = local_vocab, 
+    N = 20, verbose = FALSE)
 ```
 
     ## starting bootstrapping 
@@ -380,162 +359,210 @@ contrast_target <- contrast_nns(context1 = contextR$context, context2 = contextD
     ## starting permutations 
     ## done with permutations
 
-This function outputs a list with three elements: `nns1` and `nns2` are
-equivalent to the ouputs of `bootstrap_nns`. The third element,
-`nns_ratio`, is a dataframe with the full set of candidate nearest
-neighbors order by the ratio of cosine similarities, their standard
-errors and empirical p-value.
-
 ``` r
-knitr::kable(head(contrast_target$nns1))
+# output
+head(cnns_df)
 ```
 
-| Term        |  Estimate | Std.Error | Empirical\_Pvalue |
-| :---------- | --------: | --------: | ----------------: |
-| immigration | 0.5055121 | 0.0005854 |                 0 |
-| laws        | 0.4904284 | 0.0008031 |                 0 |
-| enacting    | 0.4589327 | 0.0006880 |                 1 |
-| enacted     | 0.4461946 | 0.0008479 |                 1 |
-| enforcing   | 0.4461584 | 0.0008864 |                 0 |
-| legislation | 0.4434541 | 0.0009074 |                 1 |
+    ##          feature    value  std.error p.value
+    ## 1    regulations 1.467040 0.02430242       0
+    ## 2      enforcing 1.439571 0.02790152       0
+    ## 3       enforces 1.422304 0.03173212       0
+    ## 4   undocumented 1.414508 0.02159694       0
+    ## 5    noncitizens 1.391774 0.01797173       0
+    ## 6 naturalization 1.389030 0.02087267       0
 
 ``` r
-knitr::kable(head(contrast_target$nns2))
+# note: the numerator in the ratio is determined by whichever group label is
+# first.
+unique(docvars(immig_corpus, "party"))
 ```
 
-| Term        |  Estimate | Std.Error | Empirical\_Pvalue |
-| :---------- | --------: | --------: | ----------------: |
-| reform      | 0.5277022 | 0.0007101 |              0.00 |
-| overhauling | 0.5233232 | 0.0004636 |              0.00 |
-| legislation | 0.5168430 | 0.0007806 |              0.00 |
-| overhaul    | 0.5029213 | 0.0005290 |              0.00 |
-| enact       | 0.4951476 | 0.0004855 |              0.00 |
-| enacting    | 0.4930879 | 0.0004256 |              0.17 |
+    ## [1] "R" "D"
+
+We plot the output of `contrast_nns` using `conText::plot_ratio()` – TO
+BE ADDED.
+
+# Embedding regression
+
+The above framework allows us to explore semantic differences over a
+given grouping variable. However, we may want to control for other
+covariates and, perhap more importantly, speak to the uncertainty
+sorrounding observed differences. In [Rodriguez, Spirling and Stewart
+(2021)](https://github.com/prodriguezsosa/EmbeddingRegression) we show
+how `a la carte` embeddings can be used within a regression-framework
+that allows us to perform statistical inference using embeddings. To do
+so we use the function `conText::conText()`. The data must be a quanteda
+corpus with covariates stored as document variables (`docvars`).
+
+First we specify the formula consisting of the target word of interest,
+*immigration* and the set of covariates –this follows a similar syntax
+as R’s `lm()` and `glm()` functions. To use all covariates in the
+corpus’ docvars simply specify `immigration ~ .`. Similarly, if you
+want to embed the full documents rather than a specific target word,
+specify `. ~ party + gender`. Covariates must either be binary indicator
+variables or discrete variables that can be transformed into binary
+indicator variables e.g. a character or factor variable with three
+states will be automatically transformed by “conText()” into two
+seperate indicator variables with one “baseline” state that is excluded
+from the regression.
+
+Keep in mind, `conText()` calls on `corpus_context()`, so you do not
+need to create a corpus of contexts before running it, simply provide it
+with the original corpus and `conText()` will find all instances of the
+target word along with their respective
+contexts.
 
 ``` r
-knitr::kable(head(contrast_target$nns_ratio))
+model1 <- conText(formula = immigration ~ party + gender, data = cr_corpus, pre_trained = glove_wvs, 
+    transform = TRUE, transform_matrix = khodakA, bootstrap = TRUE, num_bootstraps = 10, 
+    stratify = TRUE, permute = TRUE, num_permutations = 100, window = 6, case_insensitive = TRUE, 
+    verbose = TRUE)
 ```
 
-| Term      | Estimate | Std.Error | Empirical\_Pvalue |
-| :-------- | -------: | --------: | ----------------: |
-| alliance  | 926.7512 |  919.6025 |                 0 |
-| orders    | 736.4114 |  685.8994 |                 0 |
-| minor     | 353.0639 |  384.6441 |                 0 |
-| false     | 343.2215 |  350.2073 |                 0 |
-| insulting | 310.6654 |  311.3354 |                 0 |
-| hands     | 300.0554 |  362.1287 |                 0 |
+    ## 520 instances of immigration found. 
+    ## total observations included in regression: 520 
+    ## starting bootstrapping 
+    ## done with bootstrapping 
+    ## starting permutations 
+    ## done with permutations 
+    ##   Coefficient Normed_Estimate   Std.Error Empirical_Pvalue
+    ## 1     party_R      0.04081586 0.001388125             0.00
+    ## 2    gender_M      0.03278679 0.001904842             0.03
 
-Notice, it is likely that the candidate nearest neighbors with the
-highest ratios are not part of the set of top nearest neighbors for each
-party, and instead will tend to be low-frequency words that by chance
-are mentioned by one group and not the other, yet are not all that
-informative. We suggest sub-setting the `nns_ratio` dataframe to the
-union of the top \(N\) nearest neighbors for each party as below.
+`conText()` outputs a `conText-class` object which is simply a
+`dgCMatrix class` matrix corresponding to the beta coefficients
+(embeddings) with additional attributes including: a table with the
+normed coefficients (excluding the intercept), their std. errors and
+p-values, `@normed_coefficients` (see [Rodriguez, Spirling and Stewart
+(2021)](https://github.com/prodriguezsosa/EmbeddingRegression) for
+details), and the set of features used when creating the embeddings
+`@features`.
+
+Notice, we can combine the coefficients to compute the ALC embeddings
+for the various combinations of the
+covariates.
 
 ``` r
-# define top N of interest
-N <- 30
-
-# first get each party's nearest neighbors (output by the contrast_nns function)
-nnsR <- contrast_target$nns1
-nnsD <- contrast_target$nns2
-
-# subset to the union of top N nearest neighbors for each party
-top_nns <- union(nnsR$Term[1:N], nnsD$Term[1:N])
-
-# identify which of these are shared
-shared_nns <- intersect(nnsR$Term[1:N], nnsD$Term[1:N])
-
-# subset nns_ratio (output by contrast_nns) to the union of the top nearest
-# neighbors
-nns_ratio <- contrast_target$nns_ratio %>% dplyr::filter(Term %in% top_nns) %>% mutate(group = case_when(Term %in% 
-    nnsR$Term[1:N] & !(Term %in% nnsD$Term[1:N]) ~ "Republican", !(Term %in% nnsR$Term[1:N]) & 
-    Term %in% nnsD$Term[1:N] ~ "Democrat", Term %in% shared_nns ~ "shared"), significant = if_else(Empirical_Pvalue < 
-    0.01, "yes", "no"))
-
-# order Terms by Estimate
-nns_ratio <- nns_ratio %>% mutate(absdev = abs(1 - Estimate)) %>% arrange(-absdev) %>% 
-    mutate(tokenID = 1:nrow(.)) %>% mutate(Term_Sig = if_else(significant == "yes", 
-    paste0(Term, "*"), Term))
+# D-dimensional beta coefficients the intercept in this case is the ALC embedding
+# for female Democrats
+model1[, 1:5]
 ```
 
-We can then plot these nearest neighbors, ranked on the \(y\) axis by
-the magnitude of their deviation from \(1\) (in absolute terms) and on
-the x-axis by the actual deviation. The more a nearest neighbor deviates
-from \(1\), on either side, the more distinctive it is of one of the two
-groups.
+    ## 3 x 5 sparse Matrix of class "dgCMatrix"
+    ##                                                                            
+    ## party_R      0.0179647134  0.007890508  0.01564005 0.001406862 -0.013316186
+    ## gender_M    -0.0109535752  0.004144968 -0.01788107 0.004825488 -0.006383699
+    ## (Intercept)  0.0003681533 -0.019493154 -0.01977436 0.041665085  0.023799931
 
 ``` r
-# plot
-ggplot() + geom_point(aes(x = Estimate, y = tokenID, color = group, shape = group), 
-    data = nns_ratio, size = 2) + geom_vline(xintercept = 1, colour = "black", linetype = "dashed", 
-    size = 0.5) + geom_text(aes(x = Estimate, y = tokenID, label = Term_Sig), data = nns_ratio, 
-    hjust = if_else(nns_ratio$Estimate > 1, -0.2, 1.2), vjust = 0.25, size = 5) + 
-    annotate(geom = "text", x = c(0.5, 1.5), y = c(55, 55), label = c("more Democrat", 
-        "more Republican"), size = 6) + scale_color_manual(values = c("black", "gray30", 
-    "gray60")) + xlim(0, 2) + ylim(0, 60) + ylab("") + xlab("cosine similarity ratio \n (Republican/Democrat)") + 
-    theme(panel.background = element_blank(), plot.title = element_text(size = 18, 
-        hjust = 0.5, color = "blue"), axis.text.x = element_text(size = 16), axis.text.y = element_text(size = 16), 
-        axis.title.y = element_text(size = 16, margin = margin(t = 0, r = 15, b = 0, 
-            l = 15)), axis.title.x = element_text(size = 16, margin = margin(t = 15, 
-            r = 0, b = 15, l = 0)), legend.text = element_text(size = 16), legend.title = element_blank(), 
-        legend.key = element_blank(), legend.position = "top", legend.spacing.x = unit(0.25, 
-            "cm"), plot.margin = unit(c(1, 1, 0, 0), "cm"))
+# beta coefficients can be combined to get each group's ALC embedding
+DF_wv <- model1["(Intercept)", ]  # (D)emocrat - (F)emale 
+DM_wv <- model1["(Intercept)", ] + model1["gender_M", ]  # (D)emocrat - (M)ale 
+RF_wv <- model1["(Intercept)", ] + model1["party_R", ]  # (R)epublican - (F)emale 
+RM_wv <- model1["(Intercept)", ] + model1["party_R", ] + model1["gender_M", ]  # (R)epublican - (M)ale 
+
+# nearest neighbors
+nns(rbind(DF_wv, DM_wv), N = 10, pre_trained = glove_wvs, candidates = model1@features)
 ```
 
-<img src="https://github.com/prodriguezsosa/conText/blob/master/vignettes/nns1.png" width="100%" />
+    ## # A tibble: 20 x 4
+    ##    target feature          rank value
+    ##    <fct>  <chr>           <int> <dbl>
+    ##  1 DF_wv  enacting            1 0.489
+    ##  2 DF_wv  reform              2 0.488
+    ##  3 DF_wv  legislation         3 0.471
+    ##  4 DF_wv  reforming           4 0.444
+    ##  5 DF_wv  enacted             5 0.443
+    ##  6 DF_wv  reforms             6 0.427
+    ##  7 DF_wv  immigration         7 0.422
+    ##  8 DF_wv  amendments          8 0.387
+    ##  9 DF_wv  implement           9 0.382
+    ## 10 DF_wv  bipartisan         10 0.378
+    ## 11 DM_wv  reform              1 0.493
+    ## 12 DM_wv  legislation         2 0.464
+    ## 13 DM_wv  reforming           3 0.456
+    ## 14 DM_wv  enacting            4 0.439
+    ## 15 DM_wv  reforms             5 0.410
+    ## 16 DM_wv  bipartisan          6 0.400
+    ## 17 DM_wv  immigration         7 0.396
+    ## 18 DM_wv  enacted             8 0.392
+    ## 19 DM_wv  comprehensively     9 0.364
+    ## 20 DM_wv  priorities         10 0.363
 
-Below is alternative approach to visualizing these results.
+We can also access and plot –using `plot_conText()`– the normed
+coefficients.
 
 ``` r
-# another way of visualizing NNS
-nns_ratio$EstimateJitter <- jitter(nns_ratio$Estimate, amount = 0.5)
-nns_ratio <- nns_ratio %>% arrange(Estimate) %>% mutate(EstimateJitter = Estimate + 
-    seq(0.2, 0.2 * nrow(.), 0.2))
-
-ggplot() + geom_point(aes(x = EstimateJitter, y = c(0), color = group, shape = group), 
-    data = nns_ratio, size = 3) + scale_color_manual(values = c("black", "gray30", 
-    "gray60")) + geom_text(aes(x = EstimateJitter, y = c(0), label = Term_Sig), data = nns_ratio, 
-    hjust = rep(c(-0.2, 1.2), length(nns_ratio$EstimateJitter)/2), vjust = 0.5, size = 4, 
-    angle = 90) + theme(panel.background = element_blank(), legend.text = element_text(size = 14), 
-    legend.title = element_blank(), legend.key = element_blank(), legend.position = "top", 
-    axis.text.y = element_blank(), axis.text.x = element_blank(), axis.title.y = element_blank(), 
-    axis.title.x = element_blank(), axis.ticks.y = element_blank(), axis.ticks.x = element_blank(), 
-    legend.spacing.x = unit(0.25, "cm"))
+model1@normed_cofficients
 ```
 
-<img src="https://github.com/prodriguezsosa/conText/blob/master/vignettes/nns2.png" width="100%" />
+    ##   Coefficient Normed_Estimate   Std.Error Empirical_Pvalue
+    ## 1     party_R      0.04081586 0.001388125             0.00
+    ## 2    gender_M      0.03278679 0.001904842             0.03
 
-# Prototypical contexts:
+**PLOT HERE**
 
-Lastly, we may be interested in identifying the most prototypical
-contexts within which a given term is used by each group. To do this we
-use the `prototypical_context`
-function.
+# Local GloVe and transformation matrix
+
+If (a) you have a large enough corpus to train a full GloVe embeddings
+model and (b) your corpus is distinctive in some way –e.g. a collection
+of articles from scientific journals–, then you may want to consider
+estimating your own set of embeddings and transformation matrix. The
+first step is to estimate GloVe embeddings on the full corpus which you
+will then use as your pre-trained embeddings.
+
+## Estimate GloVe embeddings
+
+This example is taken (with minor changes) from [this quanteda
+vignette](https://quanteda.io/articles/pkgdown/replication/text2vec.html)
+on computing GloVe embeddings using `quanteda` and `text2vec`.
+
+## Estimating the transformation matrix
+
+Given a corpus and it’s corresponding GloVe embeddings, we can compute a
+corresponding transformation matrix using
+`conText::compute_transform()`.
 
 ``` r
-republican_pr <- prototypical_context(context = contextR$context, pre_trained = congress_pretrained_mat, 
-    transform = TRUE, transform_matrix = congress_transform_mat, N = 3, norm = "l2")
-democrat_pr <- prototypical_context(context = contextD$context, pre_trained = congress_pretrained_mat, 
-    transform = TRUE, transform_matrix = congress_transform_mat, N = 3, norm = "l2")
+# compute transform
+cr_transform <- compute_transform(x = cr_fcm, pre_trained = cr_glove_wvs, weighting = 100)
 ```
-
-    ## most prototypical contexts for Republican speakers
 
 ``` r
-contextR$context[republican_pr$doc_id]
+#---------------------------------
+# check
+#---------------------------------
+
+# create document-embedding matrix using our locally trained GloVe embeddings and
+# transformation matrix
+immig_dem_local <- dem(x = immig_dfm, pre_trained = cr_glove_wvs, transform = TRUE, 
+    transform_matrix = cr_transform, verbose = TRUE)
+
+# take the column average to get a single 'corpus-wide' embedding
+immig_wv_local <- colMeans(immig_dem_local)
+
+# find nearest neighbors for overall immigraiton embedding
+find_nns(immig_wv_local, pre_trained = cr_glove_wvs, N = 10, candidates = immig_dem_local@features)
+
+# we can also compare to corresponding pre-trained embedding
+sim2(x = matrix(immig_wv_local, nrow = 1), y = matrix(cr_glove_wvs["immigration", 
+    ], nrow = 1), method = "cosine", norm = "l2")
 ```
 
-    ## [1] "has said well dont like these laws law requires our immigration authorities"                        
-    ## [2] "immigration law would say that our laws are true and just and"                                      
-    ## [3] "these immigration laws law requires our authorities iceimmigration and customs enforcementwhen they"
+# Other
 
-    ## most prototypical contexts for Democrat speakers
+## Feature emebdding matrix
+
+## Embedding full documents
+
+In this example we will use open-ended responses to ANES 2016 question:
+“what are the most important issues facing the country?”.
 
 ``` r
-contextD$context[democrat_pr$doc_id]
-```
+# ANES 2016 open-ends on most important issues facing country
+anes2016 <- readRDS(paste0(path_to_data, "anes2016.rds"))
 
-    ## [1] "our broken immigration system need comprehensive reform and act congress which the"    
-    ## [2] "republicans should work with pass comprehensive reform bill fix our broken immigration"
-    ## [3] "those that want bring about comprehensive reform and reform our immigration system"
+## build corpus
+anes2016_corpus <- corpus(anes2016$response, docvars = anes2016[, c("ideology", "gender")])
+```

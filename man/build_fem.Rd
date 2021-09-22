@@ -2,19 +2,19 @@
 % Please edit documentation in R/object-builder.R
 \name{build_fem}
 \alias{build_fem}
-\title{build a \linkS4class{fem} object}
+\title{build a \code{fem-class} object}
 \usage{
 build_fem(Class = "fem", x_fem, features = character(), Dimnames = list())
 }
 \arguments{
 \item{Class}{defines the class of this object (fixed)}
 
+\item{x_fem}{a \verb{dgCMatrix class} matrix}
+
 \item{features}{features used in computing the embeddings}
 
 \item{Dimnames}{row (features) and columns (NULL) names}
-
-\item{x}{a \link{dgCMatrix class} matrix}
 }
 \description{
-build a \linkS4class{fem} object
+build a \code{fem-class} object
 }

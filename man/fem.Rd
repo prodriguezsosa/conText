@@ -7,20 +7,20 @@
 fem(x, pre_trained, transform = TRUE, transform_matrix, verbose = TRUE)
 }
 \arguments{
-\item{x}{a \linkS4class{fcm} object}
+\item{x}{a \code{fcm-class} object}
 
 \item{pre_trained}{a F x D matrix of numeric values corresponding to pretrained embeddings
 F = number of features and D = embedding dimensions.
 rownames(pre_trained) = set of features for which there is a pre-trained embedding}
 
-\item{transform}{(logical) if TRUE (default) apply the \link{a la carte} transformation, if FALSE ouput untransformed averaged embedding}
+\item{transform}{(logical) if TRUE (default) apply the \verb{a la carte} transformation, if FALSE ouput untransformed averaged embedding}
 
 \item{transform_matrix}{a D x D matrix of numeric values corresponding to the `a la carte`` transformation matrix}
 
 \item{verbose}{logical - report the documents/features that had no overlap with the provided pre-trained embeddings}
 }
 \value{
-a \linkS4class{fem} object
+a \code{fem-class} object
 }
 \description{
 Given a featureco-occurrence matrix for each feature,
@@ -33,12 +33,38 @@ to obtain the corresponding \verb{a la carte} embeddings.
 (see eq 2: https://arxiv.org/pdf/1805.05388.pdf)
 }
 \examples{
+
+library(quanteda)
+
 ## embed all features
-corpus_fcm <- create_fcm(cr_corpus_sample, features_remove = quanteda::stopwords('en'))
-corpus_fem <- fem(corpus_fcm, pre_trained = glove_subset, transform = TRUE, transform_matrix = khodakA, verbose = TRUE)
+
+#' # tokenize text
+cr_toks <- tokens(cr_sample_corpus)
+
+# construct document-feature-matrix
+cr_fcm <- fcm(cr_toks, context = "window", window = 6,
+count = "weighted", weights = 1 / (1:6), tri = FALSE)
+# set tri = FALSE to work with fem
+
+# construct feature-embedding-matrix
+cr_fem <- fem(cr_fcm, pre_trained = glove_subset,
+transform = TRUE, transform_matrix = khodakA, verbose = FALSE)
+dim(cr_fem)
 
 ## embed specific target features
-corpus_fcm <- create_fcm(cr_corpus_sample, target = c('immigration','welfare'), features_remove = quanteda::stopwords('en'))
-corpus_fem <- fem(corpus_fcm, pre_trained = glove_subset, transform = TRUE, transform_matrix = khodakA, verbose = TRUE)
+
+feats <- c('immigration', 'immigrants')
+
+# create feature co-occurrence matrix for features of interest
+cr_fcm <- tokens_select(cr_toks, pattern = feats, padding = TRUE) \%>\%
+# set padding = TRUE here to avoid making non-adjecnt words adjacent
+fcm(context = "window", window = 6,
+count = "weighted", weights = 1 / (1:6), tri = FALSE)
+# set tri = FALSE to work with fem and dem
+
+# construct feature-embedding-matrix
+cr_fem <- fem(cr_fcm, pre_trained = glove_subset,
+transform = TRUE, transform_matrix = khodakA, verbose = FALSE)
+dim(cr_fem)
 }
 \keyword{fem}

@@ -5,7 +5,7 @@
 \alias{fem-class}
 \title{Virtual class "fem" for a feature-embedding matrix}
 \description{
-The \link{fem class} is \link{dgCMatrix class} matrix with additional slots:
+The \verb{fem class} is \verb{dgCMatrix class} matrix with additional slots:
 }
 \section{Slots}{
 
@@ -14,7 +14,7 @@ The \link{fem class} is \link{dgCMatrix class} matrix with additional slots:
 }}
 
 \seealso{
-\link{fem}
+\code{fem}
 }
 \keyword{fem}
 \keyword{internal}

@@ -3,17 +3,17 @@
 \docType{data}
 \name{khodakA}
 \alias{khodakA}
-\title{Khodak et al's transformation matrix for GloVe}
+\title{Khodak et al's transformation matrix for GloVe 300}
 \format{
 A 300 by 300 matrix.
 }
 \source{
-\url{https://github.com/NLPrinceton/ALaCarte}
+\url{https://github.com/NLPrinceton/ALaCarte/tree/master/transform}
 }
 \usage{
 khodakA
 }
 \description{
-A square matrix corresponding to the transformation matrix computed by Khodak et al.
+A square matrix corresponding to the transformation matrix computed by Khodak et al. for 300-dimensional GloVe
 }
 \keyword{datasets}

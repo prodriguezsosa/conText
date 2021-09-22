@@ -9,28 +9,34 @@
 #' to obtain the corresponding `a la carte` document embeddings.
 #' (see eq 2: https://arxiv.org/pdf/1805.05388.pdf)
 #'
-#' @param x a [dfm-class] object
+#' @param x a `dfm-class` object
 #' @param pre_trained a F x D matrix of numeric values corresponding to pretrained embeddings
 #' F = number of features and D = embedding dimensions.
 #' rownames(pre_trained) = set of features for which there is a pre-trained embedding
-#' @param transform (logical) if TRUE (default) apply the [a la carte] transformation, if FALSE ouput untransformed averaged embedding
-#' @param transform_matrix a D x D matrix of numeric values corresponding to the `a la carte`` transformation matrix
-#' @param verbose logical - report the documents/features that had no overlap with the provided pre-trained embeddings
+#' @param transform (logical) if TRUE (default) apply the `a la carte` transformation,
+#' if FALSE ouput untransformed averaged embedding
+#' @param transform_matrix a D x D matrix of numeric values corresponding
+#' to the `a la carte`` transformation matrix
+#' @param verbose logical - report the documents/features that had
+#' no overlap with the provided pre-trained embeddings
 #'
-#' @return a [dem-class] object
+#' @return a `dem-class` object
 #' @export
 #' @rdname dem
 #' @keywords dem
 #' @examples
 #'
+#' library(quanteda)
+#'
 #' # tokenize text
-#' anes2016_toks <- tokenize(anes2016_sample_corpus)
+#' anes2016_toks <- tokens(anes2016_sample_corpus)
 #'
 #' # construct document-feature-matrix
 #' anes2016_dfm <- dfm(anes2016_toks)
 #'
 #' # construct document-embedding-matrix
-#' anes2016_dem <- dem(anes2016_dfm, pre_trained = glove_subset, transform = TRUE, transform_matrix = khodakA, verbose = TRUE)
+#' anes2016_dem <- dem(anes2016_dfm, pre_trained = glove_subset,
+#' transform = TRUE, transform_matrix = khodakA, verbose = FALSE)
 #'
 dem <- function(x, pre_trained, transform = TRUE, transform_matrix, verbose = TRUE){
 
@@ -68,7 +74,7 @@ dem <- function(x, pre_trained, transform = TRUE, transform_matrix, verbose = TR
   # create `dem` class object
   result <- build_dem(Class = 'dem',
                      x_dem = result,
-                     docvars = docvars(x)[included,,drop=FALSE],
+                     docvars = quanteda::docvars(x)[included,,drop=FALSE],
                      features = overlapping_features,
                      Dimnames = list(
                        rows = rownames(x)[included],

@@ -6,36 +6,36 @@
 \usage{
 conText(
   formula,
-  corpus,
+  data,
   pre_trained,
   transform = TRUE,
   transform_matrix,
-  features = character(0),
   bootstrap = TRUE,
   num_bootstraps = 20,
   stratify = TRUE,
   permute = TRUE,
   num_permutations = 100,
-  window = 6,
-  valuetype = "fixed",
+  window = 6L,
+  valuetype = c("glob", "regex", "fixed"),
   case_insensitive = TRUE,
+  hard_cut = FALSE,
   verbose = TRUE
 )
 }
 \arguments{
 \item{formula}{a symbolic description of the model to be fitted}
 
-\item{corpus}{a quanteda \code{corpus}}
+\item{data}{a quanteda \code{corpus}}
 
 \item{pre_trained}{a F x D matrix of numeric values corresponding to pretrained embeddings
 F = number of features and D = embedding dimensions.
 rownames(pre_trained) = set of features for which there is a pre-trained embedding}
 
-\item{transform}{(logical) if TRUE (default) apply the \link{a la carte} transformation, if FALSE ouput untransformed averaged embedding}
+\item{transform}{(logical) if TRUE (default) apply the \verb{a la carte} transformation,
+if FALSE ouput untransformed averaged embedding}
 
-\item{transform_matrix}{a D x D matrix of numeric values corresponding to the `a la carte`` transformation matrix}
-
-\item{features}{(character) a character vector of features to use when computing embedding}
+\item{transform_matrix}{a D x D matrix of numeric values corresponding
+to the `a la carte`` transformation matrix}
 
 \item{bootstrap}{(logical) if TRUE, bootstrap regression - required to get standard errors for normed coefficients}
 
@@ -56,50 +56,51 @@ exact matching. See \link[quanteda]{valuetype} for details.}
 \item{case_insensitive}{logical; if \code{TRUE}, ignore case when matching a
 \code{pattern} or \link[quanteda]{dictionary} values}
 
-\item{verbose}{logical - report the documents/features that had no overlap with the provided pre-trained embeddings}
+\item{hard_cut}{logical - if TRUE then the text must have window x 2 tokens,
+if FALSE it can have window x 2 or fewer (e.g. if a doc begins with a target word,
+then text will have window tokens rather than window x 2)}
+
+\item{verbose}{logical - report the documents/features that had
+no overlap with the provided pre-trained embeddings}
 }
 \value{
-a \linkS4class{conText} object
+a \code{conText-class} object
 }
 \description{
 Estimate an embedding regression model
 }
 \examples{
 
-## given a target word
-model1 <- conText(formula = immigration ~ party, # equivalent to: immigration ~ . (since party is the only covariate in this corpus)
-                  corpus = cr_corpus_sample,
+## given the target word "immigration"
+model1 <- conText(formula = immigration ~ party + gender,
+                  data = cr_sample_corpus,
                   pre_trained = glove_subset,
                   transform = TRUE, transform_matrix = khodakA,
                   bootstrap = TRUE, num_bootstraps = 10,
                   stratify = TRUE,
                   permute = TRUE, num_permutations = 100,
-                  window = 6, valuetype = "fixed",
-                  case_insensitive = TRUE,
+                  window = 6, case_insensitive = TRUE,
                   verbose = TRUE)
 
-# the party covariate is automatically "dummified"
+# notice, non-binary covariates are automatically "dummified"
 rownames(model1)
 
-# the beta coefficient in this case corresponds to the alc embedding
-# of immigration for Republican party speeches
-model1[,1:5]
+# the beta coefficient 'partyR' in this case corresponds to the alc embedding
+# of "immigration" for Republican party speeches
 
 # (normed) coefficient table
 model1@normed_cofficients
 
 ## embedding full documents, not just a target word
 
-model1 <- conText(formula = . ~ party,
-                  corpus = cr_corpus_sample,
+model1 <- conText(formula = . ~ ideology,
+                  data = anes2016_sample_corpus,
                   pre_trained = glove_subset,
                   transform = TRUE, transform_matrix = khodakA,
                   bootstrap = TRUE, num_bootstraps = 10,
                   stratify = TRUE,
                   permute = TRUE, num_permutations = 100,
-                  window = 6, valuetype = "fixed",
-                  case_insensitive = TRUE,
-                  verbose = TRUE)
+                  window = 6, verbose = FALSE)
 
 }
 \keyword{conText}

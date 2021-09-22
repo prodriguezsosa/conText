@@ -21,10 +21,24 @@ compute transformation matrix A
 }
 \examples{
 
-# note, cr_corpus_sample is too small to produce sensical word vectors
-features <- prune_features(cr_corpus_sample, frequency_min = 5) \%>\% .$feature # subset features
-cr_fcm <- create_fcm(x = cr_corpus_sample, window = 6L, target = features, features_keep = features) # create feature co-occurrence matrix
-cr_glove <- compute_glove(x = cr_fcm, rank = 300, x_max = 10, n_iter = 10) # estimate local glove embeddings
-cr_transform <- compute_transform(x = cr_fcm, pre_trained = cr_glove, weighting = 'log') # estimate local transform
+library(quanteda)
+
+# note, cr_sample_corpus is too small to produce sensical word vectors
+
+# tokenize
+cr_toks <- tokens(cr_sample_corpus)
+
+# construct feature-co-occurrence matrix
+cr_fcm <- fcm(cr_toks, context = "window", window = 6,
+count = "weighted", weights = 1 / (1:6), tri = FALSE)
+
+# you will generally want to estimate a new (corpus-specific)
+# GloVe model given the (small) size of our cr_corpus_sample
+# we will use glove_subset instead
+# see the Quick Start Guide to see a full example
+
+# estimate transform
+cr_transform <- compute_transform(x = cr_fcm,
+pre_trained = glove_subset, weighting = 'log')
 }
 \keyword{compute_transform}

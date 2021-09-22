@@ -10,6 +10,7 @@ corpus_context(
   window = 6L,
   valuetype = c("glob", "regex", "fixed"),
   case_insensitive = TRUE,
+  hard_cut = FALSE,
   exclude_pattern = TRUE,
   verbose = TRUE
 )
@@ -29,7 +30,11 @@ exact matching. See \link[quanteda]{valuetype} for details.}
 \item{case_insensitive}{logical; if \code{TRUE}, ignore case when matching a
 \code{pattern} or \link[quanteda]{dictionary} values}
 
-\item{exclude_pattern}{(logical) if TRUE, exclude pattern from corpus text variable}
+\item{hard_cut}{logical - if TRUE then the text must have window x 2 tokens,
+if FALSE it can have window x 2 or fewer (e.g. if a doc begins with a target word,
+then text will have window tokens rather than window x 2)}
+
+\item{exclude_pattern}{(logical) if TRUE, pattern/keyword is excluded from the text documents}
 
 \item{verbose}{(logical) if TRUE, report the total number of target instances found.}
 }
@@ -47,7 +52,8 @@ Contexts with higher typicality scores are more representative.
 }
 \examples{
 
-corpus_context(x = cr_corpus_sample, pattern = "immigration", window = 6L)
+immig_corpus <- corpus_context(x = cr_sample_corpus,
+pattern = "immigration", window = 6L, verbose = TRUE)
 
 }
 \keyword{corpus_context}

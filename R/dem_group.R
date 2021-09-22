@@ -2,16 +2,18 @@
 #'
 #' Average embeddings in a dem by a grouping variable, by averaging over columns within groups
 #' and creating new "documents" with the group labels.
-#' Similar in essence to [dfm_group].
+#' Similar in essence to `dfm_group`.
 #'
-#' @param x a [dem]
+#' @param x a `dem`
 #' @param groups a character or factor variable equal in length to the number of documents
 #'
-#' @return a [dem-class] object
+#' @return a `dem-class` object
 #' @export
 #' @rdname dem_group
 #' @keywords dem_group
 #' @examples
+#'
+#' library(quanteda)
 #'
 #' # tokenize text
 #' anes2016_toks <- tokens(anes2016_sample_corpus)
@@ -20,10 +22,12 @@
 #' anes2016_dfm <- dfm(anes2016_toks)
 #'
 #' # construct document-embedding-matrix
-#' anes2016_dem <- dem(anes2016_dfm, pre_trained = glove_subset, transform = TRUE, transform_matrix = khodakA, verbose = TRUE)
+#' anes2016_dem <- dem(anes2016_dfm, pre_trained = glove_subset,
+#' transform = TRUE, transform_matrix = khodakA, verbose = FALSE)
 #'
 #' # group document-embedding-matrix
-#' anes2016_dem_ideology <- dem_group(anes2016_dem, groups = anes2016_dem@docvars$ideology)
+#' anes2016_dem_ideology <- dem_group(anes2016_dem,
+#' groups = anes2016_dem@docvars$ideology)
 #'
 dem_group <- function(x, groups = NULL){
 

@@ -1,6 +1,6 @@
 # About
 
-An R package for estimating text embedding regression models as described in [Rodriguez, Spirling and Stewart (2021)](https://github.com/prodriguezsosa/EmbeddingRegression). 
+An R package for computing feature embeddings `a la carte` and estimating text embedding regression models as described in [Rodriguez, Spirling and Stewart (2021)](https://github.com/prodriguezsosa/EmbeddingRegression).
 
 # How to Install
 
@@ -8,14 +8,15 @@ An R package for estimating text embedding regression models as described in [Ro
 
 # Datasets
 
-To use conText you will need three datasets: 
+To use **conText** you will need three datasets: 
 
-1. A **corpus** with the text and corresponding metadata you want to evaluate.
-2. A set of **pre-trained embeddings** (a V by D matrix) used to embed context words.
-3. A **transformation matrix** (D by D) specific to the pre-trained embeddings.
+1. A (quanteda) **corpus** with the documents and corresponding document variables you want to evaluate.
+2. A set of (GloVe) **pre-trained embeddings**.
+3. A **transformation matrix** specific to the pre-trained embeddings.
 
-In [this Dropbox folder](https://www.dropbox.com/sh/jsyrag7opfo7l7i/AAB1z7tumLuKihGu2-FDmhmKa?dl=0) (see the /data folder) we have included the three datasets we use in the Quick Start Guide along with their documentation. Due to memory constraints we could not include them directly in the package. We'll be adding other useful datasets to this folder in the near future.
+In [this Dropbox folder](https://www.dropbox.com/sh/jsyrag7opfo7l7i/AAB1z7tumLuKihGu2-FDmhmKa?dl=0) (see the /data folder) we have included the three datasets we use in the Quick Start Guide along with their documentation (see the /man folder) and source files (see the /data-raw folder).
 
-# Quick Start Guide
+# Quick Start Guides
 
-Check out this [Quick Start Guide](https://github.com/prodriguezsosa/conText/blob/master/vignettes/quickstart.md) to get going with `conText`. If it makes sense to estimate your own embeddings and transformation matrix, *also* check out this [Quick Start Guide - Local Transform](https://github.com/prodriguezsosa/conText/blob/master/vignettes/quickstart_local_transform.md).
+Check out this [Quick Start Guide](https://github.com/prodriguezsosa/conText/blob/develop/vignettes/quickstart.md) to get going with `conText`.
+

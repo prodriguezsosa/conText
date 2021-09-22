@@ -20,9 +20,10 @@
 #' @export
 #' @rdname corpus_context
 #' @keywords corpus_context
-#' @example
+#' @examples
 #'
-#' corpus_context(x = cr_sample_corpus, pattern = "immigration", window = 6L)
+#' immig_corpus <- corpus_context(x = cr_sample_corpus,
+#' pattern = "immigration", window = 6L, verbose = TRUE)
 #'
 corpus_context <- function(x, pattern, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, exclude_pattern = TRUE, verbose = TRUE){
 
@@ -59,10 +60,10 @@ corpus_context <- function(x, pattern, window = 6L, valuetype = c("glob", "regex
     for(i in 1:length(pattern_tab)) cat(unname(pattern_tab[i]), "instances of", names(pattern_tab[i]) ,"found.", "\n")}
 
   # merge with docvars
-  kwic_x <- left_join(kwic_x, cbind("docname" = quanteda::docnames(x), quanteda::docvars(x)), by = "docname")
+  kwic_x <- dplyr::left_join(kwic_x, cbind("docname" = quanteda::docnames(x), quanteda::docvars(x)), by = "docname")
 
   # create corpus
-  result <- corpus(kwic_x$context, docvars = kwic_x[,setdiff(colnames(kwic_x), c('docname', 'context'))])
+  result <- quanteda::corpus(kwic_x$context, docvars = kwic_x[,setdiff(colnames(kwic_x), c('docname', 'context'))])
 
   return(result)
 }

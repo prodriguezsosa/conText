@@ -1,9 +1,9 @@
 # documentation function -------
 
-#' build a [dem-class] object
+#' build a `dem-class` object
 #'
 #' @param Class defines tha class of this object (fixed)
-#' @param x a [dgCMatrix class] matrix
+#' @param x_dem a `dgCMatrix class` matrix
 #' @param docvars document covariates, inherited from dfm and corpus,
 #' subset to embeddable documents
 #' @param features features used in computing the embeddings
@@ -23,10 +23,10 @@ build_dem <- function(Class = 'em',
   return(result)
 }
 
-#' build a [fem-class] object
+#' build a `fem-class` object
 #'
 #' @param Class defines the class of this object (fixed)
-#' @param x a [dgCMatrix class] matrix
+#' @param x_fem a `dgCMatrix class` matrix
 #' @param features features used in computing the embeddings
 #' @param Dimnames row (features) and columns (NULL) names
 #' @export
@@ -43,10 +43,10 @@ build_fem <- function(Class = 'fem',
 }
 
 
-#' build a [conText-class] object
+#' build a `conText-class` object
 #'
 #' @param Class defines the class of this object (fixed)
-#' @param x a [dgCMatrix class] matrix
+#' @param x_conText a `dgCMatrix class` matrix
 #' @param normed_cofficients a data.frame withe the normed coefficients and
 #' other statistics
 #' @param features features used in computing the embeddings

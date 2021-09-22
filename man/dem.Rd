@@ -7,20 +7,23 @@
 dem(x, pre_trained, transform = TRUE, transform_matrix, verbose = TRUE)
 }
 \arguments{
-\item{x}{a \linkS4class{dfm} object}
+\item{x}{a \code{dfm-class} object}
 
 \item{pre_trained}{a F x D matrix of numeric values corresponding to pretrained embeddings
 F = number of features and D = embedding dimensions.
 rownames(pre_trained) = set of features for which there is a pre-trained embedding}
 
-\item{transform}{(logical) if TRUE (default) apply the \link{a la carte} transformation, if FALSE ouput untransformed averaged embedding}
+\item{transform}{(logical) if TRUE (default) apply the \verb{a la carte} transformation,
+if FALSE ouput untransformed averaged embedding}
 
-\item{transform_matrix}{a D x D matrix of numeric values corresponding to the `a la carte`` transformation matrix}
+\item{transform_matrix}{a D x D matrix of numeric values corresponding
+to the `a la carte`` transformation matrix}
 
-\item{verbose}{logical - report the documents/features that had no overlap with the provided pre-trained embeddings}
+\item{verbose}{logical - report the documents/features that had
+no overlap with the provided pre-trained embeddings}
 }
 \value{
-a \linkS4class{dem} object
+a \code{dem-class} object
 }
 \description{
 Given a document-feature matrix for each document,
@@ -33,7 +36,18 @@ to obtain the corresponding \verb{a la carte} document embeddings.
 (see eq 2: https://arxiv.org/pdf/1805.05388.pdf)
 }
 \examples{
-corpus_dfm <- create_dfm(cr_corpus_sample, features_remove = quanteda::stopwords('en'))
-corpus_dem <- dem(corpus_dfm, pre_trained = glove_subset, transform = TRUE, transform_matrix = khodakA, verbose = TRUE)
+
+library(quanteda)
+
+# tokenize text
+anes2016_toks <- tokens(anes2016_sample_corpus)
+
+# construct document-feature-matrix
+anes2016_dfm <- dfm(anes2016_toks)
+
+# construct document-embedding-matrix
+anes2016_dem <- dem(anes2016_dfm, pre_trained = glove_subset,
+transform = TRUE, transform_matrix = khodakA, verbose = FALSE)
+
 }
 \keyword{dem}

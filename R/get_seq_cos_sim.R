@@ -4,7 +4,7 @@
 #' @param x a character vector - this is the set of documents (corpus) of interest
 #' @param seqvar ordered variable such as list of dates or ordered iseology scores
 #' @param target a character vector - target word
-#' @param candidates character vector defining vocabulary to subset conmparison to
+#' @param candidates (character) vector of features of interest
 #' @param pre_trained a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions
 #' @param transform_matrix a D x D transformation matrix
 #' @param window integer - defines the size of a context (words around the target)
@@ -18,19 +18,22 @@
 #' @param verbose logical - if TRUE, report the total number of target instances found, and
 #' report the observations that had no overlap the provided pre-trained embeddings
 #'
-#' @return
+#' @return a data.frame with one column for
+#' each candidate term and one column for seqvar
 #' @export
 #'
 #' @examples
-#' # load corpus
-#' corpus <- sample_corpus
-#' pre_trained <- sample_glove
-#' transform_matrix <- khodakA
+#'
+#' library(quanteda)
 #'
 #' # gen sequence var (here: year)
-#' corpus$year <- rep(2011:2014, each = 250)
-#' seqvar <- corpus$year
-#' cos_simsdf <- get_ts_cos_sim(x = corpus$speech, seqvar = seqvar, target = "equal", candidates = c("and", "the"), pre_trained = pre_trained, transform_matrix = transform_matrix)
+#' docvars(cr_sample_corpus, 'year') <- rep(2011:2014, each = 50)
+#' cos_simsdf <- get_seq_cos_sim(x = cr_sample_corpus,
+#' seqvar = docvars(cr_sample_corpus, 'year'),
+#' target = "equal",
+#' candidates = c("immigration", "immigrants"),
+#' pre_trained = glove_subset,
+#' transform_matrix = khodakA)
 get_seq_cos_sim <- function(x,
                            seqvar,
                            target,

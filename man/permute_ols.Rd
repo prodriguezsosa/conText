@@ -12,7 +12,7 @@ permute_ols(Y = NULL, X = NULL)
 \item{X}{data.frame of model independent variables (covariates)}
 }
 \value{
-list with two elements, \code{betas} = list of beta_cofficients (D dimensional vectors);
+list with two elements, \code{betas} = list of beta_coefficients (D dimensional vectors);
 \code{normed_betas} = tibble with the norm of the non-intercept coefficients
 }
 \description{

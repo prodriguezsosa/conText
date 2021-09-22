@@ -2,7 +2,7 @@
 % Please edit documentation in R/object-builder.R
 \name{build_dem}
 \alias{build_dem}
-\title{build a \linkS4class{dem} object}
+\title{build a \code{dem-class} object}
 \usage{
 build_dem(
   Class = "em",
@@ -15,15 +15,15 @@ build_dem(
 \arguments{
 \item{Class}{defines tha class of this object (fixed)}
 
+\item{x_dem}{a \verb{dgCMatrix class} matrix}
+
 \item{docvars}{document covariates, inherited from dfm and corpus,
 subset to embeddable documents}
 
 \item{features}{features used in computing the embeddings}
 
 \item{Dimnames}{row (documents) and columns (NULL) names}
-
-\item{x}{a \link{dgCMatrix class} matrix}
 }
 \description{
-build a \linkS4class{dem} object
+build a \code{dem-class} object
 }

@@ -7,8 +7,8 @@
 embed_target(
   context,
   pre_trained,
-  transform_matrix,
   transform = TRUE,
+  transform_matrix,
   aggregate = TRUE,
   verbose = TRUE
 )
@@ -18,9 +18,9 @@ embed_target(
 
 \item{pre_trained}{a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions}
 
-\item{transform_matrix}{a D x D transformation matrix}
-
 \item{transform}{logical - if TRUE (default) apply the a la carte transformation, if FALSE ouput untransformed averaged embedding}
+
+\item{transform_matrix}{a D x D transformation matrix}
 
 \item{aggregate}{logical - if TRUE (default) output will return 1 embedding (i.e. averaged over all instances of target)
 if FALSE output will return one embedding per instance}
@@ -43,20 +43,12 @@ the local vocabulary. Keep track of which contexts were embedded and which were 
 required packages: quanteda
 }
 \examples{
-library(conText)
-library(dplyr)
 
-# load data
-corpus <- sample_corpus
-pre_trained <- sample_glove
-transform_matrix <- khodakA
+immig_corpus <- corpus_context(x = cr_sample_corpus,
+pattern = "immigration", window = 6L, verbose = TRUE)
 
-# find contexts for term immigration
-context_immigration <- get_context(x = corpus$speech, target = 'immigration',
-                        window = 6, valuetype = "fixed", case_insensitive = TRUE,
-                        hard_cut = FALSE, verbose = FALSE)
-
-contexts_vectors <- embed_target(context = context_immigration$context, pre_trained,
-transform_matrix, transform = TRUE,
+contexts_vectors <- embed_target(context = immig_corpus,
+pre_trained = glove_subset,
+transform = TRUE, transform_matrix = khodakA,
 aggregate = FALSE, verbose = FALSE)
 }

@@ -7,21 +7,35 @@
 dem_group(x, groups = NULL)
 }
 \arguments{
-\item{x}{a \link{dem}}
+\item{x}{a \code{dem}}
 
 \item{groups}{a character or factor variable equal in length to the number of documents}
 }
 \value{
-a \linkS4class{dem} object
+a \code{dem-class} object
 }
 \description{
 Average embeddings in a dem by a grouping variable, by averaging over columns within groups
 and creating new "documents" with the group labels.
-Similar in essence to \link{dfm_group}.
+Similar in essence to \code{dfm_group}.
 }
 \examples{
-corpus_dfm <- create_dfm(cr_corpus_sample, features_remove = quanteda::stopwords('en'))
-corpus_dem <- dem(corpus_dfm, pre_trained = glove_subset, transform = TRUE, transform_matrix = khodakA, verbose = TRUE)
-corpus_dem_grouped <- dem_group(x = corpus_dem, groups = corpus_dem@docvars$party)
+
+library(quanteda)
+
+# tokenize text
+anes2016_toks <- tokens(anes2016_sample_corpus)
+
+# construct document-feature-matrix
+anes2016_dfm <- dfm(anes2016_toks)
+
+# construct document-embedding-matrix
+anes2016_dem <- dem(anes2016_dfm, pre_trained = glove_subset,
+transform = TRUE, transform_matrix = khodakA, verbose = FALSE)
+
+# group document-embedding-matrix
+anes2016_dem_ideology <- dem_group(anes2016_dem,
+groups = anes2016_dem@docvars$ideology)
+
 }
 \keyword{dem_group}

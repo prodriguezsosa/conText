@@ -10,20 +10,25 @@
 #' @keywords compute_transform
 #' @examples
 #'
+#' library(quanteda)
+#'
 #' # note, cr_sample_corpus is too small to produce sensical word vectors
 #'
 #' # tokenize
-#' cr_toks <- tokens(cr_corpus_sample)
+#' cr_toks <- tokens(cr_sample_corpus)
 #'
 #' # construct feature-co-occurrence matrix
-#' cr_fcm <- fcm(cr_toks, context = "window", window = 6, count = "weighted", weights = 1 / (1:6), tri = FALSE)
+#' cr_fcm <- fcm(cr_toks, context = "window", window = 6,
+#' count = "weighted", weights = 1 / (1:6), tri = FALSE)
 #'
-#' # you will generally want to estimate a new (corpus-specific) GloVe model
-#' # given the (small) size of our cr_corpus_sample we will use glove_subset instead
+#' # you will generally want to estimate a new (corpus-specific)
+#' # GloVe model given the (small) size of our cr_corpus_sample
+#' # we will use glove_subset instead
 #' # see the Quick Start Guide to see a full example
 #'
 #' # estimate transform
-#' cr_transform <- compute_transform(x = cr_fcm, pre_trained = glove_subset, weighting = 'log')
+#' cr_transform <- compute_transform(x = cr_fcm,
+#' pre_trained = glove_subset, weighting = 'log')
 compute_transform <- function(x, pre_trained, weighting = 500){
 
   # compute un-transformed additive embedding

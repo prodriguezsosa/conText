@@ -5,7 +5,7 @@
 \alias{dem-class}
 \title{Virtual class "dem" for a document-embedding matrix}
 \description{
-The \link{dem class} is \link{dgCMatrix class} matrix with additional slots:
+The \verb{dem class} is \verb{dgCMatrix class} matrix with additional slots:
 }
 \section{Slots}{
 
@@ -17,7 +17,7 @@ subset to embeddable documents}
 }}
 
 \seealso{
-\link{dem}
+\code{dem}
 }
 \keyword{dem}
 \keyword{internal}

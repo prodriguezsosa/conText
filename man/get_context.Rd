@@ -53,14 +53,8 @@ it is the result of concatenating \code{pre} and \code{post} in the \code{kwic} 
 so it may not match the user-defined target exactly if \code{valuetype} is not fixed.
 }
 \examples{
-library(conText)
-library(dplyr)
-
-# load corpus
-corpus <- sample_corpus
-
 # get context words sorrounding the term immigration
-context_immigration <- get_context(x = corpus$speech, target = 'immigration',
+context_immigration <- get_context(x = cr_sample_corpus, target = 'immigration',
                                    window = 6, valuetype = "fixed", case_insensitive = FALSE,
                                    hard_cut = FALSE, verbose = FALSE)
 }

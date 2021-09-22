@@ -5,7 +5,7 @@
 \alias{conText-class}
 \title{Virtual class "conText" for a conText regression output}
 \description{
-The \linkS4class{conText} is \link{dgCMatrix class} matrix corresponding to
+The \code{conText-class} is \verb{dgCMatrix class} matrix corresponding to
 the beta coefficients (embeddings) with additional slots:
 }
 \section{Slots}{
@@ -23,7 +23,7 @@ the beta coefficients (embeddings) with additional slots:
 }}
 
 \seealso{
-\link{conText}
+\code{conText}
 }
 \keyword{conText}
 \keyword{internal}

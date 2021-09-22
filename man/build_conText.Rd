@@ -2,7 +2,7 @@
 % Please edit documentation in R/object-builder.R
 \name{build_conText}
 \alias{build_conText}
-\title{build a \linkS4class{conText} object}
+\title{build a \code{conText-class} object}
 \usage{
 build_conText(
   Class = "conText",
@@ -15,15 +15,15 @@ build_conText(
 \arguments{
 \item{Class}{defines the class of this object (fixed)}
 
+\item{x_conText}{a \verb{dgCMatrix class} matrix}
+
 \item{normed_cofficients}{a data.frame withe the normed coefficients and
 other statistics}
 
 \item{features}{features used in computing the embeddings}
 
 \item{Dimnames}{row (features) and columns (NULL) names}
-
-\item{x}{a \link{dgCMatrix class} matrix}
 }
 \description{
-build a \linkS4class{conText} object
+build a \code{conText-class} object
 }
