@@ -6,8 +6,8 @@ Quick Start Guide
 **conText** was designed to work closely with
 [quanteda](https://quanteda.io), as such most functions will expect a
 quanteda object such as a *corpus*, *tokens* or *dfm*/*fcm*. To make the
-most of **conText**, we recommend that you familirize yourself with some
-of quanteda’s basic functionalities [Quick Start
+most of **conText**, we recommend that you familiarize yourself with
+some of quanteda’s basic functionalities [Quick Start
 Guide](https://quanteda.io/articles/quickstart.html).
 
 # Setup
@@ -552,17 +552,77 @@ sim2(x = matrix(immig_wv_local, nrow = 1), y = matrix(cr_glove_wvs["immigration"
 
 # Other
 
-## Feature emebdding matrix
+## Feature embedding matrix
+
+We can use a featur-co-occurrence matrix to simultaneously embed
+multiple features.
+
+``` r
+# terms of interest
+features <- c('immigration', 'welfare')
+
+# tokenize texts
+cr_toks <- tokens(cr_corpus)
+
+# create feature co-occurrence matrix
+cr_fcm <- fcm(cr_toks, context = "window", window = 6, count = "frequency", tri = FALSE) %>% # set tri = FALSE to work with fem
+  .[features,] # subset rows to features of interest
+
+# compute feature-embedding matrix
+cr_fem <- fem(cr_fcm, pre_trained = glove_wvs, transform = TRUE, transform_matrix = khodakA, verbose = FALSE)
+
+# find nearest neighbors
+nns(x = cr_fem, pre_trained = glove_wvs, N = 10, candidates = NULL)
+```
 
 ## Embedding full documents
 
-In this example we will use open-ended responses to ANES 2016 question:
-“what are the most important issues facing the country?”.
+In this example we use open-ended responses to ANES 2016 question: “what
+are the most important issues facing the country?”. Instead of embedding
+contexts around a given set of target words we embed each full
+open-ended response and average over respondent ideology.
 
 ``` r
 # ANES 2016 open-ends on most important issues facing country
-anes2016 <- readRDS(paste0(path_to_data, "anes2016.rds"))
+anes2016 <- readRDS(paste0(path_to_data, "anes2016.rds")) %>% select(response, ideology, 
+    gender) %>% na.omit()
 
 ## build corpus
 anes2016_corpus <- corpus(anes2016$response, docvars = anes2016[, c("ideology", "gender")])
+
+# tokenize texts
+anes2016_toks <- tokens(anes2016_corpus)
+
+# create document-feature matrix
+anes2016_dfm <- dfm(anes2016_toks)
+
+# create document-embedding matrix using a la carte
+anes2016_dem <- dem(x = anes2016_dfm, pre_trained = glove_wvs, transform = TRUE, 
+    transform_matrix = khodakA, verbose = TRUE)
 ```
+
+    ## the following documents could not be embedded due lack of overlap with pre-trained embeddings provided: 
+    ##  text493 text964 text3941 text8189
+
+``` r
+# group by ideology
+anes2016_wv_ideology <- dem_group(x = anes2016_dem, groups = anes2016_dem@docvars$ideology)
+
+# check nearest neighbors
+nns(x = anes2016_wv_ideology, pre_trained = glove_wvs, N = 10, candidates = NULL)
+```
+
+    ## # A tibble: 30 x 4
+    ##    target       feature       rank value
+    ##    <fct>        <chr>        <int> <dbl>
+    ##  1 Conservative entitlements     1 0.491
+    ##  2 Conservative entitlement      2 0.490
+    ##  3 Conservative welfare          3 0.481
+    ##  4 Conservative unemployment     4 0.478
+    ##  5 Conservative immigration      5 0.478
+    ##  6 Conservative homelessness     6 0.473
+    ##  7 Conservative ills             7 0.466
+    ##  8 Conservative joblessness      8 0.464
+    ##  9 Conservative insecurity       9 0.452
+    ## 10 Conservative combatting      10 0.451
+    ## # … with 20 more rows
