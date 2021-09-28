@@ -42,7 +42,7 @@ corpus_context <- function(x, pattern, window = 6L, valuetype = c("glob", "regex
   x <- x[pattern_present]
 
   # get kwic for each element in pattern
-  kwic_x <- quanteda::kwic(quanteda::tokens(x), pattern = phrase(pattern), window = window, valuetype = valuetype, case_insensitive = case_insensitive) %>% data.frame()
+  kwic_x <- quanteda::kwic(quanteda::tokens(x), pattern = quanteda::phrase(pattern), window = window, valuetype = valuetype, case_insensitive = case_insensitive) %>% data.frame()
 
   # if hard_cut, keep only contexts with 2*window number of words
   if(hard_cut) kwic_x <- kwic_x %>% dplyr::mutate(num_tokens = quanteda::ntoken(context)) %>% dplyr::filter(num_tokens == window*2) %>% dplyr::select(-num_tokens)
