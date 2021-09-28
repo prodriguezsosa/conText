@@ -32,9 +32,6 @@ corpus_context <- function(x, pattern, window = 6L, valuetype = c("glob", "regex
   doc_vars <- quanteda::docvars(x)
   doc_names <- quanteda::docnames(x)
 
-  # check for phrases in pattern and apply phrase() given a phrase
-  if(any(grepl(' ', pattern))) pattern[grepl(' ', pattern)] <- quanteda::phrase(pattern[grepl(' ', pattern)])
-
   # subset to documents where pattern is present (speeds up tokens() significantly)
   pattern_present <- stringr::str_detect(x, paste(stringr::regex(pattern, ignore_case = case_insensitive), collapse = '|'))
 
@@ -45,7 +42,7 @@ corpus_context <- function(x, pattern, window = 6L, valuetype = c("glob", "regex
   x <- x[pattern_present]
 
   # get kwic for each element in pattern
-  kwic_x <- quanteda::kwic(quanteda::tokens(x), pattern = pattern, window = window, valuetype = valuetype, case_insensitive = case_insensitive) %>% data.frame()
+  kwic_x <- quanteda::kwic(quanteda::tokens(x), pattern = phrase(pattern), window = window, valuetype = valuetype, case_insensitive = case_insensitive) %>% data.frame()
 
   # if hard_cut, keep only contexts with 2*window number of words
   if(hard_cut) kwic_x <- kwic_x %>% dplyr::mutate(num_tokens = quanteda::ntoken(context)) %>% dplyr::filter(num_tokens == window*2) %>% dplyr::select(-num_tokens)
