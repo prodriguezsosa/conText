@@ -16,7 +16,6 @@ conText(
   stratify_by = NULL,
   permute = TRUE,
   num_permutations = 100,
-  getcontexts = TRUE,
   window = 6,
   valuetype = "fixed",
   case_insensitive = TRUE,
@@ -30,7 +29,7 @@ symbolic description of the model to be fitted.}
 
 \item{data}{a data.frame containing the variables in the model}
 
-\item{text_var}{chr - name of variable with the text from which context will be extracted}
+\item{text_var}{chr - name of the text variable in data from which context will be extracted}
 
 \item{pre_trained}{a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions}
 
@@ -47,8 +46,6 @@ symbolic description of the model to be fitted.}
 \item{permute}{logical - if TRUE, compute empirical p-values using permutation test}
 
 \item{num_permutations}{numeric - number of permutations to use}
-
-\item{getcontexts}{logical - if TRUE, apply get_context function to get context around target word (Y in formula)}
 
 \item{window}{integer - defines the size of a context (words around the target)
 See conText documentation for get_context.}
@@ -98,7 +95,7 @@ model1 <- conText(formula = immigration ~ Republican,
                   bootstrap = TRUE, num_bootstraps = 10,
                   stratify_by = 'Republican',
                   permute = TRUE, num_permutations = 100,
-                  getcontexts = TRUE, window = 6, valuetype = "fixed",
+                  window = 6, valuetype = "fixed",
                   case_insensitive = FALSE,
                   hard_cut = FALSE, verbose = FALSE)
 

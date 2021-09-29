@@ -17,6 +17,8 @@
 #' See quanteda's documentation for the kwic function.
 #' @param case_insensitive logical - if TRUE, ignore case when matching the target.
 #' See quanteda's documentation for the kwic function.
+#' @param what character; which quanteda tokenizer to use. You will rarely want to change this.
+#' For chinese text you may want to set what = 'fastestword'.
 #' @param verbose logical - if TRUE, report the total number of target instances found.
 #' @return a `conText` classed data.frame with three columns: document name (`docname`),
 #' target (`target`) and contexts (`context`).
@@ -37,13 +39,10 @@
 #'                                    window = 6, valuetype = "fixed", case_insensitive = FALSE,
 #'                                    hard_cut = FALSE, verbose = FALSE)
 #' @export
-get_context <- function(x, target, window = 6L, valuetype = "fixed", case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
-
-  # check for phrases in targets and apply phrase() given a phrase
-  if(any(grepl(' ', target))) target[grepl(' ', target)] <- quanteda::phrase(target[grepl(' ', target)])
+get_context <- function(x, target, window = 6L, valuetype = "fixed", case_insensitive = TRUE, hard_cut = FALSE, what = 'word', verbose = TRUE){
 
   # get kwic for each element in target
-  kwic_i <- quanteda::kwic(quanteda::tokens(x), pattern = target, window = window, valuetype = valuetype, case_insensitive = case_insensitive) # get kwic given a phrase
+  kwic_i <- quanteda::kwic(quanteda::tokens(x, what = what), pattern = quanteda::phrase(target), window = window, valuetype = valuetype, case_insensitive = case_insensitive) # get kwic given a phrase
 
   # combine texts to the left and right of the target word
   # pre/post are part of kwic's output
