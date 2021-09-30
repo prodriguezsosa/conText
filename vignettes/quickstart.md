@@ -212,7 +212,7 @@ explore their cosine similarity with specific features of interest using
 nearest neighbors to the set of features in our corpus.
 
 ``` r
-# find nearest neighbors for overall immigraiton embedding
+# find nearest neighbors for overall immigration embedding
 nns(immig_wv, pre_trained = glove_wvs, N = 5, candidates = immig_dem@features)
 ```
 
