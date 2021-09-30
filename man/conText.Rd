@@ -23,7 +23,8 @@ conText(
 )
 }
 \arguments{
-\item{formula}{a symbolic description of the model to be fitted}
+\item{formula}{a symbolic description of the model to be fitted
+to use a phrase as a DV, wrap in quotations e.g. "immigrant refugees" ~ party + gender}
 
 \item{data}{a quanteda \code{corpus}}
 

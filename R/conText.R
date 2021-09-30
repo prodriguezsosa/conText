@@ -3,6 +3,7 @@
 #' Estimate an embedding regression model
 #'
 #' @param formula a symbolic description of the model to be fitted
+#' to use a phrase as a DV, wrap in quotations e.g. "immigrant refugees" ~ party + gender
 #' @param data a quanteda `corpus`
 #' @inheritParams dem
 #' @param bootstrap (logical) if TRUE, bootstrap regression - required to get standard errors for normed coefficients
@@ -74,8 +75,9 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
 
   # extract covariates names
   docvars <- quanteda::docvars(context)
-  if(as.character(formula[[3]])[1] == "."){covariates <- setdiff(names(docvars),"session_id")}else{ # follows lm convention, if DV = ., regress on all variables in data
-    covariates <- attr(terms(formula), which = "term.labels")
+  if(formula[[3]] == "."){covariates <- setdiff(names(docvars),"session_id")}else{ # follows lm convention, if DV = ., regress on all variables in data
+    covariates <- setdiff(stringr::str_squish(unlist(strsplit(as.character(formula[[3]]), '+', fixed = TRUE))), '') # to allow for phrase DVs
+    #covariates <- attr(terms(formula), which = "term.labels")
     if(any(!(covariates %in% names(docvars))))stop("one or more of the covariates could not be found in the data.")
   }
 
