@@ -11,6 +11,8 @@
 #' if FALSE it can have window x 2 or fewer (e.g. if a doc begins with a target word,
 #' then text will have window tokens rather than window x 2)
 #' @param exclude_pattern (logical) if TRUE, pattern/keyword is excluded from the text documents
+#' @param what character; which quanteda tokenizer to use. You will rarely want to change this.
+#' For chinese text you may want to set what = 'fastestword'.
 #' @param verbose (logical) if TRUE, report the total number of target instances found.
 #'
 #' @return a data.frame with with the same columns as quanteda::kwic.
@@ -25,7 +27,7 @@
 #' immig_corpus <- corpus_context(x = cr_sample_corpus,
 #' pattern = "immigration", window = 6L, verbose = TRUE)
 #'
-corpus_context <- function(x, pattern, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, exclude_pattern = TRUE, verbose = TRUE){
+corpus_context <- function(x, pattern, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, exclude_pattern = TRUE, what = 'word', verbose = TRUE){
 
   # extract elements of corpus
   doc_text <- as.character(x)
@@ -42,7 +44,7 @@ corpus_context <- function(x, pattern, window = 6L, valuetype = c("glob", "regex
   x <- x[pattern_present]
 
   # get kwic for each element in pattern
-  kwic_x <- quanteda::kwic(quanteda::tokens(x), pattern = quanteda::phrase(pattern), window = window, valuetype = valuetype, case_insensitive = case_insensitive) %>% data.frame()
+  kwic_x <- quanteda::kwic(quanteda::tokens(x, what = what), pattern = quanteda::phrase(pattern), window = window, valuetype = valuetype, case_insensitive = case_insensitive) %>% data.frame()
 
   # if hard_cut, keep only contexts with 2*window number of words
   if(hard_cut) kwic_x <- kwic_x %>% dplyr::mutate(num_tokens = quanteda::ntoken(context)) %>% dplyr::filter(num_tokens == window*2) %>% dplyr::select(-num_tokens)

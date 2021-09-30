@@ -11,6 +11,7 @@ get_context(
   valuetype = "fixed",
   case_insensitive = TRUE,
   hard_cut = FALSE,
+  what = "word",
   verbose = TRUE
 )
 }
@@ -32,6 +33,9 @@ See quanteda's documentation for the kwic function.}
 \item{hard_cut}{logical - if TRUE then the text must have window x 2 tokens,
 if FALSE it can have window x 2 or fewer (e.g. if a doc begins with a target word,
 then text will have window tokens rather than window x 2)}
+
+\item{what}{character; which quanteda tokenizer to use. You will rarely want to change this.
+For chinese text you may want to set what = 'fastestword'.}
 
 \item{verbose}{logical - if TRUE, report the total number of target instances found.}
 }

@@ -12,6 +12,7 @@ corpus_context(
   case_insensitive = TRUE,
   hard_cut = FALSE,
   exclude_pattern = TRUE,
+  what = "word",
   verbose = TRUE
 )
 }
@@ -35,6 +36,9 @@ if FALSE it can have window x 2 or fewer (e.g. if a doc begins with a target wor
 then text will have window tokens rather than window x 2)}
 
 \item{exclude_pattern}{(logical) if TRUE, pattern/keyword is excluded from the text documents}
+
+\item{what}{character; which quanteda tokenizer to use. You will rarely want to change this.
+For chinese text you may want to set what = 'fastestword'.}
 
 \item{verbose}{(logical) if TRUE, report the total number of target instances found.}
 }
