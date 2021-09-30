@@ -554,7 +554,7 @@ sim2(x = matrix(immig_wv_local, nrow = 1), y = matrix(cr_glove_wvs["immigration"
 
 ## Feature embedding matrix
 
-We can use a featur-co-occurrence matrix to simultaneously embed
+We can use a feature co-occurrence matrix to simultaneously embed
 multiple features.
 
 ``` r
