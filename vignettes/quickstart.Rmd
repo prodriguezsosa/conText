@@ -318,7 +318,6 @@ feats <- dfm(cr_toks, verbose = TRUE) %>%
 cr_toks <- tokens_select(cr_toks, feats, padding = TRUE)
 
 # construct the feature co-occurrence matrix
-cr_fcm <- fcm(cr_toks, context = "window", window = 6, count = "weighted", weights = 1 / (1:6), tri = FALSE)
 cr_fcm <- fcm(cr_toks, context = "window", window = 6, count = "frequency", tri = FALSE)
 
 # estimate glove model using text2vec

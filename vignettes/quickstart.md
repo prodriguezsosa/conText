@@ -212,11 +212,11 @@ explore their cosine similarity with specific features of interest using
 nearest neighbors to the set of features in our corpus.
 
 ``` r
-# find nearest neighbors for overall immigration embedding
+# find nearest neighbors for overall immigraiton embedding
 nns(immig_wv, pre_trained = glove_wvs, N = 5, candidates = immig_dem@features)
 ```
 
-    ## # A tibble: 5 x 4
+    ## # A tibble: 5 × 4
     ##   target feature      rank value
     ##   <lgl>  <chr>       <int> <dbl>
     ## 1 NA     legislation     1 0.478
@@ -230,7 +230,7 @@ nns(immig_wv, pre_trained = glove_wvs, N = 5, candidates = immig_dem@features)
 nns(immig_wv_party, pre_trained = glove_wvs, N = 5, candidates = immig_dem@features)
 ```
 
-    ## # A tibble: 10 x 4
+    ## # A tibble: 10 × 4
     ##    target feature      rank value
     ##    <fct>  <chr>       <int> <dbl>
     ##  1 D      reform          1 0.501
@@ -255,6 +255,60 @@ cos_sim(immig_wv_party, pre_trained = glove_wvs, features = c("reform", "enforce
     ## 2      R      reform 0.3381023
     ## 3      D enforcement 0.2767213
     ## 4      R enforcement 0.3876106
+
+## Multiple Keywords
+
+In the above example we had one keyword, `immigration`. However, we can
+also explore the semantics of multiple keywords simultaneously,
+including phrases\! We simply provide a vector of patterns in the
+`pattern` argument.
+
+``` r
+# build a corpus of contexts sorrounding the target term 'immigration'
+mkws_corpus <- corpus_context(x = cr_corpus, pattern = c("immigration", "welfare", 
+    "immigration reform"), window = 6L)
+```
+
+    ## 520 instances of immigration found. 
+    ## 104 instances of immigration reform found. 
+    ## 191 instances of welfare found.
+
+``` r
+# tokenize texts
+mkws_toks <- tokens(mkws_corpus)
+
+# create document-feature matrix
+mkws_dfm <- dfm(mkws_toks)
+
+# create document-embedding matrix using a la carte
+mkws_dem <- dem(x = mkws_dfm, pre_trained = glove_wvs, transform = TRUE, transform_matrix = khodakA, 
+    verbose = TRUE)
+
+# get keyword-specific embeddings
+mkws_wvs <- dem_group(mkws_dem, groups = mkws_dem@docvars$pattern)
+
+# find nearest neighbors for overall immigraiton embedding
+nns(mkws_wvs, pre_trained = glove_wvs, N = 5, candidates = mkws_wvs@features)
+```
+
+    ## # A tibble: 15 × 4
+    ##    target             feature        rank value
+    ##    <fct>              <chr>         <int> <dbl>
+    ##  1 immigration        legislation       1 0.478
+    ##  2 immigration        enacting          2 0.469
+    ##  3 immigration        immigration       3 0.450
+    ##  4 immigration        reform            4 0.449
+    ##  5 immigration        enacted           5 0.442
+    ##  6 welfare            welfare           1 0.542
+    ##  7 welfare            beneficiaries     2 0.408
+    ##  8 welfare            medicare          3 0.397
+    ##  9 welfare            wellbeing         4 0.385
+    ## 10 welfare            benefits          5 0.381
+    ## 11 immigration reform comprehensive     1 0.507
+    ## 12 immigration reform bipartisan        2 0.492
+    ## 13 immigration reform legislation       3 0.458
+    ## 14 immigration reform enacting          4 0.424
+    ## 15 immigration reform amendments        5 0.380
 
 # Wrapper functions
 
@@ -283,7 +337,7 @@ get_nns(x = immig_corpus, N = 10, groups = docvars(immig_corpus, "party"), candi
     num_bootstraps = 10)
 ```
 
-    ## # A tibble: 20 x 5
+    ## # A tibble: 20 × 5
     ##    target feature         rank value std.error
     ##    <fct>  <chr>          <int> <dbl>     <dbl>
     ##  1 D      reform             1 0.499   0.00406
@@ -400,12 +454,14 @@ First we specify the formula consisting of the target word of interest,
 as R’s `lm()` and `glm()` functions. To use all covariates in the
 corpus’ docvars simply specify `immigration ~ .`. Similarly, if you
 want to embed the full documents rather than a specific target word,
-specify `. ~ party + gender`. Covariates must either be binary indicator
-variables or discrete variables that can be transformed into binary
-indicator variables e.g. a character or factor variable with three
-states will be automatically transformed by “conText()” into two
-seperate indicator variables with one “baseline” state that is excluded
-from the regression.
+specify `. ~ party + gender`. Finally, the target argument can also be a
+phrase, simply wrap it in quotations – e.g. `"immigration reform" ~
+party + gender`. Covariates must either be binary indicator variables or
+discrete variables that can be transformed into binary indicator
+variables e.g. a character or factor variable with three states will be
+automatically transformed by `conText()` into two seperate indicator
+variables with one “baseline” state that is excluded from the
+regression.
 
 Keep in mind, `conText()` calls on `corpus_context()`, so you do not
 need to create a corpus of contexts before running it, simply provide it
@@ -466,7 +522,7 @@ RM_wv <- model1["(Intercept)", ] + model1["party_R", ] + model1["gender_M", ]  #
 nns(rbind(DF_wv, DM_wv), N = 10, pre_trained = glove_wvs, candidates = model1@features)
 ```
 
-    ## # A tibble: 20 x 4
+    ## # A tibble: 20 × 4
     ##    target feature          rank value
     ##    <fct>  <chr>           <int> <dbl>
     ##  1 DF_wv  enacting            1 0.489
@@ -518,6 +574,38 @@ This example is taken (with minor changes) from [this quanteda
 vignette](https://quanteda.io/articles/pkgdown/replication/text2vec.html)
 on computing GloVe embeddings using `quanteda` and `text2vec`.
 
+``` r
+library(text2vec)
+
+#---------------------------------
+# estimate transform
+#---------------------------------
+
+# tokenize
+cr_toks <- tokens(cr_corpus)
+
+# only use features that appear at least 5 times in the corpus
+feats <- dfm(cr_toks, verbose = TRUE) %>% dfm_trim(min_termfreq = 5) %>% featnames()
+
+# leave the pads so that non-adjacent words will not become adjacent
+cr_toks <- tokens_select(cr_toks, feats, padding = TRUE)
+
+# construct the feature co-occurrence matrix
+cr_fcm <- fcm(cr_toks, context = "window", window = 6, count = "frequency", tri = FALSE)
+
+# estimate glove model using text2vec
+glove <- GlobalVectors$new(rank = 300, x_max = 10, learning_rate = 0.05)
+wv_main <- glove$fit_transform(cr_fcm, n_iter = 10, convergence_tol = 0.001, n_threads = RcppParallel::defaultNumThreads())
+
+
+wv_context <- glove$components
+cr_glove_wvs <- wv_main + t(wv_context)  # word vectors
+
+# qualitative check
+local_vocab <- get_local_vocab(cr_corpus, pre_trained = cr_glove_wvs)
+find_nns(cr_glove_wvs["immigration", ], pre_trained = cr_glove_wvs, N = 5, candidates = local_vocab)
+```
+
 ## Estimating the transformation matrix
 
 Given a corpus and it’s corresponding GloVe embeddings, we can compute a
@@ -554,7 +642,7 @@ sim2(x = matrix(immig_wv_local, nrow = 1), y = matrix(cr_glove_wvs["immigration"
 
 ## Feature embedding matrix
 
-We can use a feature co-occurrence matrix to simultaneously embed
+We can use a featur-co-occurrence matrix to simultaneously embed
 multiple features.
 
 ``` r
@@ -612,7 +700,7 @@ anes2016_wv_ideology <- dem_group(x = anes2016_dem, groups = anes2016_dem@docvar
 nns(x = anes2016_wv_ideology, pre_trained = glove_wvs, N = 10, candidates = NULL)
 ```
 
-    ## # A tibble: 30 x 4
+    ## # A tibble: 30 × 4
     ##    target       feature       rank value
     ##    <fct>        <chr>        <int> <dbl>
     ##  1 Conservative entitlements     1 0.491
