@@ -647,17 +647,18 @@ multiple features.
 
 ``` r
 # terms of interest
-features <- c('immigration', 'welfare')
+features <- c("immigration", "welfare")
 
 # tokenize texts
 cr_toks <- tokens(cr_corpus)
 
-# create feature co-occurrence matrix
-cr_fcm <- fcm(cr_toks, context = "window", window = 6, count = "frequency", tri = FALSE) %>% # set tri = FALSE to work with fem
-  .[features,] # subset rows to features of interest
+# create feature co-occurrence matrix (set tri = FALSE to work with fem)
+cr_fcm <- fcm(cr_toks, context = "window", window = 6, count = "frequency", tri = FALSE) %>% 
+    .[features, ]  # subset rows to features of interest
 
 # compute feature-embedding matrix
-cr_fem <- fem(cr_fcm, pre_trained = glove_wvs, transform = TRUE, transform_matrix = khodakA, verbose = FALSE)
+cr_fem <- fem(cr_fcm, pre_trained = glove_wvs, transform = TRUE, transform_matrix = khodakA, 
+    verbose = FALSE)
 
 # find nearest neighbors
 nns(x = cr_fem, pre_trained = glove_wvs, N = 10, candidates = NULL)
