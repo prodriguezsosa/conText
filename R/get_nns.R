@@ -5,10 +5,13 @@
 #' @inheritParams nns
 #' @param groups grouping variable equal in length to the number of documents
 #' @inheritParams dem
+#' @inheritParams dem_group
 #' @param bootstrap (logical) if TRUE, bootstrap nns - sample from corpus with replacement;
 #' if groups defined, sampling is automatically stratified; top nns are those with
 #' the highest average over all bootstrap samples.
 #' @param num_bootstraps (integer) number of bootstraps to use
+#' @param what character; which quanteda tokenizer to use. You will rarely want to change this.
+#' For Chinese texts you may want to set what = 'fastestword'.
 #'
 #' @return a `data.frame` with following columns:
 #'  \item{`target`}{ (character) vector with the rownames of the dfm,
@@ -46,7 +49,8 @@ get_nns <- function(x,
                     transform = TRUE,
                     transform_matrix,
                     bootstrap = TRUE,
-                    num_bootstraps = 10) {
+                    num_bootstraps = 10,
+                    what = 'word') {
 
   # create a new corpus
   x <- quanteda::corpus(as.character(x), docvars = data.frame('group' = groups))
@@ -59,7 +63,8 @@ get_nns <- function(x,
                            candidates = candidates,
                            pre_trained = pre_trained,
                            transform = transform,
-                           transform_matrix = transform_matrix),
+                           transform_matrix = transform_matrix,
+                           what = what),
               simplify = FALSE)
     result <- do.call(rbind, nnsdf_bs) %>%
       dplyr::group_by(target, feature) %>%
@@ -74,7 +79,7 @@ get_nns <- function(x,
   }else{
 
   # tokenize texts
-  corpus_toks <- quanteda::tokens(x)
+  corpus_toks <- quanteda::tokens(x, what = what)
 
   # create document-feature matrix
   corpus_dfm <- quanteda::dfm(corpus_toks, tolower = FALSE)
@@ -99,13 +104,14 @@ nns_boostrap <- function(x,
                          candidates = character(0),
                          pre_trained,
                          transform = TRUE,
-                         transform_matrix){
+                         transform_matrix,
+                         what = what){
 
   # create a new corpus
   x <- quanteda::corpus_sample(x, size = quanteda::ndoc(x), replace = TRUE, by = groups)
 
   # tokenize texts
-  corpus_toks <- quanteda::tokens(x)
+  corpus_toks <- quanteda::tokens(x, what = what)
 
   # create document-feature matrix
   corpus_dfm <- quanteda::dfm(corpus_toks, tolower = FALSE)

@@ -12,7 +12,7 @@
 #' then text will have window tokens rather than window x 2)
 #' @param exclude_pattern (logical) if TRUE, pattern/keyword is excluded from the text documents
 #' @param what character; which quanteda tokenizer to use. You will rarely want to change this.
-#' For chinese text you may want to set what = 'fastestword'.
+#' For Chinese texts you may want to set what = 'fastestword'.
 #' @param verbose (logical) if TRUE, report the total number of target instances found.
 #'
 #' @return a data.frame with with the same columns as quanteda::kwic.

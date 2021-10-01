@@ -152,6 +152,30 @@ nns(immig_wv_party, pre_trained = glove_wvs, N = 5, candidates = immig_dem@featu
 cos_sim(immig_wv_party, pre_trained = glove_wvs, features = c('reform', 'enforcement'))
 ```
 
+## Multiple Keywords
+
+In the above example we had one keyword, `immigration`. However, we can also explore the semantics of multiple keywords simultaneously, including phrases! We simply provide a vector of patterns in the `pattern` argument.
+
+```{r, message = FALSE}
+# build a corpus of contexts sorrounding the target term "immigration"
+mkws_corpus <- corpus_context(x = cr_corpus, pattern = c("immigration", "welfare", "immigration reform"), window = 6L)
+
+# tokenize texts
+mkws_toks <- tokens(mkws_corpus)
+
+# create document-feature matrix
+mkws_dfm <- dfm(mkws_toks)
+
+# create document-embedding matrix using a la carte
+mkws_dem <- dem(x = mkws_dfm, pre_trained = glove_wvs, transform = TRUE, transform_matrix = khodakA, verbose = TRUE)
+
+# get keyword-specific embeddings
+mkws_wvs <- dem_group(mkws_dem, groups = mkws_dem@docvars$pattern)
+
+# find nearest neighbors for overall immigraiton embedding
+nns(mkws_wvs, pre_trained = glove_wvs, N = 5, candidates = mkws_wvs@features)
+```
+
 # Wrapper functions
 
 The above functions give users a lot of flexibility. However, it can be cumbersome to write each step separately every time we want to analyze a given target term. To facilitate this process `conText` includes three (for now) wrapper functions that allow you to do the above analysis and others with one line of code. An added advantage of the wrapper functions is that they make it easy to apply boostrapping --peform the analysis over random samples (with replacement) of the corpus and averaging. We being with `conText::get_nns`, a wrapper function to compare nearest neighbors between groups. Again, we limit the candidates to the set of features in our corpus.
@@ -223,7 +247,7 @@ We plot the output of `contrast_nns` using `conText::plot_ratio()` -- TO BE ADDE
 
 The above framework allows us to explore semantic differences over a given grouping variable. However, we may want to control for other covariates and, perhap more importantly, speak to the uncertainty sorrounding observed differences. In [Rodriguez, Spirling and Stewart (2021)](https://github.com/prodriguezsosa/EmbeddingRegression) we show how `a la carte` embeddings can be used within a regression-framework that allows us to perform statistical inference using embeddings. To do so we use the function `conText::conText()`. The data must be a quanteda corpus with covariates stored as document variables (`docvars`). 
 
-First we specify the formula consisting of the target word of interest, _immigration_ and the set of covariates --this follows a similar syntax as R's `lm()` and `glm()` functions. To use all covariates in the corpus' docvars simply specify `immigration ~ .`. Similarly, if you want to embed the full documents rather than a specific target word, specify `. ~ party + gender`. Covariates must either be binary indicator variables or discrete variables that can be transformed into binary indicator variables e.g. a character or factor variable with three states will be automatically transformed by "conText()" into two seperate indicator variables with one "baseline" state that is excluded from the regression.
+First we specify the formula consisting of the target word of interest, _immigration_ and the set of covariates --this follows a similar syntax as R's `lm()` and `glm()` functions. To use all covariates in the corpus' docvars simply specify `immigration ~ .`. Similarly, if you want to embed the full documents rather than a specific target word, specify `. ~ party + gender`. Finally, the target argument can also be a phrase, simply wrap it in quotations -- e.g. `"immigration reform" ~ party + gender`. Covariates must either be binary indicator variables or discrete variables that can be transformed into binary indicator variables e.g. a character or factor variable with three states will be automatically transformed by `conText()` into two seperate indicator variables with one "baseline" state that is excluded from the regression.
 
 Keep in mind, `conText()` calls on `corpus_context()`, so you do not need to create a corpus of contexts before running it, simply provide it with the original corpus and `conText()` will find all instances of the target word along with their respective contexts.
 
@@ -275,7 +299,7 @@ If (a) you have a large enough corpus to train a full GloVe embeddings model and
 
 This example is taken (with minor changes) from [this quanteda vignette](https://quanteda.io/articles/pkgdown/replication/text2vec.html) on computing GloVe embeddings using `quanteda` and `text2vec`.
 
-```{r, echo=FALSE, message=FALSE, eval=FALSE}
+```{r, message=FALSE, eval=FALSE}
 library(text2vec)
 
 #---------------------------------
