@@ -12,6 +12,9 @@ get_cos_sim(
   pre_trained,
   transform = TRUE,
   transform_matrix,
+  bootstrap = TRUE,
+  num_bootstraps = 10,
+  what = "word",
   verbose = TRUE
 )
 }
@@ -31,6 +34,15 @@ if FALSE ouput untransformed averaged embedding}
 
 \item{transform_matrix}{a D x D matrix of numeric values corresponding
 to the `a la carte`` transformation matrix}
+
+\item{bootstrap}{(logical) if TRUE, bootstrap nns - sample from corpus with replacement;
+if groups defined, sampling is automatically stratified; top nns are those with
+the highest average over all bootstrap samples.}
+
+\item{num_bootstraps}{(integer) number of bootstraps to use}
+
+\item{what}{character; which quanteda tokenizer to use. You will rarely want to change this.
+For Chinese texts you may want to set what = 'fastestword'.}
 
 \item{verbose}{logical - report the documents/features that had
 no overlap with the provided pre-trained embeddings}
@@ -55,12 +67,14 @@ library(quanteda)
 immig_corpus <- corpus_context(x = cr_sample_corpus,
 pattern = "immigration", window = 6L, verbose = TRUE)
 
-get_cos_sim(x = immig_corpus,
+temp1 <- get_cos_sim(x = immig_corpus,
 groups = docvars(immig_corpus, 'party'),
 features = c("reform", "enforce"),
 pre_trained = glove_subset,
 transform = TRUE,
 transform_matrix = khodakA,
+bootstrap = TRUE,
+num_bootstraps = 10,
 verbose = FALSE)
 }
 \keyword{get_cos_sim}

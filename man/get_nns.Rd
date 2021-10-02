@@ -14,7 +14,8 @@ get_nns(
   transform = TRUE,
   transform_matrix,
   bootstrap = TRUE,
-  num_bootstraps = 10
+  num_bootstraps = 10,
+  what = "word"
 )
 }
 \arguments{
@@ -41,6 +42,9 @@ if groups defined, sampling is automatically stratified; top nns are those with
 the highest average over all bootstrap samples.}
 
 \item{num_bootstraps}{(integer) number of bootstraps to use}
+
+\item{what}{character; which quanteda tokenizer to use. You will rarely want to change this.
+For Chinese texts you may want to set what = 'fastestword'.}
 }
 \value{
 a \code{data.frame} with following columns:
