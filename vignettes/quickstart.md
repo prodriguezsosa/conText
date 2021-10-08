@@ -319,7 +319,7 @@ given target term. To facilitate this process `conText` includes three
 others with one line of code. An added advantage of the wrapper
 functions is that they make it easy to apply boostrapping –peform the
 analysis over random samples (with replacement) of the corpus and
-averaging. We being with `conText::get_nns`, a wrapper function to
+averaging. We begin with `conText::get_nns`, a wrapper function to
 compare nearest neighbors between groups. Again, we limit the candidates
 to the set of features in our corpus.
 
