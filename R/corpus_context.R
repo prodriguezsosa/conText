@@ -56,7 +56,7 @@ corpus_context <- function(x, pattern, window = 6L, valuetype = c("glob", "regex
   # if verbose print how many instances of each pattern word were found
   if(verbose){
     pattern_tab <- table(kwic_x$keyword)
-    for(i in 1:length(pattern_tab)) cat(unname(pattern_tab[i]), "instances of", names(pattern_tab[i]) ,"found.", "\n")}
+    for(i in 1:length(pattern_tab)) cat(paste0(unname(pattern_tab[i]), "\ instances of \"", names(pattern_tab[i]),"\" found.", "\n"))}
 
   # merge with docvars
   kwic_x <- dplyr::left_join(kwic_x, cbind("docname" = quanteda::docnames(x), quanteda::docvars(x)), by = "docname")
