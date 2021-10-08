@@ -562,8 +562,8 @@ model1@normed_cofficients
 # Local GloVe and transformation matrix
 
 If (a) you have a large enough corpus to train a full GloVe embeddings
-model and (b) your corpus is distinctive in some way –e.g. a collection
-of articles from scientific journals–, then you may want to consider
+model and (b) your corpus is distinctive in some way--–e.g. a collection
+of articles from scientific journals–--then you may want to consider
 estimating your own set of embeddings and transformation matrix. The
 first step is to estimate GloVe embeddings on the full corpus which you
 will then use as your pre-trained embeddings.
