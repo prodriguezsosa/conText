@@ -5,8 +5,11 @@
 #' F = number of features and D = embedding dimensions.
 #' rownames(pre_trained) = set of features for which there is a pre-trained embedding
 #' @param features (character) features of interest
+#' @param as_list (logical) if FALSE all results are combined into a single data.frame
+#' If TRUE, a list of data.frames is returned with one data.frame per feature.
 #'
-#' @return a `data.frame` with following columns:
+#' @return a `data.frame` or list of data.frames (one for each feature)
+#' with the following columns:
 #'  \item{`target`}{ (character) vector with the rownames of the dfm,
 #'  either defining the groups or the target terms}.
 #'  \item{`feature`}{(character) vector of feature terms, one
@@ -41,8 +44,8 @@
 #'
 #' # find nearest neighbors
 #' cos_sim(x = immig_dem_party,
-#' pre_trained = glove_subset, features = c('reform', 'enforce'))
-cos_sim <- function(x, pre_trained, features = NULL){
+#' pre_trained = glove_subset, features = c('reform', 'enforce'), as_list = FALSE)
+cos_sim <- function(x, pre_trained, features = NULL, as_list = TRUE){
 
   # check features are in pre-trained embeddings
   feature_check <- features %in% rownames(pre_trained)
@@ -53,6 +56,9 @@ cos_sim <- function(x, pre_trained, features = NULL){
 
   # convert to dataframe
   result <- reshape2::melt(as.matrix(cos_sim)) %>% setNames(c('target', 'feature', 'value'))
+
+  # if !as_list return a list object with an item for each feature data.frame
+  if(as_list) result <- lapply(unique(result$feature), function(i) result[result$feature == i,] %>% dplyr::mutate(feature = as.character(feature))) %>% setNames(unique(result$feature))
 
   return(result)
 }

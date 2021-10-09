@@ -5,21 +5,28 @@
 \title{Given a set of embeddings and a set of candidate neighbors, find the top N nearest
 neighbors.}
 \usage{
-nns(x, N = 10, candidates = character(0), pre_trained)
+nns(x, N = 10, candidates = character(0), pre_trained, as_list = TRUE)
 }
 \arguments{
 \item{x}{a \linkS4class{dem} or \linkS4class{fem} object}
 
 \item{N}{(numeric) number of nearest neighbors to return}
 
-\item{candidates}{(character) vector of features to consider as candidates to be nearest neighbor}
+\item{candidates}{(character) vector of features to consider as candidates to be nearest neighbor
+You may for example want to only consider features that meet a certian count threshold
+or exclude stop words etc. To do so you can simply identify the set of features you
+want to consider and supply these as a character vector in the \code{candidates} argument.}
 
 \item{pre_trained}{a F x D matrix of numeric values corresponding to pretrained embeddings
 F = number of features and D = embedding dimensions.
 rownames(pre_trained) = set of features for which there is a pre-trained embedding}
+
+\item{as_list}{(logical) if FALSE all results are combined into a single data.frame
+If TRUE, a list of data.frames is returned with one data.frame per target.}
 }
 \value{
-a \code{data.frame} with following columns:
+a \code{data.frame} or list of data.frames (one for each target)
+with the following columns:
 \item{\code{target}}{ (character) vector with the rownames of the dfm,
 either defining the groups or the target terms}.
 \item{\code{feature}}{(character) vector of features from the candidate set,
@@ -35,22 +42,26 @@ neighbors.
 
 library(quanteda)
 
+# build corpus of contexts around immigration
+immig_corpus <- corpus_context(x = cr_sample_corpus,
+pattern = "immigration", window = 6L, verbose = TRUE)
+
 # tokenize text
-anes2016_toks <- tokens(anes2016_sample_corpus)
+immig_toks <- tokens(immig_corpus)
 
 # construct document-feature-matrix
-anes2016_dfm <- dfm(anes2016_toks)
+immig_dfm <- dfm(immig_toks)
 
 # construct document-embedding-matrix
-anes2016_dem <- dem(anes2016_dfm, pre_trained = glove_subset,
-transform = TRUE, transform_matrix = khodakA, verbose = TRUE)
+immig_dem <- dem(immig_dfm, pre_trained = glove_subset,
+transform = TRUE, transform_matrix = khodakA, verbose = FALSE)
 
 # group document-embedding-matrix
-anes2016_dem_ideology <- dem_group(anes2016_dem,
-groups = anes2016_dem@docvars$ideology)
+immig_dem_party <- dem_group(immig_dem,
+groups = immig_dem@docvars$party)
 
 # find nearest neighbors
-nns(x = anes2016_dem_ideology,
-pre_trained = glove_subset, candidates = NULL, N = 10)
+nns(x = immig_dem_party,
+pre_trained = glove_subset, candidates = NULL, N = 10, as_list = FALSE)
 }
 \keyword{nns}

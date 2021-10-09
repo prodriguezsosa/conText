@@ -5,6 +5,7 @@
 #' @param groups a grouping variable
 #' @param features (character) features of interest
 #' @inheritParams dem
+#' @inheritParams cos_sim
 #' @inheritParams dem_group
 #' @param bootstrap (logical) if TRUE, bootstrap nns - sample from corpus with replacement;
 #' if groups defined, sampling is automatically stratified; top nns are those with
@@ -13,7 +14,8 @@
 #' @param what character; which quanteda tokenizer to use. You will rarely want to change this.
 #' For Chinese texts you may want to set what = 'fastestword'.
 #'
-#' @return a `data.frame` with following columns:
+#' @return a `data.frame` or list of data.frames (one for each target)
+#' with the following columns:
 #'  \item{`target`}{ (character) vector with the rownames of the dfm,
 #'  either defining the groups or the target terms}.
 #'  \item{`feature`}{(character) vector of feature terms, one
@@ -40,6 +42,7 @@
 #' transform_matrix = khodakA,
 #' bootstrap = TRUE,
 #' num_bootstraps = 10,
+#' as_list = FALSE,
 #' verbose = FALSE)
 get_cos_sim <- function(x,
                         groups = NULL,
@@ -50,6 +53,7 @@ get_cos_sim <- function(x,
                         bootstrap = TRUE,
                         num_bootstraps = 10,
                         what = 'word',
+                        as_list = TRUE,
                         verbose = TRUE) {
 
   # create a new corpus
@@ -64,11 +68,10 @@ get_cos_sim <- function(x,
                                            pre_trained = pre_trained,
                                            transform = transform,
                                            transform_matrix = transform_matrix,
-                                           what = what),
+                                           what = what,
+                                           as_list = FALSE),
                           simplify = FALSE)
     result <- do.call(rbind, cossimdf_bs) %>%
-
-
       dplyr::group_by(target, feature) %>%
       dplyr::summarise(std.error = sd(value)/sqrt(dplyr::n()),
                        value = mean(value),
@@ -96,6 +99,9 @@ get_cos_sim <- function(x,
     result <- cos_sim(x = corpus_dem, pre_trained = pre_trained, features = features)
   }
 
+  # if !as_list return a list object with an item for each feature data.frame
+  if(as_list) result <- lapply(unique(result$feature), function(i) result[result$feature == i,] %>% dplyr::mutate(feature = as.character(feature))) %>% setNames(unique(result$feature))
+
   return(result)
 }
 
@@ -106,7 +112,8 @@ cos_sim_boostrap <- function(x,
                              pre_trained,
                              transform = TRUE,
                              transform_matrix,
-                             what = what){
+                             what = what,
+                             as_list = FALSE){
   # create a new corpus
   x <- quanteda::corpus_sample(x, size = quanteda::ndoc(x), replace = TRUE, by = groups)
 
@@ -123,7 +130,7 @@ cos_sim_boostrap <- function(x,
   if(!is.null(groups)) corpus_dem <- dem_group(x = corpus_dem, groups = corpus_dem@docvars$group)
 
   # compute cosine similarity
-  result <- cos_sim(x = corpus_dem, pre_trained = pre_trained, features = features)
+  result <- cos_sim(x = corpus_dem, pre_trained = pre_trained, features = features, as_list = FALSE)
 
   return(result)
 

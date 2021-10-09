@@ -13,7 +13,8 @@
 #' @param what character; which quanteda tokenizer to use. You will rarely want to change this.
 #' For Chinese texts you may want to set what = 'fastestword'.
 #'
-#' @return a `data.frame` with following columns:
+#' @return a `data.frame` or list of data.frames (one for each target)
+#' with the following columns:
 #'  \item{`target`}{ (character) vector with the rownames of the dfm,
 #'  either defining the groups or the target terms}.
 #'  \item{`feature`}{(character) vector of features from the candidate set,
@@ -40,7 +41,8 @@
 #' transform = TRUE,
 #' transform_matrix = khodakA,
 #' bootstrap = TRUE,
-#' num_bootstraps = 10)
+#' num_bootstraps = 10,
+#' as_list = FALSE)
 get_nns <- function(x,
                     N = 10,
                     groups = NULL,
@@ -50,7 +52,8 @@ get_nns <- function(x,
                     transform_matrix,
                     bootstrap = TRUE,
                     num_bootstraps = 10,
-                    what = 'word') {
+                    what = 'word',
+                    as_list = TRUE) {
 
   # create a new corpus
   x <- quanteda::corpus(as.character(x), docvars = data.frame('group' = groups))
@@ -64,7 +67,8 @@ get_nns <- function(x,
                            pre_trained = pre_trained,
                            transform = transform,
                            transform_matrix = transform_matrix,
-                           what = what),
+                           what = what,
+                           as_list = FALSE),
               simplify = FALSE)
     result <- do.call(rbind, nnsdf_bs) %>%
       dplyr::group_by(target, feature) %>%
@@ -91,8 +95,11 @@ get_nns <- function(x,
   if(!is.null(groups)) corpus_dem <- dem_group(x = corpus_dem, groups = corpus_dem@docvars$group)
 
   # find nearest neighbors
-  result <- nns(x = corpus_dem, N = N, candidates = candidates, pre_trained = pre_trained)
+  result <- nns(x = corpus_dem, N = N, candidates = candidates, pre_trained = pre_trained, as_list = FALSE)
   }
+
+  # if !as_list return a list object with an item for each target data.frame
+  if(as_list) result <- lapply(unique(result$target), function(i) result[result$target == i,] %>% dplyr::mutate(target = as.character(target))) %>% setNames(unique(result$target))
 
   return(result)
 }
@@ -105,7 +112,8 @@ nns_boostrap <- function(x,
                          pre_trained,
                          transform = TRUE,
                          transform_matrix,
-                         what = what){
+                         what = what,
+                         as_list = FALSE){
 
   # create a new corpus
   x <- quanteda::corpus_sample(x, size = quanteda::ndoc(x), replace = TRUE, by = groups)
@@ -123,7 +131,7 @@ nns_boostrap <- function(x,
   if(!is.null(groups)) corpus_dem <- dem_group(x = corpus_dem, groups = corpus_dem@docvars$group)
 
   # find nearest neighbors
-  result <- nns(x = corpus_dem, N = Inf, candidates = candidates, pre_trained = pre_trained)
+  result <- nns(x = corpus_dem, N = Inf, candidates = candidates, pre_trained = pre_trained, as_list = FALSE)
 
   return(result)
 

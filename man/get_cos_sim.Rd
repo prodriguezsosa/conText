@@ -15,6 +15,7 @@ get_cos_sim(
   bootstrap = TRUE,
   num_bootstraps = 10,
   what = "word",
+  as_list = TRUE,
   verbose = TRUE
 )
 }
@@ -44,11 +45,15 @@ the highest average over all bootstrap samples.}
 \item{what}{character; which quanteda tokenizer to use. You will rarely want to change this.
 For Chinese texts you may want to set what = 'fastestword'.}
 
+\item{as_list}{(logical) if FALSE all results are combined into a single data.frame
+If TRUE, a list of data.frames is returned with one data.frame per feature.}
+
 \item{verbose}{logical - report the documents/features that had
 no overlap with the provided pre-trained embeddings}
 }
 \value{
-a \code{data.frame} with following columns:
+a \code{data.frame} or list of data.frames (one for each target)
+with the following columns:
 \item{\code{target}}{ (character) vector with the rownames of the dfm,
 either defining the groups or the target terms}.
 \item{\code{feature}}{(character) vector of feature terms, one
@@ -75,6 +80,7 @@ transform = TRUE,
 transform_matrix = khodakA,
 bootstrap = TRUE,
 num_bootstraps = 10,
+as_list = FALSE,
 verbose = FALSE)
 }
 \keyword{get_cos_sim}

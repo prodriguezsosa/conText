@@ -15,7 +15,8 @@ get_nns(
   transform_matrix,
   bootstrap = TRUE,
   num_bootstraps = 10,
-  what = "word"
+  what = "word",
+  as_list = TRUE
 )
 }
 \arguments{
@@ -25,7 +26,10 @@ get_nns(
 
 \item{groups}{grouping variable equal in length to the number of documents}
 
-\item{candidates}{(character) vector of features to consider as candidates to be nearest neighbor}
+\item{candidates}{(character) vector of features to consider as candidates to be nearest neighbor
+You may for example want to only consider features that meet a certian count threshold
+or exclude stop words etc. To do so you can simply identify the set of features you
+want to consider and supply these as a character vector in the \code{candidates} argument.}
 
 \item{pre_trained}{a F x D matrix of numeric values corresponding to pretrained embeddings
 F = number of features and D = embedding dimensions.
@@ -45,9 +49,13 @@ the highest average over all bootstrap samples.}
 
 \item{what}{character; which quanteda tokenizer to use. You will rarely want to change this.
 For Chinese texts you may want to set what = 'fastestword'.}
+
+\item{as_list}{(logical) if FALSE all results are combined into a single data.frame
+If TRUE, a list of data.frames is returned with one data.frame per target.}
 }
 \value{
-a \code{data.frame} with following columns:
+a \code{data.frame} or list of data.frames (one for each target)
+with the following columns:
 \item{\code{target}}{ (character) vector with the rownames of the dfm,
 either defining the groups or the target terms}.
 \item{\code{feature}}{(character) vector of features from the candidate set,
@@ -75,6 +83,7 @@ pre_trained = glove_subset,
 transform = TRUE,
 transform_matrix = khodakA,
 bootstrap = TRUE,
-num_bootstraps = 10)
+num_bootstraps = 10,
+as_list = FALSE)
 }
 \keyword{get_nns}

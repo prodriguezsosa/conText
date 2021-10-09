@@ -4,7 +4,7 @@
 \alias{cos_sim}
 \title{Given a set of embeddings and a set of features, calculate cosine similarities.}
 \usage{
-cos_sim(x, pre_trained, features = NULL)
+cos_sim(x, pre_trained, features = NULL, as_list = TRUE)
 }
 \arguments{
 \item{x}{a \linkS4class{dem} or \linkS4class{fem} object}
@@ -14,9 +14,13 @@ F = number of features and D = embedding dimensions.
 rownames(pre_trained) = set of features for which there is a pre-trained embedding}
 
 \item{features}{(character) features of interest}
+
+\item{as_list}{(logical) if FALSE all results are combined into a single data.frame
+If TRUE, a list of data.frames is returned with one data.frame per feature.}
 }
 \value{
-a \code{data.frame} with following columns:
+a \code{data.frame} or list of data.frames (one for each feature)
+with the following columns:
 \item{\code{target}}{ (character) vector with the rownames of the dfm,
 either defining the groups or the target terms}.
 \item{\code{feature}}{(character) vector of feature terms, one
@@ -51,6 +55,6 @@ groups = immig_dem@docvars$party)
 
 # find nearest neighbors
 cos_sim(x = immig_dem_party,
-pre_trained = glove_subset, features = c('reform', 'enforce'))
+pre_trained = glove_subset, features = c('reform', 'enforce'), as_list = FALSE)
 }
 \keyword{cos_sim}
