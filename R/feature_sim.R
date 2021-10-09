@@ -62,7 +62,7 @@ feature_sim <- function(x, y, candidates = character(0)){
   row_sim <- text2vec::psim2(x, y, method = "cosine", norm = "l2")
 
   # result
-  result <- data.frame(feature = names(row_sim), value = unname(row_sim))
+  result <- data.frame(feature = names(row_sim), value = unname(row_sim)) %>% dplyr::arrange(dplyr::desc(value))
 
   return(result)
 
