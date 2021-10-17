@@ -2,7 +2,7 @@
 % Please edit documentation in R/get_cos_sim.R
 \name{get_cos_sim}
 \alias{get_cos_sim}
-\title{Given a coprus and a set of features, calculate cosine similarities over
+\title{Given a corpus and a set of features, calculate cosine similarities over
 a grouping variable.}
 \usage{
 get_cos_sim(
@@ -20,7 +20,7 @@ get_cos_sim(
 )
 }
 \arguments{
-\item{x}{a character vector - this is the set of documents (corpus) of interest}
+\item{x}{a (quanteda) corpus or character vector}
 
 \item{groups}{a grouping variable}
 
@@ -60,9 +60,11 @@ either defining the groups or the target terms}.
 instance for each target.}
 \item{\code{value}}{(numeric) cosine similarity between target
 and feature.}
+\item{\code{std.error}}{(numeric) sd of bootstrapped cosine similarities
+if bootstrap = TRUE, if FALSE, column is dropped.}
 }
 \description{
-Given a coprus and a set of features, calculate cosine similarities over
+Given a corpus and a set of features, calculate cosine similarities over
 a grouping variable.
 }
 \examples{
@@ -72,7 +74,7 @@ library(quanteda)
 immig_corpus <- corpus_context(x = cr_sample_corpus,
 pattern = "immigration", window = 6L, verbose = TRUE)
 
-temp1 <- get_cos_sim(x = immig_corpus,
+get_cos_sim(x = immig_corpus,
 groups = docvars(immig_corpus, 'party'),
 features = c("reform", "enforce"),
 pre_trained = glove_subset,

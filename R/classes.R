@@ -28,10 +28,11 @@ setClass("dem",
 #' @keywords internal fem
 setClass("fem",
          slots = c(
-           features = "character"),
+           features = "character",
+           counts = "numeric"),
          prototype = list(Dim = integer(2),
                           Dimnames = list(rows = character(), columns = NULL),
-                          features = character()),
+                          features = character(), counts = numeric()),
          contains = "dgCMatrix")
 
 #' Virtual class "conText" for a conText regression output

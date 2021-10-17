@@ -4,7 +4,13 @@
 \alias{build_fem}
 \title{build a \code{fem-class} object}
 \usage{
-build_fem(Class = "fem", x_fem, features = character(), Dimnames = list())
+build_fem(
+  Class = "fem",
+  x_fem,
+  features = character(),
+  counts = numeric(),
+  Dimnames = list()
+)
 }
 \arguments{
 \item{Class}{defines the class of this object (fixed)}
@@ -12,6 +18,8 @@ build_fem(Class = "fem", x_fem, features = character(), Dimnames = list())
 \item{x_fem}{a \verb{dgCMatrix class} matrix}
 
 \item{features}{features used in computing the embeddings}
+
+\item{counts}{counts of features used in computing embeddings}
 
 \item{Dimnames}{row (features) and columns (NULL) names}
 }

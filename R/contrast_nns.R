@@ -69,20 +69,20 @@ contrast_nns <- function(x, groups = NULL, pre_trained = NULL, transform = TRUE,
     # sim_out1
     bs_sim_out1 <- lapply(bootstrap_out, '[[', 'cos_sim1') %>% do.call(rbind,.)
     sim_out1 <- apply(bs_sim_out1, 2, mean)
-    stderror_sim_out1 <- 1/sqrt(nrow(bs_sim_out1)) * apply(bs_sim_out1, 2, sd)
+    stderror_sim_out1 <- apply(bs_sim_out1, 2, sd)
     nns1 <- dplyr::tibble(feature = names(sim_out1), value = unname(sim_out1), std.error = unname(stderror_sim_out1))
 
     # sim_out2
     bs_sim_out2 <- lapply(bootstrap_out, '[[', 'cos_sim2') %>% do.call(rbind,.)
     sim_out2 <- apply(bs_sim_out2, 2, mean)
-    stderror_sim_out2 <- 1/sqrt(nrow(bs_sim_out2)) * apply(bs_sim_out2, 2, sd)
+    stderror_sim_out2 <- apply(bs_sim_out2, 2, sd)
     nns2 <- dplyr::tibble(feature = names(sim_out2), value = unname(sim_out2), std.error = unname(stderror_sim_out2))
 
     # sim_ratio
     bs_sim_ratio <- lapply(bootstrap_out, '[[', 'sim_ratio') %>% do.call(rbind,.)
     sim_ratio <- apply(bs_sim_ratio, 2, mean)
     dev1 <- abs(sim_ratio - 1)
-    stderror_sim_ratio <- 1/sqrt(nrow(bs_sim_ratio)) * apply(bs_sim_ratio, 2, sd)
+    stderror_sim_ratio <- apply(bs_sim_ratio, 2, sd)
     nns_ratio <- dplyr::tibble(feature = names(sim_ratio), value = unname(sim_ratio), std.error = unname(stderror_sim_ratio))
     cat('done bootstrapping \n')
 

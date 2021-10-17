@@ -144,7 +144,7 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
     # summary statistics for normed betas
     normed_betas <- lapply(bootstrap_out, '[[', 'normed_betas') %>% do.call(rbind,.)
     mean_normed_betas <- apply(normed_betas, 2, mean)
-    stderror_normed_betas <- 1/sqrt(num_bootstraps) * apply(normed_betas, 2, sd)
+    stderror_normed_betas <- apply(normed_betas, 2, sd)
     bs_normed_betas <- dplyr::tibble(Coefficient = names(mean_normed_betas), Normed_Estimate = unname(mean_normed_betas), Std.Error = unname(stderror_normed_betas))
 
     # output

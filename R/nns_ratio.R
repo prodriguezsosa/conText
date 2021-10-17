@@ -1,0 +1,68 @@
+#' Computes the ratio of cosine similarities for two embeddings over
+#' the union of their respective top N nearest neighbors.
+#'
+#' @param x a [dem-class] or [fem-class] object or in general a matrix of embeddings
+#' @param N number of nearest neighbors to consider
+#' Note: if nearest neighbors overlap, the resulting number of features
+#' will be fewer than 2*N.
+#' @param candidates character vector delimiting the features to consider as nearest neighbor candidates
+#' @param pre_trained a F x D matrix of numeric values corresponding to pretrained embeddings
+#' F = number of features and D = embedding dimensions.
+#' rownames(pre_trained) = set of features for which there is a pre-trained embedding
+#'
+#' @return a `data.frame` with following columns:
+#'  \item{`feature`}{(character) vector of features from the candidate set,
+#'  one instance for each target.}
+#'  \item{`value`}{(numeric) ratio of cosine similarities}.
+#'
+#' @export
+#' @rdname nns_ratio
+#' @keywords nns_ratio
+#' @examples
+#'
+#' library(quanteda)
+#'
+#' # build corpus of contexts around immigration
+#' immig_corpus <- corpus_context(x = cr_sample_corpus,
+#' pattern = "immigration",
+#' window = 6L,
+#' verbose = TRUE)
+#'
+#' # tokenize text
+#' immig_toks <- tokens(immig_corpus)
+#'
+#' # construct document-feature-matrix
+#' immig_dfm <- dfm(immig_toks)
+#'
+#' # construct document-embedding-matrix
+#' immig_dem <- dem(immig_dfm,
+#' pre_trained =
+#' glove_subset,
+#' transform = TRUE,
+#' transform_matrix = khodakA,
+#' verbose = FALSE)
+#'
+#' # group document-embedding-matrix
+#' immig_dem_party <- dem_group(immig_dem, groups = immig_dem@docvars$party)
+#'
+#' # find nearest neighbors
+#' nns_ratio(x = immig_dem_party, pre_trained = glove_subset, candidates = character(0), N = 10)
+nns_ratio <- function(x, N = 10, candidates = character(0), pre_trained){
+
+  # check
+  if(nrow(x)!=2) stop('nns_ratio can only be applied to a pair of embeddings i.e. nrow(x) must equal 2')
+
+  # get nns
+  nnsdf1 <- nns(x = x[1,], N = Inf, candidates = candidates, pre_trained = pre_trained, as_list = FALSE)
+  nnsdf2 <- nns(x = x[2,], N = Inf, candidates = candidates, pre_trained = pre_trained, as_list = FALSE)
+
+  # get union of top N nns (if N is NULL, use all features)
+  if(is.null(N)){union_nns <- union(nnsdf1$feature, nnsdf2$feature)}else{union_nns <- union(nnsdf1$feature[1:N], nnsdf2$feature[1:N])}
+
+  # compute ratio for union_nns
+  nnsdf1 <- nnsdf1 %>% dplyr::filter(feature %in% union_nns) %>% dplyr::arrange(feature)
+  nnsdf2 <- nnsdf2 %>% dplyr::filter(feature %in% union_nns) %>% dplyr::arrange(feature)
+  result <- data.frame(feature = nnsdf1$feature, value = nnsdf1$value/nnsdf2$value) %>% dplyr::arrange(-value)
+
+  return(result)
+}

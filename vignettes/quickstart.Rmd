@@ -15,6 +15,16 @@ knitr::opts_chunk$set(collapse = FALSE,
 
 # Preliminaries
 
+What do we "mean" by _meaning_?
+
+What does a "statistically significant" difference mean in this context (no pun intended)?
+
+A key result in our paper is that we can get meaningful word vectors, even for single instances of a context, where meaningful in this case refers to the ability of the vector to capture some of the variation in meaning (see paper). Given meaningful single instance embeddings buys us the necessary flexibility to study and make inferences regarding differences "meaning" as a function of covarites --be they group or time. Keep in mind the underlying assumptions of the model: context words do not vary in meaning.
+
+- finite sample bias
+- parametric and non-parametric tests
+
+
 **conText** was designed to work closely with [quanteda](https://quanteda.io), as such most functions will expect a quanteda object such as a _corpus_, _tokens_ or _dfm_/_fcm_. To make the most of **conText**, we recommend that you familiarize yourself with some of quanteda's basic functionalities [Quick Start Guide](https://quanteda.io/articles/quickstart.html).
 
 # Setup
@@ -77,6 +87,8 @@ cr_corpus <- corpus(cr_sample$speech,
 ```
 
 # The building blocks of `a la carte` embeddings
+
+We applied some minimal pre-procesing to the corpus. Below we include a function (not as part of the package) outlining our pre-processing steps.
 
 ## 1. Build a corpus of contexts
 

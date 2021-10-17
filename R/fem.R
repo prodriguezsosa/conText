@@ -93,6 +93,7 @@ fem <- function(x, pre_trained, transform = TRUE, transform_matrix, verbose = TR
   result <- build_fem(Class = 'fem',
                      x_fem = result,
                      features = overlapping_features,
+                     counts = x@meta$object$margin[overlapping_features],
                      Dimnames = list(
                        rows = rownames(x)[included],
                        columns = NULL))

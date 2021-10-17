@@ -3,9 +3,8 @@
 #'
 #' @param x a feature embedding matrix (`fem`)
 #' @param y a feature embedding matrix (`fem`)
-#' @param candidates (character) vector of features to consider as candidates to be nearest neighbor
-#' they must be present in both `x` and `y`. If not candidates are provided
-#' the full set of overlapping features are used.
+#' @param features (character) vector of features for which to compute
+#' similarity scores. If not defined then all features will be used.
 #'
 #' @return a `data.frame` with following columns:
 #'  \item{`feature`}{(character) vector of features that are being compared}
@@ -39,16 +38,16 @@
 #' # compare features
 #' feature_sim(x = cr_fem_R, y = cr_fem_D)
 #'
-feature_sim <- function(x, y, candidates = character(0)){
+feature_sim <- function(x, y, features = character(0)){
 
   # check if there are any overlapping tokens
   overlapping_features <- intersect(rownames(x), rownames(y))
 
-  # check if candidates are defined
-  if(length(candidates) > 0){
-    missing_candidates <- setdiff(candidates, overlapping_features)
-    if(length(missing_candidates)!=0) for(i in 1:length(missing_candidates)) cat("the following candidates are not part of the overlapping feature set: ", paste0(missing_candidates, collapse = ", "))
-    overlapping_features <- intersect(candidates, overlapping_features)
+  # check if features are defined
+  if(length(features) > 0){
+    missing_features <- setdiff(features, overlapping_features)
+    if(length(missing_features)!=0) for(i in 1:length(missing_features)) cat("the following features are not part of the overlapping feature set: ", paste0(missing_features, collapse = ", "))
+    overlapping_features <- intersect(features, overlapping_features)
     }
 
   # check if there are any overlapping features
@@ -62,7 +61,7 @@ feature_sim <- function(x, y, candidates = character(0)){
   row_sim <- text2vec::psim2(x, y, method = "cosine", norm = "l2")
 
   # result
-  result <- data.frame(feature = names(row_sim), value = unname(row_sim)) %>% dplyr::arrange(dplyr::desc(value))
+  result <- data.frame(feature = names(row_sim), value = unname(row_sim)) %>% dplyr::arrange(value)
 
   return(result)
 

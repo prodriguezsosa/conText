@@ -5,16 +5,15 @@
 \title{Given two feature embedding matrices, compute "parallel" cosine similarities
 between overlapping features.}
 \usage{
-feature_sim(x, y, candidates = character(0))
+feature_sim(x, y, features = character(0))
 }
 \arguments{
 \item{x}{a feature embedding matrix (\code{fem})}
 
 \item{y}{a feature embedding matrix (\code{fem})}
 
-\item{candidates}{(character) vector of features to consider as candidates to be nearest neighbor
-they must be present in both \code{x} and \code{y}. If not candidates are provided
-the full set of overlapping features are used.}
+\item{features}{(character) vector of features for which to compute
+similarity scores. If not defined then all features will be used.}
 }
 \value{
 a \code{data.frame} with following columns:

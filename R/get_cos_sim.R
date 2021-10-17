@@ -1,7 +1,7 @@
-#' Given a coprus and a set of features, calculate cosine similarities over
+#' Given a corpus and a set of features, calculate cosine similarities over
 #' a grouping variable.
 #'
-#' @param x a character vector - this is the set of documents (corpus) of interest
+#' @param x a (quanteda) corpus or character vector
 #' @param groups a grouping variable
 #' @param features (character) features of interest
 #' @inheritParams dem
@@ -22,6 +22,8 @@
 #'  instance for each target.}
 #'  \item{`value`}{(numeric) cosine similarity between target
 #'  and feature.}
+#'  \item{`std.error`}{(numeric) sd of bootstrapped cosine similarities
+#'  if bootstrap = TRUE, if FALSE, column is dropped.}
 #'
 #' @export
 #' @rdname get_cos_sim
@@ -34,7 +36,7 @@
 #' immig_corpus <- corpus_context(x = cr_sample_corpus,
 #' pattern = "immigration", window = 6L, verbose = TRUE)
 #'
-#' temp1 <- get_cos_sim(x = immig_corpus,
+#' get_cos_sim(x = immig_corpus,
 #' groups = docvars(immig_corpus, 'party'),
 #' features = c("reform", "enforce"),
 #' pre_trained = glove_subset,
@@ -60,7 +62,6 @@ get_cos_sim <- function(x,
   x <- quanteda::corpus(as.character(x), docvars = data.frame('group' = groups))
 
   if(bootstrap){
-    set.seed(42L)
     cossimdf_bs <- replicate(num_bootstraps,
                           cos_sim_boostrap(x = x,
                                            groups = quanteda::docvars(x, 'group'),
@@ -73,7 +74,7 @@ get_cos_sim <- function(x,
                           simplify = FALSE)
     result <- do.call(rbind, cossimdf_bs) %>%
       dplyr::group_by(target, feature) %>%
-      dplyr::summarise(std.error = sd(value)/sqrt(dplyr::n()),
+      dplyr::summarise(std.error = sd(value),
                        value = mean(value),
                        .groups = 'keep') %>%
       dplyr::ungroup() %>%

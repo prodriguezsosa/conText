@@ -28,15 +28,18 @@ build_dem <- function(Class = 'em',
 #' @param Class defines the class of this object (fixed)
 #' @param x_fem a `dgCMatrix class` matrix
 #' @param features features used in computing the embeddings
+#' @param counts counts of features used in computing embeddings
 #' @param Dimnames row (features) and columns (NULL) names
 #' @export
 build_fem <- function(Class = 'fem',
                       x_fem,
                       features = character(),
+                      counts = numeric(),
                       Dimnames = list()){
   result <-  new(Class = Class,
                  as(x_fem, "dgCMatrix"),
                  features = features,
+                 counts = counts,
                  Dimnames = Dimnames)
 
   return(result)

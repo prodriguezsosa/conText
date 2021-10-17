@@ -20,7 +20,7 @@ get_nns(
 )
 }
 \arguments{
-\item{x}{a character vector - this is the set of documents (corpus) of interest}
+\item{x}{a (quanteda) corpus or character vector}
 
 \item{N}{(numeric) number of nearest neighbors to return}
 
@@ -62,8 +62,8 @@ either defining the groups or the target terms}.
 one instance for each target.}
 \item{\code{value}}{(numeric) cosine similarity between target
 and candidate (mean of boostraps if boostrap = TRUE).}
-\item{\code{std.error}}{(numeric) sd/srt(num_bootstrap) of bootstrapped
-cosine similarities if bootstrap = TRUE, if FALSE, column is dropped.}
+\item{\code{std.error}}{(numeric) sd of bootstrapped cosine similarities
+if bootstrap = TRUE, if FALSE, column is dropped.}
 }
 \description{
 Given a corpus and a set of candidate neighbors, find the top N nearest

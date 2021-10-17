@@ -19,6 +19,7 @@ Imports:
     reshape2 (>= 1.4.4),
     fastDummies (>= 1.6.3),
     stringr (>= 1.4.0),
+    ggplot2,
     methods
 URL: https://github.com/prodriguezsosa/EmbeddingRegression
 BugReports: https://github.com/prodriguezsosa/ConText/issues
@@ -31,5 +32,4 @@ RoxygenNote: 7.1.1
 Roxygen: list(markdown = TRUE)
 Suggests: 
     knitr,
-    rmarkdown,
-    ggplot2
+    rmarkdown

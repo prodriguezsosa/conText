@@ -1,7 +1,7 @@
 #' Given a corpus and a set of candidate neighbors, find the top N nearest
 #' neighbors.
 #'
-#' @param x a character vector - this is the set of documents (corpus) of interest
+#' @param x a (quanteda) corpus or character vector
 #' @inheritParams nns
 #' @param groups grouping variable equal in length to the number of documents
 #' @inheritParams dem
@@ -21,8 +21,8 @@
 #'  one instance for each target.}
 #'  \item{`value`}{(numeric) cosine similarity between target
 #'  and candidate (mean of boostraps if boostrap = TRUE).}
-#'  \item{`std.error`}{(numeric) sd/srt(num_bootstrap) of bootstrapped
-#'  cosine similarities if bootstrap = TRUE, if FALSE, column is dropped.}
+#'  \item{`std.error`}{(numeric) sd of bootstrapped cosine similarities
+#'  if bootstrap = TRUE, if FALSE, column is dropped.}
 #'
 #' @export
 #' @rdname get_nns
@@ -59,7 +59,6 @@ get_nns <- function(x,
   x <- quanteda::corpus(as.character(x), docvars = data.frame('group' = groups))
 
   if(bootstrap){
-    set.seed(42L)
     nnsdf_bs <- replicate(num_bootstraps,
               nns_boostrap(x = x,
                            groups = quanteda::docvars(x, 'group'),
@@ -72,7 +71,7 @@ get_nns <- function(x,
               simplify = FALSE)
     result <- do.call(rbind, nnsdf_bs) %>%
       dplyr::group_by(target, feature) %>%
-      dplyr::summarise(std.error = sd(value)/sqrt(dplyr::n()),
+      dplyr::summarise(std.error = sd(value),
                 value = mean(value),
                 .groups = 'keep') %>%
       dplyr::group_by(target) %>%
