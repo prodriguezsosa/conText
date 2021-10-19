@@ -8,7 +8,7 @@ over the union of their respective N nearest neighbors.}
 get_nns_ratio(
   x,
   N = 10,
-  groups = NULL,
+  groups,
   numerator = NULL,
   candidates = character(0),
   pre_trained,
@@ -18,19 +18,17 @@ get_nns_ratio(
   num_bootstraps = 10,
   permute = TRUE,
   num_permutations = 100,
-  what = "word"
+  verbose = TRUE
 )
 }
 \arguments{
-\item{x}{a (quanteda) corpus or character vector}
+\item{x}{a (quanteda) tokens object}
 
-\item{N}{number of nearest neighbors to consider
-Note: if nearest neighbors overlap, the resulting number of features
-will be fewer than 2*N.}
+\item{N}{number of nearest neighbors to consider}
 
 \item{groups}{a character or factor variable equal in length to the number of documents}
 
-\item{numerator}{(character)}
+\item{numerator}{(character) defines which group is the nuemerator in the ratio.}
 
 \item{candidates}{character vector delimiting the features to consider as nearest neighbor candidates}
 
@@ -54,8 +52,7 @@ the highest average over all bootstrap samples.}
 
 \item{num_permutations}{(numeric) number of permutations to use}
 
-\item{what}{character; which quanteda tokenizer to use. You will rarely want to change this.
-For Chinese texts you may want to set what = 'fastestword'.}
+\item{verbose}{provide information on which group is the numerator}
 }
 \value{
 a \code{data.frame} with following columns:
@@ -82,12 +79,17 @@ pattern = "immigration",
 window = 6L,
 verbose = TRUE)
 
+# identify features in local vocab that overlap with pre-trained embeddings
+# these are used to define candidate nearest neighbors below (optional)
 local_vocab <- get_local_vocab(as.character(immig_corpus), pre_trained = glove_subset)
 
+# tokenize
+immig_toks <- tokens(immig_corpus)
+
 set.seed(42L)
-get_nns_ratio(x = immig_corpus,
+temp <- get_nns_ratio(x = immig_toks,
 N = 20,
-groups = docvars(immig_corpus, 'party'),
+groups = docvars(immig_toks, 'party'),
 numerator = "R",
 candidates = local_vocab,
 pre_trained = glove_subset,
@@ -96,7 +98,7 @@ transform_matrix = khodakA,
 bootstrap = TRUE,
 num_bootstraps = 10,
 permute = TRUE,
-num_permutations = 10)
-
+num_permutations = 10,
+verbose = TRUE)
 }
 \keyword{get_nns_ratio}

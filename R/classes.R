@@ -13,7 +13,7 @@ setClass("dem",
            docvars = "data.frame",
            features = "character"),
          prototype = list(Dim = integer(2),
-                          Dimnames = list(rows = character(), columns = NULL),
+                          Dimnames = list(docs = character(), columns = NULL),
                           docvars = data.frame(row.names = integer()),
                           features = character()),
          contains = "dgCMatrix")

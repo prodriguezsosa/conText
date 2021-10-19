@@ -14,13 +14,12 @@ get_cos_sim(
   transform_matrix,
   bootstrap = TRUE,
   num_bootstraps = 10,
-  what = "word",
   as_list = TRUE,
   verbose = TRUE
 )
 }
 \arguments{
-\item{x}{a (quanteda) corpus or character vector}
+\item{x}{a (quanteda) tokens object}
 
 \item{groups}{a grouping variable}
 
@@ -41,9 +40,6 @@ if groups defined, sampling is automatically stratified; top nns are those with
 the highest average over all bootstrap samples.}
 
 \item{num_bootstraps}{(integer) number of bootstraps to use}
-
-\item{what}{character; which quanteda tokenizer to use. You will rarely want to change this.
-For Chinese texts you may want to set what = 'fastestword'.}
 
 \item{as_list}{(logical) if FALSE all results are combined into a single data.frame
 If TRUE, a list of data.frames is returned with one data.frame per feature.}
@@ -74,8 +70,10 @@ library(quanteda)
 immig_corpus <- corpus_context(x = cr_sample_corpus,
 pattern = "immigration", window = 6L, verbose = TRUE)
 
-get_cos_sim(x = immig_corpus,
-groups = docvars(immig_corpus, 'party'),
+immig_toks <- tokens(immig_corpus)
+
+get_cos_sim(x = immig_toks,
+groups = docvars(immig_toks, "party"),
 features = c("reform", "enforce"),
 pre_trained = glove_subset,
 transform = TRUE,

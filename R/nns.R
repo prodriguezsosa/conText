@@ -83,7 +83,8 @@ nns <- function(x, N = 10, candidates = character(0), pre_trained, as_list = TRU
   if(is.null(rownames(x))) result$target <- NA
 
   # if !as_list return a list object with an item for each target data.frame
-  if(as_list) result <- lapply(unique(result$target), function(i) result[result$target == i,] %>% dplyr::mutate(target = as.character(target))) %>% setNames(unique(result$target))
+  if(as_list && !is.null(rownames(x))) result <- lapply(unique(result$target), function(i) result[result$target == i,] %>% dplyr::mutate(target = as.character(target))) %>% setNames(unique(result$target))
+  if(as_list && is.null(rownames(x))) message("although as_list = TRUE, will return a single tibble as there is only one word vector")
 
   return(result)
 }

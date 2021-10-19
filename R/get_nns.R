@@ -1,7 +1,7 @@
 #' Given a corpus and a set of candidate neighbors, find the top N nearest
 #' neighbors.
 #'
-#' @param x a (quanteda) corpus or character vector
+#' @param x a (quanteda) tokens object
 #' @inheritParams nns
 #' @param groups grouping variable equal in length to the number of documents
 #' @inheritParams dem
@@ -10,8 +10,6 @@
 #' if groups defined, sampling is automatically stratified; top nns are those with
 #' the highest average over all bootstrap samples.
 #' @param num_bootstraps (integer) number of bootstraps to use
-#' @param what character; which quanteda tokenizer to use. You will rarely want to change this.
-#' For Chinese texts you may want to set what = 'fastestword'.
 #'
 #' @return a `data.frame` or list of data.frames (one for each target)
 #' with the following columns:
@@ -34,8 +32,10 @@
 #' immig_corpus <- corpus_context(x = cr_sample_corpus,
 #' pattern = "immigration", window = 6L, verbose = TRUE)
 #'
-#' get_nns(x = immig_corpus, N = 10,
-#' groups = docvars(immig_corpus, 'party'),
+#' immig_toks <- tokens(immig_corpus)
+#'
+#' get_nns(x = immig_toks, N = 10,
+#' groups = docvars(immig_toks, "party"),
 #' candidates = character(0),
 #' pre_trained = glove_subset,
 #' transform = TRUE,
@@ -52,21 +52,20 @@ get_nns <- function(x,
                     transform_matrix,
                     bootstrap = TRUE,
                     num_bootstraps = 10,
-                    what = 'word',
                     as_list = TRUE) {
 
-  # create a new corpus
-  x <- quanteda::corpus(as.character(x), docvars = data.frame('group' = groups))
+  # add grouping variable to docvars
+  if(!is.null(groups)) docvars(x) <- NULL; docvars(x, "group") <- groups
 
+  # if bootstrap
   if(bootstrap){
     nnsdf_bs <- replicate(num_bootstraps,
               nns_boostrap(x = x,
-                           groups = quanteda::docvars(x, 'group'),
+                           groups = groups,
                            candidates = candidates,
                            pre_trained = pre_trained,
                            transform = transform,
                            transform_matrix = transform_matrix,
-                           what = what,
                            as_list = FALSE),
               simplify = FALSE)
     result <- do.call(rbind, nnsdf_bs) %>%
@@ -81,20 +80,21 @@ get_nns <- function(x,
       dplyr::select('target', 'feature', 'rank', 'value', 'std.error')
   }else{
 
-  # tokenize texts
-  corpus_toks <- quanteda::tokens(x, what = what)
-
   # create document-feature matrix
-  corpus_dfm <- quanteda::dfm(corpus_toks, tolower = FALSE)
+  x_dfm <- quanteda::dfm(x, tolower = FALSE)
 
   # compute document-embedding matrix
-  corpus_dem <- dem(x = corpus_dfm, pre_trained = pre_trained, transform = transform, transform_matrix = transform_matrix, verbose = FALSE)
+  x_dem <- dem(x = x_dfm, pre_trained = pre_trained, transform = transform, transform_matrix = transform_matrix, verbose = FALSE)
 
   # aggregate dems by group var
-  if(!is.null(groups)) corpus_dem <- dem_group(x = corpus_dem, groups = corpus_dem@docvars$group)
+  if(!is.null(groups)){
+    wvs <- dem_group(x = x_dem, groups = x_dem@docvars$group)
+  } else {
+    wvs <- matrix(colMeans(x_dem), ncol = ncol(x_dem))
+  }
 
   # find nearest neighbors
-  result <- nns(x = corpus_dem, N = N, candidates = candidates, pre_trained = pre_trained, as_list = FALSE)
+  result <- nns(x = wvs, N = N, candidates = candidates, pre_trained = pre_trained, as_list = FALSE)
   }
 
   # if !as_list return a list object with an item for each target data.frame
@@ -111,26 +111,30 @@ nns_boostrap <- function(x,
                          pre_trained,
                          transform = TRUE,
                          transform_matrix,
-                         what = what,
                          as_list = FALSE){
 
-  # create a new corpus
-  x <- quanteda::corpus_sample(x, size = quanteda::ndoc(x), replace = TRUE, by = groups)
-
-  # tokenize texts
-  corpus_toks <- quanteda::tokens(x, what = what)
+  # sample tokens with replacement
+  if(!is.null(groups)) {
+    x <- quanteda::tokens_sample(x = x, size = table(groups), replace = TRUE, by = groups)
+    } else {
+      x <- quanteda::tokens_sample(x = x, size = quanteda::ndoc(x), replace = TRUE)
+  }
 
   # create document-feature matrix
-  corpus_dfm <- quanteda::dfm(corpus_toks, tolower = FALSE)
+  x_dfm <- quanteda::dfm(x, tolower = FALSE)
 
   # compute document-embedding matrix
-  corpus_dem <- dem(x = corpus_dfm, pre_trained = pre_trained, transform = transform, transform_matrix = transform_matrix, verbose = FALSE)
+  x_dem <- dem(x = x_dfm, pre_trained = pre_trained, transform = transform, transform_matrix = transform_matrix, verbose = FALSE)
 
-  # aggregate dems by group var
-  if(!is.null(groups)) corpus_dem <- dem_group(x = corpus_dem, groups = corpus_dem@docvars$group)
+  # aggregate dems by group var if defined
+  if(!is.null(groups)){
+    wvs <- dem_group(x = x_dem, groups = x_dem@docvars$group)
+  } else {
+    wvs <- matrix(colMeans(x_dem), ncol = ncol(x_dem))
+    }
 
   # find nearest neighbors
-  result <- nns(x = corpus_dem, N = Inf, candidates = candidates, pre_trained = pre_trained, as_list = FALSE)
+  result <- nns(x = wvs, N = Inf, candidates = candidates, pre_trained = pre_trained, as_list = FALSE)
 
   return(result)
 

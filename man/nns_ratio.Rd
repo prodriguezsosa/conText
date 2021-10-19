@@ -5,12 +5,21 @@
 \title{Computes the ratio of cosine similarities for two embeddings over
 the union of their respective top N nearest neighbors.}
 \usage{
-nns_ratio(x, N = 10, candidates = character(0), pre_trained)
+nns_ratio(
+  x,
+  N = 10,
+  numerator = NULL,
+  candidates = character(0),
+  pre_trained,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{x}{a \linkS4class{dem} or \linkS4class{fem} object or in general a matrix of embeddings}
 
-\item{N}{number of nearest neighbors to consider
+\item{N}{number of nearest neighbors to consider}
+
+\item{numerator}{(character) defines which group is the nuemerator in the ratio
 Note: if nearest neighbors overlap, the resulting number of features
 will be fewer than 2*N.}
 
@@ -19,6 +28,8 @@ will be fewer than 2*N.}
 \item{pre_trained}{a F x D matrix of numeric values corresponding to pretrained embeddings
 F = number of features and D = embedding dimensions.
 rownames(pre_trained) = set of features for which there is a pre-trained embedding}
+
+\item{verbose}{provide information on which group is the numerator}
 }
 \value{
 a \code{data.frame} with following columns:
@@ -58,6 +69,6 @@ verbose = FALSE)
 immig_dem_party <- dem_group(immig_dem, groups = immig_dem@docvars$party)
 
 # find nearest neighbors
-nns_ratio(x = immig_dem_party, pre_trained = glove_subset, candidates = character(0), N = 10)
+nns_ratio(x = immig_dem_party, N = 10, numerator = "R", candidates = character(0), pre_trained = glove_subset, verbose = TRUE)
 }
 \keyword{nns_ratio}
