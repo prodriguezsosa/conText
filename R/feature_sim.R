@@ -29,11 +29,11 @@
 #' count = "frequency", tri = FALSE)
 #'
 #' # compute feature-embedding matrix
-#' cr_fem_R <- fem(cr_fcm_R, pre_trained = glove_subset,
-#' transform = TRUE, transform_matrix = khodakA, verbose = FALSE)
+#' cr_fem_R <- fem(cr_fcm_R, pre_trained = cr_glove_subset,
+#' transform = TRUE, transform_matrix = cr_transform, verbose = FALSE)
 #'
-#' cr_fem_D <- fem(cr_fcm_D, pre_trained = glove_subset,
-#' transform = TRUE, transform_matrix = khodakA, verbose = FALSE)
+#' cr_fem_D <- fem(cr_fcm_D, pre_trained = cr_glove_subset,
+#' transform = TRUE, transform_matrix = cr_transform, verbose = FALSE)
 #'
 #' # compare features
 #' feature_sim(x = cr_fem_R, y = cr_fem_D)

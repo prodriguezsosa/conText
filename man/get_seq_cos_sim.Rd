@@ -65,6 +65,6 @@ cos_simsdf <- get_seq_cos_sim(x = cr_sample_corpus,
 seqvar = docvars(cr_sample_corpus, 'year'),
 target = "equal",
 candidates = c("immigration", "immigrants"),
-pre_trained = glove_subset,
-transform_matrix = khodakA)
+pre_trained = cr_glove_subset,
+transform_matrix = cr_transform)
 }

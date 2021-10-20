@@ -36,8 +36,8 @@
 #' # set tri = FALSE to work with fem
 #'
 #' # construct feature-embedding-matrix
-#' cr_fem <- fem(cr_fcm, pre_trained = glove_subset,
-#' transform = TRUE, transform_matrix = khodakA, verbose = FALSE)
+#' cr_fem <- fem(cr_fcm, pre_trained = cr_glove_subset,
+#' transform = TRUE, transform_matrix = cr_transform, verbose = FALSE)
 #' dim(cr_fem)
 #'
 #' ## embed specific target features
@@ -52,8 +52,8 @@
 #' # set tri = FALSE to work with fem and dem
 #'
 #' # construct feature-embedding-matrix
-#' cr_fem <- fem(cr_fcm, pre_trained = glove_subset,
-#' transform = TRUE, transform_matrix = khodakA, verbose = FALSE)
+#' cr_fem <- fem(cr_fcm, pre_trained = cr_glove_subset,
+#' transform = TRUE, transform_matrix = cr_transform, verbose = FALSE)
 #' dim(cr_fem)
 fem <- function(x, pre_trained, transform = TRUE, transform_matrix, verbose = TRUE){
 

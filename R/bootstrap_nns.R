@@ -25,12 +25,12 @@
 #'                                    hard_cut = FALSE, verbose = FALSE)
 #'
 #' # find local vocab (use it to define the candidate of nearest neighbors)
-#' local_vocab <- get_local_vocab(context_immigration$context, pre_trained = glove_subset)
+#' local_vocab <- get_local_vocab(context_immigration$context, pre_trained = cr_glove_subset)
 #'
 #' set.seed(42L)
 #' nns_immigration <- bootstrap_nns(context = context_immigration$context,
-#'                                  pre_trained = glove_subset,
-#'                                  transform_matrix = khodakA,
+#'                                  pre_trained = cr_glove_subset,
+#'                                  transform_matrix = cr_transform,
 #'                                  transform = TRUE,
 #'                                  candidates = local_vocab,
 #'                                  bootstrap = TRUE,

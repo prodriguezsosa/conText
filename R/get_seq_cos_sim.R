@@ -32,8 +32,8 @@
 #' seqvar = docvars(cr_sample_corpus, 'year'),
 #' target = "equal",
 #' candidates = c("immigration", "immigrants"),
-#' pre_trained = glove_subset,
-#' transform_matrix = khodakA)
+#' pre_trained = cr_glove_subset,
+#' transform_matrix = cr_transform)
 get_seq_cos_sim <- function(x,
                            seqvar,
                            target,

@@ -17,9 +17,9 @@
 #'
 #' # identify top N prototypical contexts and compute typicality score
 #' pt_context <- prototypical_context(context = context_immigration$context,
-#' pre_trained = glove_subset,
+#' pre_trained = cr_glove_subset,
 #' transform = TRUE,
-#' transform_matrix = khodakA,
+#' transform_matrix = cr_transform,
 #' N = 3, norm = 'l2')
 #' @export
 prototypical_context <- function(context, pre_trained, transform = TRUE, transform_matrix, N = 3, norm = 'l2'){

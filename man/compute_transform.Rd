@@ -33,12 +33,11 @@ cr_fcm <- fcm(cr_toks, context = "window", window = 6,
 count = "weighted", weights = 1 / (1:6), tri = FALSE)
 
 # you will generally want to estimate a new (corpus-specific)
-# GloVe model given the (small) size of our cr_corpus_sample
-# we will use glove_subset instead
-# see the Quick Start Guide to see a full example
+# GloVe model, we will use cr_glove_subset instead
+# see the Quick Start Guide to see a full example.
 
 # estimate transform
-cr_transform <- compute_transform(x = cr_fcm,
-pre_trained = glove_subset, weighting = 'log')
+cr_subset_transform <- compute_transform(x = cr_fcm,
+pre_trained = cr_glove_subset, weighting = 'log')
 }
 \keyword{compute_transform}

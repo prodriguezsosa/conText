@@ -37,9 +37,9 @@
 #' # construct document-embedding-matrix
 #' immig_dem <- dem(immig_dfm,
 #' pre_trained =
-#' glove_subset,
+#' cr_glove_subset,
 #' transform = TRUE,
-#' transform_matrix = khodakA,
+#' transform_matrix = cr_transform,
 #' verbose = FALSE)
 #'
 #' # group document-embedding-matrix
@@ -49,7 +49,7 @@
 #' nns_ratio(x = immig_dem_party, N = 10,
 #' numerator = "R",
 #' candidates = character(0),
-#' pre_trained = glove_subset,
+#' pre_trained = cr_glove_subset,
 #' verbose = TRUE)
 nns_ratio <- function(x, N = 10, numerator = NULL, candidates = character(0), pre_trained, verbose = TRUE){
 

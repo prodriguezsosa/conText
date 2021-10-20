@@ -10,7 +10,7 @@
 #' @export
 #' @examples
 #' # find local vocab (use it to define the candidate of nearest neighbors)
-#' local_vocab <- get_local_vocab(cr_sample_corpus, pre_trained = glove_subset)
+#' local_vocab <- get_local_vocab(cr_sample_corpus, pre_trained = cr_glove_subset)
 
 get_local_vocab <- function(context, pre_trained){
 

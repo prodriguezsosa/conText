@@ -35,8 +35,8 @@
 #' immig_dfm <- dfm(immig_toks)
 #'
 #' # construct document-embedding-matrix
-#' immig_dem <- dem(immig_dfm, pre_trained = glove_subset,
-#' transform = TRUE, transform_matrix = khodakA, verbose = FALSE)
+#' immig_dem <- dem(immig_dfm, pre_trained = cr_glove_subset,
+#' transform = TRUE, transform_matrix = cr_transform, verbose = FALSE)
 #'
 #' # group document-embedding-matrix
 #' immig_dem_party <- dem_group(immig_dem,
@@ -44,7 +44,7 @@
 #'
 #' # find nearest neighbors
 #' cos_sim(x = immig_dem_party,
-#' pre_trained = glove_subset, features = c('reform', 'enforce'), as_list = FALSE)
+#' pre_trained = cr_glove_subset, features = c('reform', 'enforce'), as_list = FALSE)
 cos_sim <- function(x, pre_trained, features = NULL, as_list = TRUE){
 
   # check features are in pre-trained embeddings

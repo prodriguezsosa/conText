@@ -1,6 +1,6 @@
 # About
 
-**conText** us R package that provides a powerful yet computationally simple framework to compute context-specific document and feature embeddings. These can then be used to: (1) evaluate hypotheses about covariate effects on text embeddings and (2) as context-specific features for downstream classification tasks. **conText** builds on results in [Arora et al. (2018)](https://arxiv.org/abs/1601.03764), [Khodak et al. (2018)](https://arxiv.org/abs/1805.05388) and, more recently, [Rodriguez et al. (2021)](https://github.com/prodriguezsosa/EmbeddingRegression).
+**conText** provides a fast, flexible and transparent framework to estimate context-specific word and short document embeddings using the 'a la carte' embeddings approach developed by Khodak et al. (2018)(https://arxiv.org/abs/1805.05388) <arXiv:1805.05388> and evaluate hypotheses about covariate effects on embeddings using the regression framework developed by [Rodriguez et al. (2021)](https://github.com/prodriguezsosa/EmbeddingRegression).
 
 # How to Install
 
@@ -8,13 +8,13 @@
 
 # Datasets
 
-To use **conText** you will need three datasets: 
+To use **conText** you will need three objects: 
 
 1. A (quanteda) **corpus** with the documents and corresponding document variables you want to evaluate.
 2. A set of (GloVe) **pre-trained embeddings**.
 3. A **transformation matrix** specific to the pre-trained embeddings.
 
-In [this Dropbox folder](https://www.dropbox.com/sh/jsyrag7opfo7l7i/AAB1z7tumLuKihGu2-FDmhmKa?dl=0) (see the /data folder) we have included the three datasets we use in the Quick Start Guide along with their documentation (see the /man folder) and source files (see the /data-raw folder).
+**conText** includes sample objects for all three but keep in mind these are just meant to illustrate function implementations. In [this Dropbox folder](https://www.dropbox.com/sh/jsyrag7opfo7l7i/AAB1z7tumLuKihGu2-FDmhmKa?dl=0) we have included the raw versions of these objects including the full Stanford GloVe 300-dimensional embeddings (labeled _glove.rds_) and its corresponding transformation matrix estimated by Khodak et al. (2018) (labeled khodakA.rds).
 
 # Quick Start Guides
 

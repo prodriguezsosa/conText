@@ -26,8 +26,8 @@
 #' ## given the target word "immigration"
 #' model1 <- conText(formula = immigration ~ party + gender,
 #'                   data = cr_toks,
-#'                   pre_trained = glove_subset,
-#'                   transform = TRUE, transform_matrix = khodakA,
+#'                   pre_trained = cr_glove_subset,
+#'                   transform = TRUE, transform_matrix = cr_transform,
 #'                   bootstrap = TRUE, num_bootstraps = 10,
 #'                   stratify = TRUE,
 #'                   permute = TRUE, num_permutations = 100,

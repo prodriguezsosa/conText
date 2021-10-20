@@ -34,8 +34,8 @@
 #' set.seed(42L)
 #' party_nns <- contrast_nns(x = immig_toks,
 #' groups = docvars(immig_toks, 'party'),
-#' pre_trained = glove_subset,
-#' transform = TRUE, transform_matrix = khodakA,
+#' pre_trained = cr_glove_subset,
+#' transform = TRUE, transform_matrix = cr_transform,
 #' bootstrap = TRUE, num_bootstraps = 10,
 #' permute = TRUE, num_permutations = 100,
 #' candidates = NULL, N = 20,

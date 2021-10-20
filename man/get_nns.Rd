@@ -79,9 +79,9 @@ pattern = "immigration", window = 6L, hard_cut = FALSE, verbose = TRUE)
 get_nns(x = immig_toks, N = 10,
 groups = docvars(immig_toks, "party"),
 candidates = character(0),
-pre_trained = glove_subset,
+pre_trained = cr_glove_subset,
 transform = TRUE,
-transform_matrix = khodakA,
+transform_matrix = cr_transform,
 bootstrap = TRUE,
 num_bootstraps = 10,
 as_list = FALSE)

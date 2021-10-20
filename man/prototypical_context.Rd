@@ -41,8 +41,8 @@ context_immigration <- get_context(x = cr_sample_corpus, target = 'immigration',
 
 # identify top N prototypical contexts and compute typicality score
 pt_context <- prototypical_context(context = context_immigration$context,
-pre_trained = glove_subset,
+pre_trained = cr_glove_subset,
 transform = TRUE,
-transform_matrix = khodakA,
+transform_matrix = cr_transform,
 N = 3, norm = 'l2')
 }

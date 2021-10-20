@@ -47,8 +47,8 @@ count = "weighted", weights = 1 / (1:6), tri = FALSE)
 # set tri = FALSE to work with fem
 
 # construct feature-embedding-matrix
-cr_fem <- fem(cr_fcm, pre_trained = glove_subset,
-transform = TRUE, transform_matrix = khodakA, verbose = FALSE)
+cr_fem <- fem(cr_fcm, pre_trained = cr_glove_subset,
+transform = TRUE, transform_matrix = cr_transform, verbose = FALSE)
 dim(cr_fem)
 
 ## embed specific target features
@@ -63,8 +63,8 @@ count = "weighted", weights = 1 / (1:6), tri = FALSE)
 # set tri = FALSE to work with fem and dem
 
 # construct feature-embedding-matrix
-cr_fem <- fem(cr_fcm, pre_trained = glove_subset,
-transform = TRUE, transform_matrix = khodakA, verbose = FALSE)
+cr_fem <- fem(cr_fcm, pre_trained = cr_glove_subset,
+transform = TRUE, transform_matrix = cr_transform, verbose = FALSE)
 dim(cr_fem)
 }
 \keyword{fem}

@@ -40,8 +40,8 @@
 #' immig_dfm <- dfm(immig_toks)
 #'
 #' # construct document-embedding-matrix
-#' immig_dem <- dem(immig_dfm, pre_trained = glove_subset,
-#' transform = TRUE, transform_matrix = khodakA, verbose = FALSE)
+#' immig_dem <- dem(immig_dfm, pre_trained = cr_glove_subset,
+#' transform = TRUE, transform_matrix = cr_transform, verbose = FALSE)
 #'
 #' # group document-embedding-matrix
 #' immig_dem_party <- dem_group(immig_dem,
@@ -49,7 +49,7 @@
 #'
 #' # find nearest neighbors
 #' nns(x = immig_dem_party,
-#' pre_trained = glove_subset, candidates = NULL, N = 10, as_list = FALSE)
+#' pre_trained = cr_glove_subset, candidates = NULL, N = 10, as_list = FALSE)
 nns <- function(x, N = 10, candidates = character(0), pre_trained, as_list = TRUE){
 
   # for single numeric vectors

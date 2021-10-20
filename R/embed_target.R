@@ -26,8 +26,8 @@
 #'                         hard_cut = FALSE, verbose = FALSE)
 #'
 #' contexts_vectors <- embed_target(context = context_immigration$context,
-#' pre_trained = glove_subset,
-#' transform = TRUE, transform_matrix = khodakA,
+#' pre_trained = cr_glove_subset,
+#' transform = TRUE, transform_matrix = cr_transform,
 #' aggregate = FALSE, verbose = FALSE)
 #' @export
 

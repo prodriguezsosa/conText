@@ -24,7 +24,7 @@ a character vector of nearest neighbors to target
 Return nearest neighbors based on cosine similarity
 }
 \examples{
-find_nns(target_embedding = glove_subset['immigration',],
-         pre_trained = glove_subset, N = 5,
+find_nns(target_embedding = cr_glove_subset['immigration',],
+         pre_trained = cr_glove_subset, N = 5,
          candidates = NULL, norm = "l2")
 }

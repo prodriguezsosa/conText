@@ -24,18 +24,18 @@ Similar in essence to \code{dfm_group}.
 library(quanteda)
 
 # tokenize text
-anes2016_toks <- tokens(anes2016_sample_corpus)
+cr_toks <- tokens(cr_sample_corpus)
 
 # construct document-feature-matrix
-anes2016_dfm <- dfm(anes2016_toks)
+cr_dfm <- dfm(cr_toks)
 
 # construct document-embedding-matrix
-anes2016_dem <- dem(anes2016_dfm, pre_trained = glove_subset,
-transform = TRUE, transform_matrix = khodakA, verbose = FALSE)
+cr_dem <- dem(cr_dfm, pre_trained = cr_glove_subset,
+transform = TRUE, transform_matrix = cr_transform, verbose = FALSE)
 
 # group document-embedding-matrix
-anes2016_dem_ideology <- dem_group(anes2016_dem,
-groups = anes2016_dem@docvars$ideology)
+cr_dem_party <- dem_group(cr_dem,
+groups = cr_dem@docvars$party)
 
 }
 \keyword{dem_group}

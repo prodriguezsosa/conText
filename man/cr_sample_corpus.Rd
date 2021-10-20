@@ -23,7 +23,7 @@ cr_sample_corpus
 A (quanteda) corpus containing a sample of the United States Congressional Record
 (daily transcripts) covering the 111th to 114th Congresses.
 The raw corpus is first subset to speeches
-containing the word "immigration". Then 25 docs from each party-session pair
+containing the regular expression "immig*". Then 100 docs from each party-gender pair
 is randomly sampled. For full data and pre-processing file, see:
 https://www.dropbox.com/sh/jsyrag7opfo7l7i/AAB1z7tumLuKihGu2-FDmhmKa?dl=0
 }
