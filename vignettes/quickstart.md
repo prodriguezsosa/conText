@@ -547,7 +547,7 @@ argument.
 plot_nns_ratio(x = immig_nns_ratio, alpha = 0.01, horizontal = TRUE)
 ```
 
-<img src="/Users/pedrorodriguez/Dropbox/GitHub/repositories/conText/vignettes/nns_ratio.png" width="100%" />
+<img src="https://github.com/prodriguezsosa/conText/blob/develop/vignettes/nns_ratio.png" width="100%" />
 
 # Embedding regression
 
