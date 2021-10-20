@@ -547,7 +547,7 @@ argument.
 plot_nns_ratio(x = immig_nns_ratio, alpha = 0.01, horizontal = TRUE)
 ```
 
-![](/private/var/folders/81/yb6y5pld4sq8yfdj9v0lwfj80000gn/T/RtmptZAifX/preview-2e8e126ce009.dir/quickstart_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+![](/private/var/folders/81/yb6y5pld4sq8yfdj9v0lwfj80000gn/T/RtmptZAifX/preview-2e8e5d3364fc.dir/quickstart_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
 
 # Embedding regression
 
