@@ -36,16 +36,17 @@ To use **conText** you will need three datasets:
 2.  A set of (GloVe) **pre-trained embeddings**.
 3.  A **transformation matrix** specific to the pre-trained embeddings.
 
-The **conText** package includes two sample corpora `cr_sample_corpus`
-–a sample of the U.S. Congressional Records (Sessions 111th - 114th)–
-and `anes2016_sample_corpus` –a sample of the ANES 2016 open-ended
-question on “most important issues facing the country”–; a subset of
-[Stanford NLP’s](https://nlp.stanford.edu/projects/glove/)
-300-dimensional GloVe embeddings, `glove_subset`; and a transformation
-matrix ,`khodakA`, computed by [Khodak et
+The **conText** package includes two sample corpora:
+- `cr_sample_corpus`, a sample of the U.S. Congressional Records (Sessions 111th - 114th)
+- `anes2016_sample_corpus`, a sample of the ANES 2016 open-ended question on “most important issues facing the country”; 
+It also includes:
+- a subset of [Stanford NLP’s](https://nlp.stanford.edu/projects/glove/)
+300-dimensional GloVe embeddings, `glove_subset`
+- a transformation matrix ,`khodakA`, computed by [Khodak et
 al.](https://arxiv.org/abs/1805.05388) for the aforementioned GloVe
-300-dimensional embeddings (see documentation for details). For the
-following guide we will be using the full versions of these datasets
+300-dimensional embeddings (see documentation for details). 
+
+For the following guide we will be using the full versions of these datasets
 which we’ve made available
 [here](https://www.dropbox.com/sh/6dfr3i6no6nzvm0/AADqk6HFTvZJGNyu3FuO62kGa?dl=0).
 
