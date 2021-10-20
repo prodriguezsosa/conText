@@ -38,7 +38,9 @@ To use **conText** you will need three datasets:
 
 The **conText** package includes two sample corpora:
 - `cr_sample_corpus`, a sample of the U.S. Congressional Records (Sessions 111th - 114th)
-- `anes2016_sample_corpus`, a sample of the ANES 2016 open-ended question on “most important issues facing the country”; 
+- `anes2016_sample_corpus`, a sample of the ANES 2016 open-ended question on “most important issues facing the country”
+
+
 It also includes:
 - a subset of [Stanford NLP’s](https://nlp.stanford.edu/projects/glove/)
 300-dimensional GloVe embeddings, `glove_subset`
