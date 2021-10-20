@@ -26,7 +26,7 @@ conText(
 \item{formula}{a symbolic description of the model to be fitted
 to use a phrase as a DV, wrap in quotations e.g. "immigrant refugees" ~ party + gender}
 
-\item{data}{a quanteda \code{corpus}}
+\item{data}{a quanteda \code{tokens} object}
 
 \item{pre_trained}{a F x D matrix of numeric values corresponding to pretrained embeddings
 F = number of features and D = embedding dimensions.
@@ -72,16 +72,21 @@ Estimate an embedding regression model
 }
 \examples{
 
+library(quanteda)
+
+cr_toks <- tokens(cr_sample_corpus)
+
 ## given the target word "immigration"
 model1 <- conText(formula = immigration ~ party + gender,
-                  data = cr_sample_corpus,
+                  data = cr_toks,
                   pre_trained = glove_subset,
                   transform = TRUE, transform_matrix = khodakA,
                   bootstrap = TRUE, num_bootstraps = 10,
                   stratify = TRUE,
                   permute = TRUE, num_permutations = 100,
                   window = 6, case_insensitive = TRUE,
-                  verbose = TRUE)
+                  hard_cut = FALSE,
+                  verbose = FALSE)
 
 # notice, non-binary covariates are automatically "dummified"
 rownames(model1)
@@ -91,17 +96,6 @@ rownames(model1)
 
 # (normed) coefficient table
 model1@normed_cofficients
-
-## embedding full documents, not just a target word
-
-model1 <- conText(formula = . ~ ideology,
-                  data = anes2016_sample_corpus,
-                  pre_trained = glove_subset,
-                  transform = TRUE, transform_matrix = khodakA,
-                  bootstrap = TRUE, num_bootstraps = 10,
-                  stratify = TRUE,
-                  permute = TRUE, num_permutations = 100,
-                  window = 6, verbose = FALSE)
 
 }
 \keyword{conText}

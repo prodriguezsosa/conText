@@ -34,10 +34,15 @@ Find prototypical contexts (most similar on average to the full set of contexts)
 }
 \examples{
 
-immig_corpus <- corpus_context(x = cr_sample_corpus,
-pattern = "immigration", window = 6L, verbose = TRUE)
+# find contexts of immigration
+context_immigration <- get_context(x = cr_sample_corpus, target = 'immigration',
+                                   window = 6, valuetype = "fixed", case_insensitive = TRUE,
+                                   hard_cut = FALSE, verbose = FALSE)
 
 # identify top N prototypical contexts and compute typicality score
-pt_context <- prototypical_context(context = immig_corpus, pre_trained = glove_subset,
-                                   transform = TRUE, transform_matrix = khodakA, N = 3, norm = 'l2')
+pt_context <- prototypical_context(context = context_immigration$context,
+pre_trained = glove_subset,
+transform = TRUE,
+transform_matrix = khodakA,
+N = 3, norm = 'l2')
 }

@@ -20,7 +20,7 @@ contrast_nns(
 )
 }
 \arguments{
-\item{x}{(quanteda) corpus}
+\item{x}{(quanteda) tokens object}
 
 \item{groups}{a variable with two unique values (can be numeric, factor, character)}
 
@@ -66,12 +66,14 @@ Contrast nearest neighbors
 
 library(quanteda)
 
-immig_corpus <- corpus_context(x = cr_sample_corpus,
-pattern = "immigration", window = 6L, verbose = TRUE)
+cr_toks <- tokens(cr_sample_corpus)
+
+immig_toks <- tokens_context(x = cr_toks,
+pattern = "immigration", window = 6L, hard_cut = FALSE, verbose = TRUE)
 
 set.seed(42L)
-party_nns <- contrast_nns(x = immig_corpus,
-groups = docvars(immig_corpus, 'party'),
+party_nns <- contrast_nns(x = immig_toks,
+groups = docvars(immig_toks, 'party'),
 pre_trained = glove_subset,
 transform = TRUE, transform_matrix = khodakA,
 bootstrap = TRUE, num_bootstraps = 10,

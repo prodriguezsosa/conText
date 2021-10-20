@@ -29,12 +29,12 @@
 #'
 #' library(quanteda)
 #'
-#' # build corpus of contexts around immigration
-#' immig_corpus <- corpus_context(x = cr_sample_corpus,
-#' pattern = "immigration", window = 6L, verbose = TRUE)
+#' # tokenize corpus
+#' cr_toks <- tokens(cr_sample_corpus)
 #'
-#' # tokenize text
-#' immig_toks <- tokens(immig_corpus)
+#' # get tokens around immigration
+#' immig_toks <- tokens_context(x = cr_toks,
+#' pattern = "immigration", window = 6L, hard_cut = FALSE, verbose = TRUE)
 #'
 #' # construct document-feature-matrix
 #' immig_dfm <- dfm(immig_toks)
@@ -54,6 +54,9 @@ nns <- function(x, N = 10, candidates = character(0), pre_trained, as_list = TRU
 
   # for single numeric vectors
   if(is.null(dim(x)) & length(x) == dim(pre_trained)[2]) x <- matrix(x, nrow = 1)
+
+  # subset candidates to features present in pre-trained embeddings provided
+  if(length(candidates) > 0) candidates <- intersect(candidates, rownames(pre_trained))
 
   ## compute cosine similarity
   # if no candidates are provided, use full set of features

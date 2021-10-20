@@ -35,12 +35,12 @@ Given a set of embeddings and a set of features, calculate cosine similarities.
 
 library(quanteda)
 
-# build corpus of contexts around immigration
-immig_corpus <- corpus_context(x = cr_sample_corpus,
-pattern = "immigration", window = 6L, verbose = TRUE)
+# tokenize corpus
+cr_toks <- tokens(cr_sample_corpus)
 
-# tokenize text
-immig_toks <- tokens(immig_corpus)
+# get tokens around immigration
+immig_toks <- tokens_context(x = cr_toks,
+pattern = "immigration", window = 6L, hard_cut = FALSE, verbose = TRUE)
 
 # construct document-feature-matrix
 immig_dfm <- dfm(immig_toks)

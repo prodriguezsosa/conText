@@ -31,10 +31,12 @@
 #'
 #' library(quanteda)
 #'
-#' immig_corpus <- corpus_context(x = cr_sample_corpus,
-#' pattern = "immigration", window = 6L, verbose = TRUE)
+#' # tokenize corpus
+#' cr_toks <- tokens(cr_sample_corpus)
 #'
-#' immig_toks <- tokens(immig_corpus)
+#' # get tokens around immigration
+#' immig_toks <- tokens_context(x = cr_toks,
+#' pattern = "immigration", window = 6L, hard_cut = FALSE, verbose = TRUE)
 #'
 #' get_cos_sim(x = immig_toks,
 #' groups = docvars(immig_toks, "party"),
@@ -57,8 +59,11 @@ get_cos_sim <- function(x,
                         as_list = TRUE,
                         verbose = TRUE) {
 
+  # initial checks
+  if(class(x)[1] != "tokens") stop("data must be of class tokens")
+
   # add grouping variable to docvars
-  if(!is.null(groups)) docvars(x) <- NULL; docvars(x, "group") <- groups
+  if(!is.null(groups)) quanteda::docvars(x) <- NULL; quanteda::docvars(x, "group") <- groups
 
   if(bootstrap){
     cossimdf_bs <- replicate(num_bootstraps,

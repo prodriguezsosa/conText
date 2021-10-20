@@ -4,14 +4,14 @@
 #'
 #' @param formula a symbolic description of the model to be fitted
 #' to use a phrase as a DV, wrap in quotations e.g. "immigrant refugees" ~ party + gender
-#' @param data a quanteda `corpus`
+#' @param data a quanteda `tokens` object
 #' @inheritParams dem
 #' @param bootstrap (logical) if TRUE, bootstrap regression - required to get standard errors for normed coefficients
 #' @param num_bootstraps (numeric) number of bootstraps to use
 #' @param stratify (logical) if TRUE, stratify by covariates when bootstrapping
 #' @param permute (logical) if TRUE, compute empirical p-values using permutation test
 #' @param num_permutations (numeric) number of permutations to use
-#' @inheritParams corpus_context
+#' @inheritParams tokens_context
 #'
 #' @return a `conText-class` object
 #' @export
@@ -19,16 +19,21 @@
 #' @keywords conText
 #' @examples
 #'
+#' library(quanteda)
+#'
+#' cr_toks <- tokens(cr_sample_corpus)
+#'
 #' ## given the target word "immigration"
 #' model1 <- conText(formula = immigration ~ party + gender,
-#'                   data = cr_sample_corpus,
+#'                   data = cr_toks,
 #'                   pre_trained = glove_subset,
 #'                   transform = TRUE, transform_matrix = khodakA,
 #'                   bootstrap = TRUE, num_bootstraps = 10,
 #'                   stratify = TRUE,
 #'                   permute = TRUE, num_permutations = 100,
 #'                   window = 6, case_insensitive = TRUE,
-#'                   verbose = TRUE)
+#'                   hard_cut = FALSE,
+#'                   verbose = FALSE)
 #'
 #' # notice, non-binary covariates are automatically "dummified"
 #' rownames(model1)
@@ -39,21 +44,10 @@
 #' # (normed) coefficient table
 #' model1@normed_cofficients
 #'
-#' ## embedding full documents, not just a target word
-#'
-#' model1 <- conText(formula = . ~ ideology,
-#'                   data = anes2016_sample_corpus,
-#'                   pre_trained = glove_subset,
-#'                   transform = TRUE, transform_matrix = khodakA,
-#'                   bootstrap = TRUE, num_bootstraps = 10,
-#'                   stratify = TRUE,
-#'                   permute = TRUE, num_permutations = 100,
-#'                   window = 6, verbose = FALSE)
-#'
 conText <- function(formula, data, pre_trained, transform = TRUE, transform_matrix, bootstrap = TRUE, num_bootstraps = 20, stratify = TRUE, permute = TRUE, num_permutations = 100, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
 
   # initial checks
-  if(class(data)[1] != "corpus") stop("data must be of class corpus")
+  if(class(data)[1] != "tokens") stop("data must be of class tokens")
   if(!transform & !is.null(transform_matrix)) warning("Warning: transform = FALSE means transform_matrix argument was ignored. If that was not your intention, use transform = TRUE.")
 
   # extract dependent variable
@@ -63,10 +57,10 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
   if(target != "."){
 
     # create a corpus of contexts
-    context <- corpus_context(x = data, pattern = target, window = window, valuetype = valuetype, case_insensitive = case_insensitive, hard_cut = FALSE, exclude_pattern = TRUE, verbose = verbose)
+    toks <- tokens_context(x = data, pattern = target, window = window, valuetype = valuetype, case_insensitive = case_insensitive, hard_cut = hard_cut, verbose = verbose)
 
   }else{
-    context <- data
+    toks <- data
   }
 
   #----------------------
@@ -74,10 +68,9 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
   #----------------------
 
   # extract covariates names
-  docvars <- quanteda::docvars(context)
-  if(formula[[3]] == "."){covariates <- setdiff(names(docvars),"session_id")}else{ # follows lm convention, if DV = ., regress on all variables in data
+  docvars <- quanteda::docvars(toks)
+  if(formula[[3]] == "."){covariates <- names(docvars)}else{ # follows lm convention, if DV = ., regress on all variables in data
     covariates <- setdiff(stringr::str_squish(unlist(strsplit(as.character(formula[[3]]), '+', fixed = TRUE))), '') # to allow for phrase DVs
-    #covariates <- attr(terms(formula), which = "term.labels")
     if(any(!(covariates %in% names(docvars))))stop("one or more of the covariates could not be found in the data.")
   }
 
@@ -103,21 +96,18 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
   cov_vars <- cov_vars %>% dplyr::mutate('(Intercept)' = 1)
 
   # create new corpus
-  context <- quanteda::corpus(context, docvars = cov_vars)
-
-  # tokenize texts
-  context_toks <- quanteda::tokens(context)
+  quanteda::docvars(toks) <- cov_vars
 
   # create document-feature matrix
-  context_dfm <- quanteda::dfm(context_toks, tolower = FALSE)
+  toks_dfm <- quanteda::dfm(toks, tolower = FALSE)
 
-  # embed context to get dependent variable
-  context_dem <- dem(x = context_dfm, pre_trained = pre_trained, transform_matrix = transform_matrix, transform = transform, verbose = verbose)
-  Y <- context_dem
+  # embed toks to get dependent variable
+  toks_dem <- dem(x = toks_dfm, pre_trained = pre_trained, transform_matrix = transform_matrix, transform = transform, verbose = verbose)
+  Y <- toks_dem
   if(verbose) cat('total observations included in regression:', nrow(Y), '\n')
 
   # regressors
-  X <- context_dem@docvars
+  X <- toks_dem@docvars
 
   # run full sample ols
   full_sample_out <- run_ols(Y = Y, X = X)
@@ -185,7 +175,7 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
   result <- build_conText(Class = 'conText',
                           x_conText = beta_coefficients,
                           normed_cofficients = norm_tibble,
-                          features = context_dem@features,
+                          features = toks_dem@features,
                           Dimnames = list(
                             rows = rownames(beta_coefficients),
                             columns = NULL))

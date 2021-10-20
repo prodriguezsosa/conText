@@ -73,25 +73,19 @@ over the union of their respective N nearest neighbors.
 
 library(quanteda)
 
-# build corpus of contexts around immigration
-immig_corpus <- corpus_context(x = cr_sample_corpus,
-pattern = "immigration",
-window = 6L,
-verbose = TRUE)
+# tokenize corpus
+cr_toks <- tokens(cr_sample_corpus)
 
-# identify features in local vocab that overlap with pre-trained embeddings
-# these are used to define candidate nearest neighbors below (optional)
-local_vocab <- get_local_vocab(as.character(immig_corpus), pre_trained = glove_subset)
-
-# tokenize
-immig_toks <- tokens(immig_corpus)
+# get tokens around immigration
+immig_toks <- tokens_context(x = cr_toks,
+pattern = "immigration", window = 6L, hard_cut = FALSE, verbose = TRUE)
 
 set.seed(42L)
-temp <- get_nns_ratio(x = immig_toks,
+get_nns_ratio(x = immig_toks,
 N = 20,
 groups = docvars(immig_toks, 'party'),
 numerator = "R",
-candidates = local_vocab,
+candidates = character(0),
 pre_trained = glove_subset,
 transform = TRUE,
 transform_matrix = khodakA,

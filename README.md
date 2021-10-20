@@ -1,6 +1,6 @@
 # About
 
-An R package for computing feature embeddings `a la carte` and estimating text embedding regression models as described in [Rodriguez, Spirling and Stewart (2021)](https://github.com/prodriguezsosa/EmbeddingRegression).
+**conText** us R package that provides a powerful yet computationally simple framework to compute context-specific document and feature embeddings. These can then be used to: (1) evaluate hypotheses about covariate effects on text embeddings and (2) as context-specific features for downstream classification tasks. **conText** builds on results in [Arora et al. (2018)](https://arxiv.org/abs/1601.03764), [Khodak et al. (2018)](https://arxiv.org/abs/1805.05388) and, more recently, [Rodriguez et al. (2021)](https://github.com/prodriguezsosa/EmbeddingRegression).
 
 # How to Install
 

@@ -20,10 +20,12 @@
 #' A row (context) is excluded when none of the words in the context are present in the pre-trained embeddings provided.
 #' @examples
 #'
-#' immig_corpus <- corpus_context(x = cr_sample_corpus,
-#' pattern = "immigration", window = 6L, verbose = TRUE)
+#' # find contexts for term immigration
+#' context_immigration <- get_context(x = cr_sample_corpus, target = 'immigration',
+#'                         window = 6, valuetype = "fixed", case_insensitive = TRUE,
+#'                         hard_cut = FALSE, verbose = FALSE)
 #'
-#' contexts_vectors <- embed_target(context = immig_corpus,
+#' contexts_vectors <- embed_target(context = context_immigration$context,
 #' pre_trained = glove_subset,
 #' transform = TRUE, transform_matrix = khodakA,
 #' aggregate = FALSE, verbose = FALSE)

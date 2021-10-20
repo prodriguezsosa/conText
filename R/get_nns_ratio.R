@@ -32,25 +32,19 @@
 #'
 #' library(quanteda)
 #'
-#' # build corpus of contexts around immigration
-#' immig_corpus <- corpus_context(x = cr_sample_corpus,
-#' pattern = "immigration",
-#' window = 6L,
-#' verbose = TRUE)
+#' # tokenize corpus
+#' cr_toks <- tokens(cr_sample_corpus)
 #'
-#' # identify features in local vocab that overlap with pre-trained embeddings
-#' # these are used to define candidate nearest neighbors below (optional)
-#' local_vocab <- get_local_vocab(as.character(immig_corpus), pre_trained = glove_subset)
-#'
-#' # tokenize
-#' immig_toks <- tokens(immig_corpus)
+#' # get tokens around immigration
+#' immig_toks <- tokens_context(x = cr_toks,
+#' pattern = "immigration", window = 6L, hard_cut = FALSE, verbose = TRUE)
 #'
 #' set.seed(42L)
-#' temp <- get_nns_ratio(x = immig_toks,
+#' get_nns_ratio(x = immig_toks,
 #' N = 20,
 #' groups = docvars(immig_toks, 'party'),
 #' numerator = "R",
-#' candidates = local_vocab,
+#' candidates = character(0),
 #' pre_trained = glove_subset,
 #' transform = TRUE,
 #' transform_matrix = khodakA,
@@ -73,6 +67,9 @@ get_nns_ratio <- function(x,
                           num_permutations = 100,
                           verbose = TRUE){
 
+  # initial checks
+  if(class(x)[1] != "tokens") stop("data must be of class tokens")
+
   # checks
   group_vars <- unique(groups)
   if(is.null(group_vars) | length(group_vars)!=2) stop("a binary grouping variable must be provided")
@@ -82,7 +79,7 @@ get_nns_ratio <- function(x,
   denominator <- setdiff(group_vars, numerator)
 
   # add grouping variable to docvars
-  if(!is.null(groups)) docvars(x) <- NULL; docvars(x, "group") <- groups
+  if(!is.null(groups)) quanteda::docvars(x) <- NULL; quanteda::docvars(x, "group") <- groups
 
   # create document-feature matrix
   x_dfm <- quanteda::dfm(x, tolower = FALSE)
@@ -92,6 +89,9 @@ get_nns_ratio <- function(x,
 
   # aggregate dems by group var
   wvs <- dem_group(x = x_dem, groups = x_dem@docvars$group)
+
+  # subset candidates to features present in pre-trained embeddings provided
+  if(length(candidates) > 0) candidates <- intersect(candidates, rownames(pre_trained))
 
   # get top N nns (if N is Inf or NULL, use all features)
   nnsdfs <- nns(x = wvs, N = Inf, candidates = candidates, pre_trained = pre_trained, as_list = TRUE)
@@ -208,7 +208,7 @@ nns_ratio_permute <- function(x,
                               transform_matrix){
 
   # shuffle tokenized texts
-  docvars(x, 'group') <- sample(groups)
+  quanteda::docvars(x, 'group') <- sample(groups)
 
   # create document-feature matrix
   x_dfm <- quanteda::dfm(x, tolower = FALSE)

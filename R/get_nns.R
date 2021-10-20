@@ -29,10 +29,12 @@
 #'
 #' library(quanteda)
 #'
-#' immig_corpus <- corpus_context(x = cr_sample_corpus,
-#' pattern = "immigration", window = 6L, verbose = TRUE)
+#' # tokenize corpus
+#' cr_toks <- tokens(cr_sample_corpus)
 #'
-#' immig_toks <- tokens(immig_corpus)
+#' # get tokens around immigration
+#' immig_toks <- tokens_context(x = cr_toks,
+#' pattern = "immigration", window = 6L, hard_cut = FALSE, verbose = TRUE)
 #'
 #' get_nns(x = immig_toks, N = 10,
 #' groups = docvars(immig_toks, "party"),
@@ -54,8 +56,14 @@ get_nns <- function(x,
                     num_bootstraps = 10,
                     as_list = TRUE) {
 
+  # initial checks
+  if(class(x)[1] != "tokens") stop("data must be of class tokens")
+
   # add grouping variable to docvars
-  if(!is.null(groups)) docvars(x) <- NULL; docvars(x, "group") <- groups
+  if(!is.null(groups)) quanteda::docvars(x) <- NULL; quanteda::docvars(x, "group") <- groups
+
+  # subset candidates to features present in pre-trained embeddings provided
+  if(length(candidates) > 0) candidates <- intersect(candidates, rownames(pre_trained))
 
   # if bootstrap
   if(bootstrap){

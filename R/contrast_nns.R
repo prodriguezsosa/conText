@@ -1,6 +1,6 @@
 #' Contrast nearest neighbors
 #'
-#' @param x (quanteda) corpus
+#' @param x (quanteda) tokens object
 #' @param groups a variable with two unique values (can be numeric, factor, character)
 #' @inheritParams dem
 #' @param bootstrap logical - if TRUE, bootstrap cosine similarity ratio - required to get standard errors around cosine similarity ratios
@@ -26,12 +26,14 @@
 #'
 #' library(quanteda)
 #'
-#' immig_corpus <- corpus_context(x = cr_sample_corpus,
-#' pattern = "immigration", window = 6L, verbose = TRUE)
+#' cr_toks <- tokens(cr_sample_corpus)
+#'
+#' immig_toks <- tokens_context(x = cr_toks,
+#' pattern = "immigration", window = 6L, hard_cut = FALSE, verbose = TRUE)
 #'
 #' set.seed(42L)
-#' party_nns <- contrast_nns(x = immig_corpus,
-#' groups = docvars(immig_corpus, 'party'),
+#' party_nns <- contrast_nns(x = immig_toks,
+#' groups = docvars(immig_toks, 'party'),
 #' pre_trained = glove_subset,
 #' transform = TRUE, transform_matrix = khodakA,
 #' bootstrap = TRUE, num_bootstraps = 10,
@@ -41,24 +43,22 @@
 contrast_nns <- function(x, groups = NULL, pre_trained = NULL, transform = TRUE, transform_matrix = NULL, bootstrap = TRUE, num_bootstraps = 20, permute = TRUE, num_permutations = 100, candidates = NULL, N = 20, verbose = TRUE){
 
   # checks
+  if(class(x)[1] != "tokens") stop("data must be of class tokens")
   groupvals <- unique(groups)
   if(length(groupvals)!=2) stop("groups must be binary")
 
-  # create a new corpus
-  x <- quanteda::corpus(as.character(x), docvars = data.frame('group' = groups))
-
-  # tokenize
-  corpus_toks <- quanteda::tokens(x)
+  # add grouping variable to docvars
+  quanteda::docvars(x, "group") <- groups
 
   # construct document-feature-matrix
-  corpus_dfm <- quanteda::dfm(corpus_toks, tolower = FALSE)
+  toks_dfm <- quanteda::dfm(x, tolower = FALSE)
 
   # construct document-embedding-matrix
-  corpus_dem <- dem(x = corpus_dfm, pre_trained = pre_trained, transform = transform, transform_matrix = transform_matrix, verbose = verbose)
+  toks_dem <- dem(x = toks_dfm, pre_trained = pre_trained, transform = transform, transform_matrix = transform_matrix, verbose = verbose)
 
   # aggregate dems by group var
-  embeds_out1 <- corpus_dem[which(corpus_dem@docvars$group == groupvals[1]),]
-  embeds_out2 <- corpus_dem[which(corpus_dem@docvars$group == groupvals[2]),]
+  embeds_out1 <- toks_dem[which(toks_dem@docvars$group == groupvals[1]),]
+  embeds_out2 <- toks_dem[which(toks_dem@docvars$group == groupvals[2]),]
 
   if(bootstrap){
 

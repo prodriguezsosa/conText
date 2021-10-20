@@ -14,27 +14,27 @@
 #' library(ggplot2)
 #' library(quanteda)
 #'
-#' # build corpus of contexts around immigration
-#' immig_corpus <- corpus_context(x = cr_sample_corpus,
-#' pattern = "immigration",
-#' window = 6L,
-#' verbose = TRUE)
+#' # tokenize corpus
+#' cr_toks <- tokens(cr_sample_corpus)
 #'
-#' local_vocab <- get_local_vocab(as.character(immig_corpus), pre_trained = glove_subset)
+#' # get tokens around immigration
+#' immig_toks <- tokens_context(x = cr_toks,
+#' pattern = "immigration", window = 6L, hard_cut = FALSE, verbose = TRUE)
 #'
 #' set.seed(42L)
-#' nns_ratio_immig <- get_nns_ratio(x = immig_corpus,
+#' nns_ratio_immig <- get_nns_ratio(x = immig_toks,
 #' N = 20,
-#' groups = docvars(immig_corpus, 'party'),
+#' groups = docvars(immig_toks, 'party'),
 #' numerator = "R",
-#' candidates = local_vocab,
+#' candidates = character(0),
 #' pre_trained = glove_subset,
 #' transform = TRUE,
 #' transform_matrix = khodakA,
 #' bootstrap = TRUE,
 #' num_bootstraps = 10,
 #' permute = TRUE,
-#' num_permutations = 10)
+#' num_permutations = 10,
+#' verbose = TRUE)
 #'
 #' plot_nns_ratio(x = nns_ratio_immig, alpha = 0.01, horizontal = TRUE)
 plot_nns_ratio <- function(x, alpha = 0.01, horizontal = TRUE){

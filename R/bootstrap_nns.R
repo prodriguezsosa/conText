@@ -11,20 +11,33 @@
 #' @param norm character = c("l2", "none") - set to 'l2' for cosine similarity and to 'none' for inner product (see ?sim2 in text2vec)
 #'
 #' @return data.frame with nearest neighbor tokens, similarity (numeric value) and std.error (given bootstrap)
+#' @export
+#' @rdname bootstrap_nns
+#' @keywords bootstrap_nns
 #' @examples
 #'
-#' immig_corpus <- corpus_context(x = cr_sample_corpus,
-#' pattern = "immigration", window = 6L, verbose = TRUE)
+#' # find contexts of immigration
+#' context_immigration <- get_context(x = cr_sample_corpus,
+#'                                    target = 'immigration',
+#'                                    window = 6,
+#'                                    valuetype = "fixed",
+#'                                    case_insensitive = TRUE,
+#'                                    hard_cut = FALSE, verbose = FALSE)
+#'
+#' # find local vocab (use it to define the candidate of nearest neighbors)
+#' local_vocab <- get_local_vocab(context_immigration$context, pre_trained = glove_subset)
 #'
 #' set.seed(42L)
-#' bootstrap_nns(context = immig_corpus,
-#'               pre_trained = glove_subset,
-#'               transform = TRUE, transform_matrix = khodakA,
-#'               bootstrap = TRUE, num_bootstraps = 20,
-#'               N = 20, norm = "l2")
+#' nns_immigration <- bootstrap_nns(context = context_immigration$context,
+#'                                  pre_trained = glove_subset,
+#'                                  transform_matrix = khodakA,
+#'                                  transform = TRUE,
+#'                                  candidates = local_vocab,
+#'                                  bootstrap = TRUE,
+#'                                  num_bootstraps = 20, N = 50,
+#'                                  norm = "l2")
 #'
 #' @export
-
 bootstrap_nns <- function(context = NULL, pre_trained = NULL, transform = TRUE, transform_matrix = NULL, candidates = NULL, bootstrap = TRUE, num_bootstraps = 20, N = 50, norm = "l2"){
 
   # IF BOOTSTRAP

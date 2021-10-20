@@ -69,10 +69,12 @@ neighbors.
 
 library(quanteda)
 
-immig_corpus <- corpus_context(x = cr_sample_corpus,
-pattern = "immigration", window = 6L, verbose = TRUE)
+# tokenize corpus
+cr_toks <- tokens(cr_sample_corpus)
 
-immig_toks <- tokens(immig_corpus)
+# get tokens around immigration
+immig_toks <- tokens_context(x = cr_toks,
+pattern = "immigration", window = 6L, hard_cut = FALSE, verbose = TRUE)
 
 get_nns(x = immig_toks, N = 10,
 groups = docvars(immig_toks, "party"),

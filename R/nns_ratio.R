@@ -24,14 +24,12 @@
 #'
 #' library(quanteda)
 #'
-#' # build corpus of contexts around immigration
-#' immig_corpus <- corpus_context(x = cr_sample_corpus,
-#' pattern = "immigration",
-#' window = 6L,
-#' verbose = TRUE)
+#' # tokenize corpus
+#' cr_toks <- tokens(cr_sample_corpus)
 #'
-#' # tokenize text
-#' immig_toks <- tokens(immig_corpus)
+#' # get tokens around immigration
+#' immig_toks <- tokens_context(x = cr_toks,
+#' pattern = "immigration", window = 6L, hard_cut = FALSE, verbose = TRUE)
 #'
 #' # construct document-feature-matrix
 #' immig_dfm <- dfm(immig_toks)
@@ -48,7 +46,11 @@
 #' immig_dem_party <- dem_group(immig_dem, groups = immig_dem@docvars$party)
 #'
 #' # find nearest neighbors
-#' nns_ratio(x = immig_dem_party, N = 10, numerator = "R", candidates = character(0), pre_trained = glove_subset, verbose = TRUE)
+#' nns_ratio(x = immig_dem_party, N = 10,
+#' numerator = "R",
+#' candidates = character(0),
+#' pre_trained = glove_subset,
+#' verbose = TRUE)
 nns_ratio <- function(x, N = 10, numerator = NULL, candidates = character(0), pre_trained, verbose = TRUE){
 
   # check
@@ -56,6 +58,9 @@ nns_ratio <- function(x, N = 10, numerator = NULL, candidates = character(0), pr
 
   # re-arrange if numerator is defined
   if(!is.null(numerator) && rownames(x)[1]!=numerator) x <- x[c(rownames(x)[2],rownames(x)[1]),]
+
+  # subset candidates to features present in pre-trained embeddings provided
+  if(length(candidates) > 0) candidates <- intersect(candidates, rownames(pre_trained))
 
   # get nns
   nnsdf1 <- nns(x = x[1,], N = Inf, candidates = candidates, pre_trained = pre_trained, as_list = FALSE)
