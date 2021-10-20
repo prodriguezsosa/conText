@@ -52,7 +52,7 @@ For the following guide we will be using the full versions of these datasets
 which we’ve made available
 [here](https://www.dropbox.com/sh/6dfr3i6no6nzvm0/AADqk6HFTvZJGNyu3FuO62kGa?dl=0).
 
-## Load data
+## Preliminaries: loading data and embeddings
 
 ``` r
 # other libraries
@@ -86,7 +86,7 @@ cr_corpus <- corpus(cr_sample$speech, docvars = cr_sample[, c("party", "gender")
 ## Pre-processing
 
 ``` r
-# tokenize corpus
+# tokenize corpus using standard `quanteda` functionality
 toks <- tokens(cr_corpus, remove_punct = T, remove_symbols = T, remove_numbers = T, 
     remove_separators = T)
 
@@ -98,7 +98,7 @@ toks_nostop <- tokens_select(toks, pattern = stopwords("en"), selection = "remov
 feats <- dfm(toks_nostop, tolower = T, verbose = TRUE) %>% dfm_trim(min_termfreq = 5) %>% 
     featnames()
 
-# leave the pads so that non-adjacent words will not become adjacent
+# leave the 'pads' so that non-adjacent words will not become adjacent
 toks <- tokens_select(toks_nostop, feats, padding = TRUE)
 ```
 
@@ -109,7 +109,7 @@ toks <- tokens_select(toks_nostop, feats, padding = TRUE)
 Suppose we are interested in the semantics surrounding the word
 *immigration* in the U.S. Congress during the Obama years (sessions
 111th - 114th). We begin by identifying all instances of the **target**
-term –*immigration*– in our corpus and, for each instance, store it’s
+term–--*immigration*–--in our corpus and, for each instance, store it’s
 context– the N words (N = 6 in this example) preceding and following the
 instance. We can do this in one step using the `conText::tokens_context`
 function. Notice, both the input, `x`, and the output are a quanteda
