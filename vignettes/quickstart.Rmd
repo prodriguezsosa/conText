@@ -309,8 +309,13 @@ head(immig_nns_ratio)
 
 **conText** also includes a plotting function specific to `get_nns_ratio()`, providing a nice visualization of its output. `alpha` defines the desired significance threshold to denote "significant" results on the plot. Also, you can choose between two different visualizations of the same results using the `horizontal` argument.
 
-```{r}
+```{r, eval=FALSE}
 plot_nns_ratio(x = immig_nns_ratio, alpha = 0.01, horizontal = TRUE)
+```
+
+```{r out.width = "100%", echo = FALSE}
+# outputs better in knitr than R-generated images
+knitr::include_graphics('/Users/pedrorodriguez/Dropbox/GitHub/repositories/conText/vignettes/nns_ratio.png')
 ```
 
 # Embedding regression
