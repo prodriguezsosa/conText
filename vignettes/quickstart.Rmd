@@ -315,7 +315,7 @@ plot_nns_ratio(x = immig_nns_ratio, alpha = 0.01, horizontal = TRUE)
 
 ```{r out.width = "100%", echo = FALSE}
 # outputs better in knitr than R-generated images
-knitr::include_graphics('/Users/pedrorodriguez/Dropbox/GitHub/repositories/conText/vignettes/nns_ratio.png')
+knitr::include_graphics('https://github.com/prodriguezsosa/conText/blob/develop/vignettes/nns_ratio.png')
 ```
 
 # Embedding regression
