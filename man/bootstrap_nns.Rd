@@ -7,8 +7,8 @@
 bootstrap_nns(
   context = NULL,
   pre_trained = NULL,
-  transform_matrix = NULL,
   transform = TRUE,
+  transform_matrix = NULL,
   candidates = NULL,
   bootstrap = TRUE,
   num_bootstraps = 20,
@@ -21,9 +21,9 @@ bootstrap_nns(
 
 \item{pre_trained}{a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions}
 
-\item{transform_matrix}{a D x D transformation matrix}
-
 \item{transform}{logical - if TRUE (default) apply the a la carte transformation, if FALSE ouput untransformed averaged embedding}
+
+\item{transform_matrix}{a D x D transformation matrix}
 
 \item{candidates}{character vector defining the candidates for nearest neighbors - e.g. output from \code{get_local_vocab}}
 
@@ -42,16 +42,9 @@ data.frame with nearest neighbor tokens, similarity (numeric value) and std.erro
 Bootstrap nearest neighbors
 }
 \examples{
-library(conText)
-library(dplyr)
-
-# load data
-corpus <- sample_corpus
-pre_trained <- sample_glove
-transform_matrix <- khodakA
 
 # find contexts of immigration
-context_immigration <- get_context(x = corpus$speech,
+context_immigration <- get_context(x = cr_sample_corpus,
                                    target = 'immigration',
                                    window = 6,
                                    valuetype = "fixed",
@@ -59,15 +52,17 @@ context_immigration <- get_context(x = corpus$speech,
                                    hard_cut = FALSE, verbose = FALSE)
 
 # find local vocab (use it to define the candidate of nearest neighbors)
-local_vocab <- get_local_vocab(context_immigration$context, pre_trained)
+local_vocab <- get_local_vocab(context_immigration$context, pre_trained = cr_glove_subset)
 
 set.seed(42L)
 nns_immigration <- bootstrap_nns(context = context_immigration$context,
-                                 pre_trained, transform_matrix,
-                                 transform = TRUE, candidates = local_vocab,
+                                 pre_trained = cr_glove_subset,
+                                 transform_matrix = cr_transform,
+                                 transform = TRUE,
+                                 candidates = local_vocab,
                                  bootstrap = TRUE,
-                                 num_bootstraps = 20, N = 50, norm = "l2")
+                                 num_bootstraps = 20, N = 50,
+                                 norm = "l2")
 
-# print output
-knitr::kable(head(nns_immigration))
 }
+\keyword{bootstrap_nns}

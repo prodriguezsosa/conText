@@ -19,19 +19,6 @@ Local vocab consists of the intersect between the set of pre-trained embeddings
 and the local contexts.
 }
 \examples{
-library(conText)
-library(dplyr)
-
-# load data
-corpus <- sample_corpus
-pre_trained <- sample_glove
-transform_matrix <- khodakA
-
-# find contexts of immigration
-context_immigration <- get_context(x = corpus$speech, target = 'immigration',
-                        window = 6, valuetype = "fixed", case_insensitive = TRUE,
-                        hard_cut = FALSE, verbose = FALSE)
-
 # find local vocab (use it to define the candidate of nearest neighbors)
-local_vocab <- get_local_vocab(context_immigration$context, pre_trained)
+local_vocab <- get_local_vocab(cr_sample_corpus, pre_trained = cr_glove_subset)
 }

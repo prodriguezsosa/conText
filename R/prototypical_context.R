@@ -9,22 +9,18 @@
 #'
 #' @return character vector of contexts ordered by average similarity to all contexts
 #' @examples
-#' library(conText)
-#' library(dplyr)
-#'
-#' # load data
-#' corpus <- sample_corpus
-#' pre_trained <- sample_glove
-#' transform_matrix <- khodakA
 #'
 #' # find contexts of immigration
-#' context_immigration <- get_context(x = corpus$speech, target = 'immigration',
+#' context_immigration <- get_context(x = cr_sample_corpus, target = 'immigration',
 #'                                    window = 6, valuetype = "fixed", case_insensitive = TRUE,
 #'                                    hard_cut = FALSE, verbose = FALSE)
 #'
 #' # identify top N prototypical contexts and compute typicality score
-#' pt_context <- prototypical_context(context = context_immigration$context, pre_trained,
-#'                                    transform = TRUE, transform_matrix, N = 3, norm = 'l2')
+#' pt_context <- prototypical_context(context = context_immigration$context,
+#' pre_trained = cr_glove_subset,
+#' transform = TRUE,
+#' transform_matrix = cr_transform,
+#' N = 3, norm = 'l2')
 #' @export
 prototypical_context <- function(context, pre_trained, transform = TRUE, transform_matrix, N = 3, norm = 'l2'){
 

@@ -4,17 +4,17 @@
 \alias{bootstrap_ols}
 \title{Bootstrap OLS}
 \usage{
-bootstrap_ols(Y = NULL, X = NULL, stratify_by = NULL)
+bootstrap_ols(Y = NULL, X = NULL, stratify = NULL)
 }
 \arguments{
 \item{Y}{vector of regression model's dependent variable (embedded context)}
 
 \item{X}{data.frame of model independent variables (covariates)}
 
-\item{stratify_by}{covariates to stratify when bootstrapping}
+\item{stratify}{covariates to stratify when bootstrapping}
 }
 \value{
-list with two elements, \code{betas} = list of beta_cofficients (D dimensional vectors);
+list with two elements, \code{betas} = list of beta_coefficients (D dimensional vectors);
 \code{normed_betas} = tibble with the norm of the non-intercept coefficients
 }
 \description{
