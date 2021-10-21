@@ -18,5 +18,5 @@ To use **conText** you will need three objects:
 
 # Quick Start Guides
 
-Check out this [Quick Start Guide](https://github.com/prodriguezsosa/conText/blob/develop/vignettes/quickstart.md) to get going with `conText`.
+Check out this [Quick Start Guide](https://github.com/prodriguezsosa/conText/blob/master/vignettes/quickstart.md) to get going with `conText`.
 
