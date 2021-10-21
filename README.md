@@ -1,3 +1,5 @@
+![logo-conText](https://user-images.githubusercontent.com/6556873/138290976-c709087f-ce63-4142-80f4-1bf3ce2b1d72.jpeg)
+
 # About
 
 **conText** provides a fast, flexible and transparent framework to estimate context-specific word and short document embeddings using the 'a la carte' embeddings approach developed by [Khodak et al. (2018)](https://arxiv.org/abs/1805.05388) and evaluate hypotheses about covariate effects on embeddings using the regression framework developed by [Rodriguez et al. (2021)](https://github.com/prodriguezsosa/EmbeddingRegression).
