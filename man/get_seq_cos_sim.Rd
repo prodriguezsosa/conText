@@ -26,7 +26,7 @@ get_seq_cos_sim(
 
 \item{target}{a character vector - target word}
 
-\item{candidates}{character vector defining vocabulary to subset conmparison to}
+\item{candidates}{(character) vector of features of interest}
 
 \item{pre_trained}{a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions}
 
@@ -48,19 +48,23 @@ then text will have window tokens rather than window x 2)}
 report the observations that had no overlap the provided pre-trained embeddings}
 }
 \value{
-
+a data.frame with one column for
+each candidate term and one column for seqvar
 }
 \description{
 Calculate cosine similarities between target word and candidates words over
 sequenced variable using ALC embedding approach
 }
 \examples{
-# load sample data
-sample_corpus <- sample_corpus
-sample_glove <- sample_glove
-khodakA <- khodakA
+
+library(quanteda)
 
 # gen sequence var (here: year)
-sample_corpus$year <- rep(2011:2014, each = 250)
-cos_simsdf <- get_seq_cos_sim(x = sample_corpus$speech, seqvar = sample_corpus$year, target = "equal", candidates = c("and", "the"), pre_trained = sample_glove, transform_matrix = khodakA)
+docvars(cr_sample_corpus, 'year') <- rep(2011:2014, each = 50)
+cos_simsdf <- get_seq_cos_sim(x = cr_sample_corpus,
+seqvar = docvars(cr_sample_corpus, 'year'),
+target = "equal",
+candidates = c("immigration", "immigrants"),
+pre_trained = cr_glove_subset,
+transform_matrix = cr_transform)
 }
