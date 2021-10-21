@@ -26,10 +26,10 @@ library(quanteda)
 # note, cr_sample_corpus is too small to produce sensical word vectors
 
 # tokenize
-cr_toks <- tokens(cr_sample_corpus)
+toks <- tokens(cr_sample_corpus)
 
 # construct feature-co-occurrence matrix
-cr_fcm <- fcm(cr_toks, context = "window", window = 6,
+toks_fcm <- fcm(toks, context = "window", window = 6,
 count = "weighted", weights = 1 / (1:6), tri = FALSE)
 
 # you will generally want to estimate a new (corpus-specific)
@@ -37,7 +37,7 @@ count = "weighted", weights = 1 / (1:6), tri = FALSE)
 # see the Quick Start Guide to see a full example.
 
 # estimate transform
-cr_subset_transform <- compute_transform(x = cr_fcm,
+local_transform <- compute_transform(x = toks_fcm,
 pre_trained = cr_glove_subset, weighting = 'log')
 }
 \keyword{compute_transform}

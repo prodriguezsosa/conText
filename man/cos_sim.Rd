@@ -36,25 +36,23 @@ Given a set of embeddings and a set of features, calculate cosine similarities.
 library(quanteda)
 
 # tokenize corpus
-cr_toks <- tokens(cr_sample_corpus)
+toks <- tokens(cr_sample_corpus)
 
-# get tokens around immigration
-immig_toks <- tokens_context(x = cr_toks,
-pattern = "immigration", window = 6L, hard_cut = FALSE, verbose = TRUE)
+# build a tokenized corpus of contexts sorrounding a target term
+immig_toks <- tokens_context(x = toks, pattern = "immigr*", window = 6L)
 
-# construct document-feature-matrix
+# build document-feature matrix
 immig_dfm <- dfm(immig_toks)
 
 # construct document-embedding-matrix
 immig_dem <- dem(immig_dfm, pre_trained = cr_glove_subset,
 transform = TRUE, transform_matrix = cr_transform, verbose = FALSE)
 
-# group document-embedding-matrix
-immig_dem_party <- dem_group(immig_dem,
-groups = immig_dem@docvars$party)
+# to get group-specific embeddings, average within party
+immig_wv_party <- dem_group(immig_dem, groups = immig_dem@docvars$party)
 
-# find nearest neighbors
-cos_sim(x = immig_dem_party,
-pre_trained = cr_glove_subset, features = c('reform', 'enforce'), as_list = FALSE)
+# compute the cosine similarity between each party's embedding and a specific set of features
+cos_sim(immig_wv_party, pre_trained = cr_glove_subset,
+features = c('reform', 'enforcement'), as_list = FALSE)
 }
 \keyword{cos_sim}

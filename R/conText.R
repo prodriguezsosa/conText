@@ -21,19 +21,23 @@
 #'
 #' library(quanteda)
 #'
-#' cr_toks <- tokens(cr_sample_corpus)
+#' # tokenize corpus
+#' toks <- tokens(cr_sample_corpus)
+#'
+#' # build a tokenized corpus of contexts sorrounding a target term
+#' immig_toks <- tokens_context(x = toks, pattern = "immigr*", window = 6L)
 #'
 #' ## given the target word "immigration"
+#' set.seed(2021L)
 #' model1 <- conText(formula = immigration ~ party + gender,
-#'                   data = cr_toks,
-#'                   pre_trained = cr_glove_subset,
-#'                   transform = TRUE, transform_matrix = cr_transform,
-#'                   bootstrap = TRUE, num_bootstraps = 10,
-#'                   stratify = TRUE,
-#'                   permute = TRUE, num_permutations = 100,
-#'                   window = 6, case_insensitive = TRUE,
-#'                   hard_cut = FALSE,
-#'                   verbose = FALSE)
+#'                  data = toks,
+#'                  pre_trained = cr_glove_subset,
+#'                  transform = TRUE, transform_matrix = cr_transform,
+#'                  bootstrap = TRUE, num_bootstraps = 10,
+#'                  stratify = TRUE,
+#'                  permute = TRUE, num_permutations = 100,
+#'                  window = 6, case_insensitive = TRUE,
+#'                  verbose = FALSE)
 #'
 #' # notice, non-binary covariates are automatically "dummified"
 #' rownames(model1)

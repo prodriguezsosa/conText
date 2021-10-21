@@ -36,35 +36,15 @@ to obtain the corresponding \verb{a la carte} embeddings.
 
 library(quanteda)
 
-## embed all features
+# tokenize corpus
+toks <- tokens(cr_sample_corpus)
 
-#' # tokenize text
-cr_toks <- tokens(cr_sample_corpus)
+# create feature co-occurrence matrix (set tri = FALSE to work with fem)
+toks_fcm <- fcm(toks, context = "window", window = 6,
+count = "frequency", tri = FALSE)
 
-# construct document-feature-matrix
-cr_fcm <- fcm(cr_toks, context = "window", window = 6,
-count = "weighted", weights = 1 / (1:6), tri = FALSE)
-# set tri = FALSE to work with fem
-
-# construct feature-embedding-matrix
-cr_fem <- fem(cr_fcm, pre_trained = cr_glove_subset,
+# compute feature-embedding matrix
+toks_fem <- fem(toks_fcm, pre_trained = cr_glove_subset,
 transform = TRUE, transform_matrix = cr_transform, verbose = FALSE)
-dim(cr_fem)
-
-## embed specific target features
-
-feats <- c('immigration', 'immigrants')
-
-# create feature co-occurrence matrix for features of interest
-cr_fcm <- tokens_select(cr_toks, pattern = feats, padding = TRUE) \%>\%
-# set padding = TRUE here to avoid making non-adjecnt words adjacent
-fcm(context = "window", window = 6,
-count = "weighted", weights = 1 / (1:6), tri = FALSE)
-# set tri = FALSE to work with fem and dem
-
-# construct feature-embedding-matrix
-cr_fem <- fem(cr_fcm, pre_trained = cr_glove_subset,
-transform = TRUE, transform_matrix = cr_transform, verbose = FALSE)
-dim(cr_fem)
 }
 \keyword{fem}

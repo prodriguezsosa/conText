@@ -43,25 +43,25 @@ neighbors.
 library(quanteda)
 
 # tokenize corpus
-cr_toks <- tokens(cr_sample_corpus)
+toks <- tokens(cr_sample_corpus)
 
-# get tokens around immigration
-immig_toks <- tokens_context(x = cr_toks,
-pattern = "immigration", window = 6L, hard_cut = FALSE, verbose = TRUE)
+# build a tokenized corpus of contexts sorrounding a target term
+immig_toks <- tokens_context(x = toks, pattern = "immigr*", window = 6L)
 
-# construct document-feature-matrix
+# build document-feature matrix
 immig_dfm <- dfm(immig_toks)
 
 # construct document-embedding-matrix
 immig_dem <- dem(immig_dfm, pre_trained = cr_glove_subset,
 transform = TRUE, transform_matrix = cr_transform, verbose = FALSE)
 
-# group document-embedding-matrix
-immig_dem_party <- dem_group(immig_dem,
-groups = immig_dem@docvars$party)
+# to get group-specific embeddings, average within party
+immig_wv_party <- dem_group(immig_dem, groups = immig_dem@docvars$party)
 
-# find nearest neighbors
-nns(x = immig_dem_party,
-pre_trained = cr_glove_subset, candidates = NULL, N = 10, as_list = FALSE)
+# find nearest neighbors by party
+# setting as_list = FALSE combines each group's
+# results into a single tibble (useful for joint plotting)
+immig_nns <- nns(immig_wv_party, pre_trained = cr_glove_subset,
+N = 5, candidates = immig_wv_party@features, as_list = TRUE)
 }
 \keyword{nns}

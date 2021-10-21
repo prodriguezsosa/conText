@@ -46,31 +46,25 @@ the union of their respective top N nearest neighbors.
 library(quanteda)
 
 # tokenize corpus
-cr_toks <- tokens(cr_sample_corpus)
+toks <- tokens(cr_sample_corpus)
 
-# get tokens around immigration
-immig_toks <- tokens_context(x = cr_toks,
-pattern = "immigration", window = 6L, hard_cut = FALSE, verbose = TRUE)
+# build a tokenized corpus of contexts sorrounding a target term
+immig_toks <- tokens_context(x = toks, pattern = "immigr*", window = 6L)
 
-# construct document-feature-matrix
+# build document-feature matrix
 immig_dfm <- dfm(immig_toks)
 
 # construct document-embedding-matrix
-immig_dem <- dem(immig_dfm,
-pre_trained =
-cr_glove_subset,
-transform = TRUE,
-transform_matrix = cr_transform,
-verbose = FALSE)
+immig_dem <- dem(immig_dfm, pre_trained = cr_glove_subset,
+transform = TRUE, transform_matrix = cr_transform, verbose = FALSE)
 
-# group document-embedding-matrix
-immig_dem_party <- dem_group(immig_dem, groups = immig_dem@docvars$party)
+# to get group-specific embeddings, average within party
+immig_wv_party <- dem_group(immig_dem, groups = immig_dem@docvars$party)
 
-# find nearest neighbors
-nns_ratio(x = immig_dem_party, N = 10,
-numerator = "R",
-candidates = character(0),
-pre_trained = cr_glove_subset,
-verbose = TRUE)
+# compute the cosine similarity between each party's
+# embedding and a specific set of features
+nns_ratio(x = immig_wv_party, N = 10, numerator = "R",
+candidates = immig_wv_party@features,
+pre_trained = cr_glove_subset, verbose = FALSE)
 }
 \keyword{nns_ratio}

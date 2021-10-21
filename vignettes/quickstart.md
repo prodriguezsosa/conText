@@ -589,6 +589,13 @@ model1 <- conText(formula = immigration ~ party + gender, data = toks, pre_train
     ## 1     party_R       0.8301277 0.08035593                0
     ## 2    gender_M       0.4295767 0.05099670                0
 
+``` r
+# notice, non-binary covariates are automatically 'dummified'
+rownames(model1)
+```
+
+    ## [1] "party_R"     "gender_M"    "(Intercept)"
+
 `conText()` outputs a `conText-class` object which is simply a
 `dgCMatrix class` matrix corresponding to the beta coefficients (ALC
 embeddings) with additional attributes including: a table (automatically
@@ -683,19 +690,19 @@ toks_fcm <- fcm(toks, context = "window", window = 6, count = "frequency", tri =
 
 # estimate glove model using text2vec
 glove <- GlobalVectors$new(rank = 300, x_max = 10, learning_rate = 0.05)
-wv_main <- glove$fit_transform(toks_fcm, n_iter = 10, convergence_tol = 0.001, n_threads = RcppParallel::defaultNumThreads())
+wv_main <- glove$fit_transform(toks_fcm, n_iter = 10, convergence_tol = 0.001, n_threads = parallel::detectCores())
 ```
 
-    ## INFO  [18:13:51.730] epoch 1, loss 0.2253 
-    ## INFO  [18:13:53.240] epoch 2, loss 0.0767 
-    ## INFO  [18:13:54.748] epoch 3, loss 0.0501 
-    ## INFO  [18:13:56.228] epoch 4, loss 0.0380 
-    ## INFO  [18:13:57.727] epoch 5, loss 0.0309 
-    ## INFO  [18:13:59.259] epoch 6, loss 0.0262 
-    ## INFO  [18:14:00.750] epoch 7, loss 0.0229 
-    ## INFO  [18:14:02.241] epoch 8, loss 0.0204 
-    ## INFO  [18:14:03.732] epoch 9, loss 0.0184 
-    ## INFO  [18:14:05.220] epoch 10, loss 0.0169
+    ## INFO  [19:27:41.585] epoch 1, loss 0.2253 
+    ## INFO  [19:27:43.110] epoch 2, loss 0.0767 
+    ## INFO  [19:27:44.618] epoch 3, loss 0.0501 
+    ## INFO  [19:27:46.133] epoch 4, loss 0.0380 
+    ## INFO  [19:27:47.651] epoch 5, loss 0.0309 
+    ## INFO  [19:27:49.163] epoch 6, loss 0.0262 
+    ## INFO  [19:27:50.712] epoch 7, loss 0.0229 
+    ## INFO  [19:27:52.223] epoch 8, loss 0.0204 
+    ## INFO  [19:27:53.734] epoch 9, loss 0.0184 
+    ## INFO  [19:27:55.244] epoch 10, loss 0.0169
 
 ``` r
 wv_context <- glove$components
@@ -809,6 +816,7 @@ overlapping features. The output of `feature_sim` is ranked from least
 similar to most similar features.
 
 ``` r
+# compute 'horizontal' cosine similarity
 feat_comp <- feature_sim(x = fem_R, y = fem_D)
 
 # least similar features

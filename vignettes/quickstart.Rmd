@@ -319,6 +319,9 @@ model1 <- conText(formula = immigration ~ party + gender,
                   permute = TRUE, num_permutations = 100,
                   window = 6, case_insensitive = TRUE,
                   verbose = FALSE)
+
+# notice, non-binary covariates are automatically "dummified"
+rownames(model1)
 ```
 
 `conText()` outputs a `conText-class` object which is simply a `dgCMatrix class` matrix corresponding to the beta coefficients (ALC embeddings) with additional attributes including: a table (automatically printed) with the normed coefficients (excluding the intercept), their std. errors and p-values, `@normed_coefficients`, and the set of features used when creating the embeddings `@features`.
@@ -369,7 +372,7 @@ glove <- GlobalVectors$new(rank = 300,
                            learning_rate = 0.05)
 wv_main <- glove$fit_transform(toks_fcm, n_iter = 10,
                                convergence_tol = 1e-3, 
-                               n_threads = RcppParallel::defaultNumThreads())
+                               n_threads = parallel::detectCores())
 
 
 wv_context <- glove$components
@@ -438,6 +441,8 @@ fem_D[1:5,1:3]
 Finally, we can use the `conText::feature_sim` function to compute "horizontal" cosine similarities between both `fem`s for the set of overlapping features. The output of `feature_sim` is ranked from least similar to most similar features.
 
 ```{r, message = FALSE}
+
+# compute "horizontal" cosine similarity
 feat_comp <- feature_sim(x = fem_R, y = fem_D)
 
 # least similar features

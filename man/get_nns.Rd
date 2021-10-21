@@ -70,20 +70,27 @@ neighbors.
 library(quanteda)
 
 # tokenize corpus
-cr_toks <- tokens(cr_sample_corpus)
+toks <- tokens(cr_sample_corpus)
 
-# get tokens around immigration
-immig_toks <- tokens_context(x = cr_toks,
-pattern = "immigration", window = 6L, hard_cut = FALSE, verbose = TRUE)
+# build a tokenized corpus of contexts sorrounding a target term
+immig_toks <- tokens_context(x = toks, pattern = "immigr*", window = 6L)
 
-get_nns(x = immig_toks, N = 10,
-groups = docvars(immig_toks, "party"),
-candidates = character(0),
-pre_trained = cr_glove_subset,
-transform = TRUE,
-transform_matrix = cr_transform,
-bootstrap = TRUE,
-num_bootstraps = 10,
-as_list = FALSE)
+# we limit candidates to features in our corpus
+feats <- featnames(dfm(immig_toks))
+
+# compare nearest neighbors between groups
+set.seed(2021L)
+immig_party_nns <- get_nns(x = immig_toks, N = 10,
+                           groups = docvars(immig_toks, 'party'),
+                           candidates = feats,
+                           pre_trained = cr_glove_subset,
+                           transform = TRUE,
+                           transform_matrix = cr_transform,
+                           bootstrap = TRUE,
+                           num_bootstraps = 10,
+                           as_list = TRUE)
+
+# nearest neighbors of "immigration" for Republican party
+immig_party_nns[["R"]]
 }
 \keyword{get_nns}

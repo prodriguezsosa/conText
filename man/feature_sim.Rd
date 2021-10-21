@@ -28,26 +28,22 @@ between overlapping features.
 
 library(quanteda)
 
-# tokenize texts
-cr_tokens_R <- tokens(corpus_subset(cr_sample_corpus, party == "R"))
-cr_tokens_D <- tokens(corpus_subset(cr_sample_corpus, party == "D"))
+# tokenize corpus
+toks <- tokens(cr_sample_corpus)
 
-# create feature co-occurrence matrix (set tri = FALSE to work with fem)
-cr_fcm_R <- fcm(cr_tokens_R, context = "window", window = 6,
-count = "frequency", tri = FALSE)
-
-cr_fcm_D <- fcm(cr_tokens_D, context = "window", window = 6,
-count = "frequency", tri = FALSE)
+# create feature co-occurrence matrix for each party (set tri = FALSE to work with fem)
+fcm_D <- fcm(toks[docvars(toks, 'party') == "D",],
+context = "window", window = 6, count = "frequency", tri = FALSE)
+fcm_R <- fcm(toks[docvars(toks, 'party') == "R",],
+context = "window", window = 6, count = "frequency", tri = FALSE)
 
 # compute feature-embedding matrix
-cr_fem_R <- fem(cr_fcm_R, pre_trained = cr_glove_subset,
+fem_D <- fem(fcm_D, pre_trained = cr_glove_subset,
+transform = TRUE, transform_matrix = cr_transform, verbose = FALSE)
+fem_R <- fem(fcm_R, pre_trained = cr_glove_subset,
 transform = TRUE, transform_matrix = cr_transform, verbose = FALSE)
 
-cr_fem_D <- fem(cr_fcm_D, pre_trained = cr_glove_subset,
-transform = TRUE, transform_matrix = cr_transform, verbose = FALSE)
-
-# compare features
-feature_sim(x = cr_fem_R, y = cr_fem_D)
-
+# compare "horizontal" cosine similarity
+feat_comp <- feature_sim(x = fem_R, y = fem_D)
 }
 \keyword{feature_sim}

@@ -23,19 +23,21 @@ Similar in essence to \code{dfm_group}.
 
 library(quanteda)
 
-# tokenize text
-cr_toks <- tokens(cr_sample_corpus)
+# tokenize corpus
+toks <- tokens(cr_sample_corpus)
 
-# construct document-feature-matrix
-cr_dfm <- dfm(cr_toks)
+# build a tokenized corpus of contexts sorrounding a target term
+immig_toks <- tokens_context(x = toks, pattern = "immigr*", window = 6L)
+
+# build document-feature matrix
+immig_dfm <- dfm(immig_toks)
 
 # construct document-embedding-matrix
-cr_dem <- dem(cr_dfm, pre_trained = cr_glove_subset,
+immig_dem <- dem(immig_dfm, pre_trained = cr_glove_subset,
 transform = TRUE, transform_matrix = cr_transform, verbose = FALSE)
 
-# group document-embedding-matrix
-cr_dem_party <- dem_group(cr_dem,
-groups = cr_dem@docvars$party)
-
+# to get group-specific embeddings, average within party
+immig_wv_party <- dem_group(immig_dem,
+groups = immig_dem@docvars$party)
 }
 \keyword{dem_group}

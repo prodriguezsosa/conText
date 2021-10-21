@@ -32,22 +32,23 @@
 #' library(quanteda)
 #'
 #' # tokenize corpus
-#' cr_toks <- tokens(cr_sample_corpus)
+#' toks <- tokens(cr_sample_corpus)
 #'
-#' # get tokens around immigration
-#' immig_toks <- tokens_context(x = cr_toks,
-#' pattern = "immigration", window = 6L, hard_cut = FALSE, verbose = TRUE)
+#' # build a tokenized corpus of contexts sorrounding a target term
+#' immig_toks <- tokens_context(x = toks, pattern = "immigr*", window = 6L)
 #'
+#' # compute the cosine similarity between each group's embedding
+#' # and a specific set of features
+#' set.seed(2021L)
 #' get_cos_sim(x = immig_toks,
-#' groups = docvars(immig_toks, "party"),
-#' features = c("reform", "enforce"),
-#' pre_trained = cr_glove_subset,
-#' transform = TRUE,
-#' transform_matrix = cr_transform,
-#' bootstrap = TRUE,
-#' num_bootstraps = 10,
-#' as_list = FALSE,
-#' verbose = FALSE)
+#'             groups = docvars(immig_toks, 'party'),
+#'             features = c("reform", "enforce"),
+#'             pre_trained = cr_glove_subset,
+#'             transform = TRUE,
+#'            transform_matrix = cr_transform,
+#'             bootstrap = TRUE,
+#'             num_bootstraps = 10,
+#'             as_list = FALSE)
 get_cos_sim <- function(x,
                         groups = NULL,
                         features = character(0),
