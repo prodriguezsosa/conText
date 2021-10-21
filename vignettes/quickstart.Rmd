@@ -452,9 +452,9 @@ head(feat_comp)
 tail(feat_comp)
 ```
 
-## Embedding full documents
+## Embedding full (short) documents
 
-In all of examples above we've focused on contexts defined as "windows" around a target word. In  [Rodriguez et al. (2021)](https://github.com/prodriguezsosa/EmbeddingRegression) we show that the same procedure works well on contexts defined as the full document, as long as the full document is relatively short --exactly what threshold to use to define "short" is still an open question. Responses to open-ended survey questions is a good example (discussed in the paper). Below we provide an illustrative example using a subset of the `cr_sample_corpus`. In particular, note the use of the `. ~` operator to indicate that the full document should be used as the dv.
+In all the examples above we've focused on contexts defined as "windows" around a target word. In  [Rodriguez et al. (2021)](https://github.com/prodriguezsosa/EmbeddingRegression) we show that the same procedure works well on contexts defined as the full document, as long as the full document is relatively short --exactly what threshold to use to define "short" is still an open question. Responses to open-ended survey questions is a good example (discussed in the paper). Below we provide an illustrative example using a subset of the `cr_sample_corpus`. In particular, note the use of the `. ~` operator to indicate that the full document should be used as the dv.
 
 ```{r, message = FALSE}
 

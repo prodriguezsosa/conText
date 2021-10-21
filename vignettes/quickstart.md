@@ -693,16 +693,16 @@ glove <- GlobalVectors$new(rank = 300, x_max = 10, learning_rate = 0.05)
 wv_main <- glove$fit_transform(toks_fcm, n_iter = 10, convergence_tol = 0.001, n_threads = parallel::detectCores())
 ```
 
-    ## INFO  [19:27:41.585] epoch 1, loss 0.2253 
-    ## INFO  [19:27:43.110] epoch 2, loss 0.0767 
-    ## INFO  [19:27:44.618] epoch 3, loss 0.0501 
-    ## INFO  [19:27:46.133] epoch 4, loss 0.0380 
-    ## INFO  [19:27:47.651] epoch 5, loss 0.0309 
-    ## INFO  [19:27:49.163] epoch 6, loss 0.0262 
-    ## INFO  [19:27:50.712] epoch 7, loss 0.0229 
-    ## INFO  [19:27:52.223] epoch 8, loss 0.0204 
-    ## INFO  [19:27:53.734] epoch 9, loss 0.0184 
-    ## INFO  [19:27:55.244] epoch 10, loss 0.0169
+    ## INFO  [09:00:48.580] epoch 1, loss 0.2253 
+    ## INFO  [09:00:50.116] epoch 2, loss 0.0767 
+    ## INFO  [09:00:51.608] epoch 3, loss 0.0501 
+    ## INFO  [09:00:53.127] epoch 4, loss 0.0380 
+    ## INFO  [09:00:54.595] epoch 5, loss 0.0309 
+    ## INFO  [09:00:56.083] epoch 6, loss 0.0262 
+    ## INFO  [09:00:57.571] epoch 7, loss 0.0229 
+    ## INFO  [09:00:59.039] epoch 8, loss 0.0204 
+    ## INFO  [09:01:00.508] epoch 9, loss 0.0184 
+    ## INFO  [09:01:01.978] epoch 10, loss 0.0169
 
 ``` r
 wv_context <- glove$components
@@ -844,9 +844,9 @@ tail(feat_comp)
     ## 3636  border 0.9451811
     ## 3637  reform 0.9561077
 
-## Embedding full documents
+## Embedding full (short) documents
 
-In all of examples above we’ve focused on contexts defined as “windows”
+In all the examples above we’ve focused on contexts defined as “windows”
 around a target word. In [Rodriguez et al.
 (2021)](https://github.com/prodriguezsosa/EmbeddingRegression) we show
 that the same procedure works well on contexts defined as the full
