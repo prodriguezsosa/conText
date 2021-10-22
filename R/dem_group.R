@@ -4,10 +4,12 @@
 #' and creating new "documents" with the group labels.
 #' Similar in essence to `dfm_group`.
 #'
-#' @param x a `dem`
+#' @param x a (`dem-class`) document-embedding-matrix
 #' @param groups a character or factor variable equal in length to the number of documents
 #'
-#' @return a `dem-class` object
+#' @return a G x D (`dem-class`) document-embedding-matrix corresponding to the ALC embeddings for each group.
+#' G = number of unique groups defined in the `groups` variable, D = dimensions of pretrained embeddings.
+#'
 #' @export
 #' @rdname dem_group
 #' @keywords dem_group

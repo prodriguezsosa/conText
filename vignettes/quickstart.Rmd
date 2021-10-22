@@ -67,13 +67,13 @@ feats <- dfm(toks_nostop, tolower=T, verbose = TRUE) %>% dfm_trim(min_termfreq =
 toks <- tokens_select(toks_nostop, feats, padding = TRUE)
 ```
 
-# The building blocks of `a la carte` embeddings
+# The building blocks of 'a la carte' embeddings
 
 Suppose we are interested in the semantics surrounding the word "immigration" in the U.S. Congress during the Obama years (sessions 111th - 114th).
 
 ## 1. Build a (tokenized) corpus of contexts
 
-We begin by identifying all instances of the _target_ term --"immigration"-- in our corpus and, for each instance, store it's context-- the N words (N = 6 in this example) preceding and following the instance, and tokenize. Given our tokenized corpus, `toks`, we can do this in one step using `conText::tokens_context()` --a wrapper function for quanteda::kwic(). Notice, both the input, `x`, and the output are a quanteda `tokens` objects. Each document in `immig_toks` --tokens of a context around an instance of _immigration_-- inherits the document variables (`docvars`) of the document from whence it came, along with a column registering it's the pattern used. This information can be retrieved using `docvars()`.
+We begin by identifying all instances of the _target_ term --"immigration"-- in our corpus and, for each instance, store it's context-- the N words (N = 6 in this example) preceding and following the instance, and tokenize. Given our tokenized corpus, `toks`, we can do this in one step using `conText::tokens_context()` --a wrapper function for quanteda::kwic(). Notice, both the input, `x`, and the output are a quanteda `tokens` objects. Each document in `immig_toks` --tokens of a context around an instance of _immigration_-- inherits the document variables (`docvars`) of the document from whence it came, along with a column registering the corresponding pattern. This information can be retrieved using `docvars()`.
 
 ```{r, message = FALSE}
 # build a tokenized corpus of contexts sorrounding the target term "immigration"
@@ -372,7 +372,7 @@ glove <- GlobalVectors$new(rank = 300,
                            learning_rate = 0.05)
 wv_main <- glove$fit_transform(toks_fcm, n_iter = 10,
                                convergence_tol = 1e-3, 
-                               n_threads = parallel::detectCores())
+                               n_threads = 2) # set to 'parallel::detectCores()' to use all available cores
 
 
 wv_context <- glove$components

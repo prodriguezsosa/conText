@@ -1,13 +1,18 @@
-#' Get local vocab
+#' Identify words common to a collection of texts and a set of pretrained embeddings.
 #'
-#' Local vocab consists of the intersect between the set of pre-trained embeddings
-#' and the local contexts.
+#' Local vocab consists of the intersect between the set of pretrained embeddings
+#' and the collection of texts.
 #'
-#' @param context the text to be used to compute localized embeddings
-#' @param pre_trained the pre-trained embeddings to be used to compute localized embeddings
+#' @param context (character) vector of contexts (usually `context` in `get_context()` output)
+#' @param pre_trained (numeric) a F x D matrix corresponding to pretrained embeddings.
+#' F = number of features and D = embedding dimensions.
+#' rownames(pre_trained) = set of features for which there is a pre-trained embedding.
 #'
-#' @return chr vector - vector of words in vocabulary
+#' @return  (character) vector of words common to the texts and pretrained embeddings.
+#'
 #' @export
+#' @rdname get_local_vocab
+#' @keywords get_local_vocab
 #' @examples
 #' # find local vocab (use it to define the candidate of nearest neighbors)
 #' local_vocab <- get_local_vocab(cr_sample_corpus, pre_trained = cr_glove_subset)

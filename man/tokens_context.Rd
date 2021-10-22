@@ -15,7 +15,7 @@ tokens_context(
 )
 }
 \arguments{
-\item{x}{a (quanteda) tokens object}
+\item{x}{a (quanteda) \code{tokens-class} object}
 
 \item{pattern}{a character vector, list of character vectors, \link[quanteda]{dictionary},
 or collocations object.  See \link[quanteda]{pattern} for details.}
@@ -29,18 +29,21 @@ exact matching. See \link[quanteda]{valuetype} for details.}
 \item{case_insensitive}{logical; if \code{TRUE}, ignore case when matching a
 \code{pattern} or \link[quanteda]{dictionary} values}
 
-\item{hard_cut}{logical - if TRUE then the text must have window x 2 tokens,
-if FALSE it can have window x 2 or fewer (e.g. if a doc begins with a target word,
-then text will have window tokens rather than window x 2)}
+\item{hard_cut}{(logical) - if TRUE then a context must have \code{window} x 2 tokens,
+if FALSE it can have \code{window} x 2 or fewer (e.g. if a doc begins with a target word,
+then context will have \code{window} tokens rather than \code{window} x 2)}
 
-\item{verbose}{(logical) if TRUE, report the total number of target instances found.}
+\item{verbose}{(logical) if TRUE, report the total number of instances per pattern found}
 }
 \value{
-a quanteda tokens object
+a (quanteda) \code{tokens-class}. Each document in the output tokens object
+inherits the document variables (\code{docvars}) of the document from whence it came,
+along with a column registering corresponding the pattern used.
+This information can be retrieved using \code{docvars()}.
 }
 \description{
-This function uses quanteda's kwic function to find the contexts
-around user defined target words and return a tokens object
+This function uses quanteda's \code{kwic()} function to find the contexts
+around user defined patterns (i.e. target words/phrases) and return a tokens object
 with the tokenized contexts and corresponding document variables.
 }
 \examples{

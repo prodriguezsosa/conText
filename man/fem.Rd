@@ -7,17 +7,20 @@
 fem(x, pre_trained, transform = TRUE, transform_matrix, verbose = TRUE)
 }
 \arguments{
-\item{x}{a \code{fcm-class} object}
+\item{x}{a quanteda (\code{fcm-class}) feature-co-occurrence-matrix}
 
-\item{pre_trained}{a F x D matrix of numeric values corresponding to pretrained embeddings
+\item{pre_trained}{(numeric) a F x D matrix corresponding to pretrained embeddings.
 F = number of features and D = embedding dimensions.
-rownames(pre_trained) = set of features for which there is a pre-trained embedding}
+rownames(pre_trained) = set of features for which there is a pre-trained embedding.}
 
-\item{transform}{(logical) if TRUE (default) apply the \verb{a la carte} transformation, if FALSE ouput untransformed averaged embedding}
+\item{transform}{(logical) if TRUE (default) apply the 'a la carte' transformation,
+if FALSE ouput untransformed averaged embeddings.}
 
-\item{transform_matrix}{a D x D matrix of numeric values corresponding to the `a la carte`` transformation matrix}
+\item{transform_matrix}{(numeric) a D x D 'a la carte' transformation matrix.
+D = dimensions of pretrained embeddings.}
 
-\item{verbose}{logical - report the documents/features that had no overlap with the provided pre-trained embeddings}
+\item{verbose}{(logical) - if TRUE, report the features that had
+no overlapping (co-occurring) features with the pretrained embeddings provided.}
 }
 \value{
 a \code{fem-class} object

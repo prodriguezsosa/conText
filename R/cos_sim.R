@@ -1,21 +1,23 @@
-#' Given a set of embeddings and a set of features, calculate cosine similarities.
+#' Compute the cosine similarity between one or more ALC embeddings and a set of features.
 #'
-#' @param x a [dem-class] or [fem-class] object
-#' @param pre_trained a F x D matrix of numeric values corresponding to pretrained embeddings
+#' @param x a (quanteda) `dem-class` or `fem-class` object.
+#' @param pre_trained (numeric) a F x D matrix corresponding to pretrained embeddings.
 #' F = number of features and D = embedding dimensions.
-#' rownames(pre_trained) = set of features for which there is a pre-trained embedding
-#' @param features (character) features of interest
+#' rownames(pre_trained) = set of features for which there is a pre-trained embedding.
+#' @param features (character) features of interest.
 #' @param as_list (logical) if FALSE all results are combined into a single data.frame
 #' If TRUE, a list of data.frames is returned with one data.frame per feature.
 #'
-#' @return a `data.frame` or list of data.frames (one for each feature)
+#' @return a `data.frame` or list of data.frames (one for each target)
 #' with the following columns:
-#'  \item{`target`}{ (character) vector with the rownames of the dfm,
-#'  either defining the groups or the target terms}.
-#'  \item{`feature`}{(character) vector of feature terms, one
-#'  instance for each target.}
-#'  \item{`value`}{(numeric) cosine similarity between target
+#' \describe{
+#'  \item{`target`}{ (character) rownames of `x`,
+#'  the labels of the ALC embeddings.}
+#'  \item{`feature`}{(character) feature terms defined in
+#'  the `features` argument.}
+#'  \item{`value`}{(numeric) cosine similarity between `x`
 #'  and feature.}
+#'  }
 #'
 #' @export
 #' @rdname cos_sim

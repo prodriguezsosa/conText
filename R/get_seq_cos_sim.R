@@ -1,25 +1,21 @@
 #' Calculate cosine similarities between target word and candidates words over
 #' sequenced variable using ALC embedding approach
 #'
-#' @param x a character vector - this is the set of documents (corpus) of interest
+#' @param x (character) vector - this is the set of documents (corpus) of interest
 #' @param seqvar ordered variable such as list of dates or ordered iseology scores
-#' @param target a character vector - target word
+#' @param target (character) vector - target word
 #' @param candidates (character) vector of features of interest
-#' @param pre_trained a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions
-#' @param transform_matrix a D x D transformation matrix
-#' @param window integer - defines the size of a context (words around the target)
-#' @param valuetype the type of pattern matching: "glob" for "glob"-style wildcard expressions;
-#' "regex" for regular expressions; or "fixed" for exact matching.
-#' @param case_insensitive logical - if TRUE, ignore case when matching the target.
-#' See quanteda's documentation for the kwic function.
-#' @param hard_cut logical - if TRUE then the text must have window x 2 tokens,
-#' if FALSE it can have window x 2 or fewer (e.g. if a doc begins with a target word,
-#' then text will have window tokens rather than window x 2)
-#' @param verbose logical - if TRUE, report the total number of target instances found, and
-#' report the observations that had no overlap the provided pre-trained embeddings
+#' @param pre_trained (numeric) a F x D matrix corresponding to pretrained embeddings.
+#' F = number of features and D = embedding dimensions.
+#' rownames(pre_trained) = set of features for which there is a pre-trained embedding.
+#' @param transform_matrix (numeric) a D x D 'a la carte' transformation matrix.
+#' D = dimensions of pretrained embeddings.
+#' @inheritParams get_context
 #'
 #' @return a data.frame with one column for
-#' each candidate term and one column for seqvar
+#' each candidate term with corresponding cosine similarity values
+#' and one column for seqvar.
+#'
 #' @export
 #'
 #' @examples

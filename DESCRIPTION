@@ -1,6 +1,6 @@
 Package: conText
 Version: 1.0.0
-Title: 'a la Carte' on Text (ConText) embedding regression
+Title: 'a la Carte' on Text (ConText) Embedding Regression
 Description: A fast, flexible and transparent framework to estimate context-specific word and short document embeddings using the 'a la carte' 
     embeddings approach developed by Khodak et al. (2018) <arXiv:1805.05388> and evaluate hypotheses about covariate effects on embeddings using 
     the regression framework developed by Rodriguez et al. (2021)<https://github.com/prodriguezsosa/EmbeddingRegression>.

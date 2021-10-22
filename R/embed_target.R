@@ -6,20 +6,30 @@
 #'
 #' required packages: quanteda
 #'
-#' @param context vector of texts - `context`` variable in get_context output
-#' @param pre_trained a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions
-#' @param transform_matrix a D x D transformation matrix
-#' @param transform logical - if TRUE (default) apply the a la carte transformation, if FALSE ouput untransformed averaged embedding
-#' @param aggregate logical - if TRUE (default) output will return 1 embedding (i.e. averaged over all instances of target)
+#' @param context (character) vector of texts - `context` variable in get_context output
+#' @param pre_trained (numeric) a F x D matrix corresponding to pretrained embeddings.
+#' F = number of features and D = embedding dimensions.
+#' rownames(pre_trained) = set of features for which there is a pre-trained embedding.
+#' @param transform (logical) if TRUE (default) apply the 'a la carte' transformation,
+#' if FALSE ouput untransformed averaged embeddings.
+#' @param transform_matrix (numeric) a D x D 'a la carte' transformation matrix.
+#' D = dimensions of pretrained embeddings.
+#' @param aggregate (logical) - if TRUE (default) output will return one embedding (i.e. averaged over all instances of target)
 #' if FALSE output will return one embedding per instance
-#' @param verbose logical - report the observations that had no overlap the provided pre-trained embeddings
-#' @return list with three elements:
-#' `target_embedding` the target embedding(s). Values and dimensions will vary with the above settings.
-#' `local_vocab` character vector - vocabulary that appears in the set of contexts provided.
-#' `obs_included` integer vector - the rows of the context vector that were included in the computation.
-#' A row (context) is excluded when none of the words in the context are present in the pre-trained embeddings provided.
-#' @examples
+#' @param verbose (logical) - report the observations that had no overlap the provided pre-trained embeddings
 #'
+#' @return list with three elements:
+#' \describe{
+#' \item{`target_embedding`}{the target embedding(s). Values and dimensions will vary with the above settings.}
+#' \item{`local_vocab`}{(character) vocabulary that appears in the set of contexts provided.}
+#' \item{`obs_included`}{(integer) rows of the context vector that were included in the computation.
+#' A row (context) is excluded when none of the words in the context are present in the pre-trained embeddings provided.}
+#' }
+#'
+#' @export
+#' @rdname embed_target
+#' @keywords embed_target
+#' @examples
 #' # find contexts for term immigration
 #' context_immigration <- get_context(x = cr_sample_corpus, target = 'immigration',
 #'                         window = 6, valuetype = "fixed", case_insensitive = TRUE,
@@ -29,8 +39,6 @@
 #' pre_trained = cr_glove_subset,
 #' transform = TRUE, transform_matrix = cr_transform,
 #' aggregate = FALSE, verbose = FALSE)
-#' @export
-
 embed_target <- function(context, pre_trained, transform = TRUE, transform_matrix, aggregate = TRUE, verbose = TRUE){
 
   # checks

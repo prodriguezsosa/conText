@@ -7,12 +7,13 @@
 dem_group(x, groups = NULL)
 }
 \arguments{
-\item{x}{a \code{dem}}
+\item{x}{a (\code{dem-class}) document-embedding-matrix}
 
 \item{groups}{a character or factor variable equal in length to the number of documents}
 }
 \value{
-a \code{dem-class} object
+a G x D (\code{dem-class}) document-embedding-matrix corresponding to the ALC embeddings for each group.
+G = number of unique groups defined in the \code{groups} variable, D = dimensions of pretrained embeddings.
 }
 \description{
 Average embeddings in a dem by a grouping variable, by averaging over columns within groups

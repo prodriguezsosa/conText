@@ -1,29 +1,36 @@
 #' Given a corpus and a binary grouping variable, computes the ratio of cosine similarities
 #' over the union of their respective N nearest neighbors.
 #'
+#' This is a wrapper function for `nns_ratio()` that allows users to go from a
+#' tokenized corpus to results with the option to: (1) bootstrap cosine similarity ratios
+#' and get the corresponding std. errors. (2) use a permutation test to get empirical
+#' p-values for inference.
+#'
 #' @param x a (quanteda) tokens object
 #' @inheritParams nns_ratio
 #' @inheritParams dem
 #' @inheritParams dem
 #' @inheritParams dem_group
 #' @param numerator (character) defines which group is the nuemerator in the ratio.
-#' @param bootstrap (logical) if TRUE, bootstrap nns - sample from corpus with replacement;
-#' if groups defined, sampling is automatically stratified; top nns are those with
-#' the highest average over all bootstrap samples.
-#' @param num_bootstraps (integer) number of bootstraps to use
+#' @param bootstrap (logical) if TRUE, use bootstrapping -- sample from texts with replacement and
+#' re-estimate cosine similarity ratios for each sample. Required to get std. errors.
+#' If `groups` defined, sampling is automatically stratified.
+#' @param num_bootstraps (integer) number of bootstraps to use.
 #' @param permute (logical) if TRUE, compute empirical p-values using permutation test
-#' @param num_permutations (numeric) number of permutations to use
+#' @param num_permutations (numeric) number of permutations to use.
 #' @param verbose provide information on which group is the numerator
 #'
 #' @return a `data.frame` with following columns:
-#'  \item{`feature`}{(character) vector of features from the candidate set,
-#'  one instance for each target.}
-#'  \item{`value`}{(numeric) ratio of cosine similarities
-#'  (mean of boostraps if boostrap = TRUE).}
-#'  \item{`std.error`}{(numeric) sd of bootstrapped ratio
-#'  of cosine similarities if bootstrap = TRUE, if FALSE, column is dropped.}
+#' \describe{
+#'  \item{`feature`}{(character) features in `candidates`
+#'  (or all features if `candidates` not defined), one instance for each embedding in `x`.}
+#'  \item{`value`}{(numeric) cosine similarity ratio between `x`
+#'  and feature. Average over bootstrapped samples if bootstrap = TRUE.}
+#'  \item{`std.error`}{(numeric) std. error of the similarity value.
+#'  Column is dropped if bootstrap = FALSE.}
 #'  \item{`p.value`}{(numeric) empirical p-value of bootstrapped ratio
 #'  of cosine similarities if permute = TRUE, if FALSE, column is dropped.}
+#'  }
 #'
 #' @export
 #' @rdname get_nns_ratio

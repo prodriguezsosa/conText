@@ -1,26 +1,31 @@
-#' Create an document-embedding matrix
+#' Build a document-embedding matrix
 #'
-#' Given a document-feature matrix for each document,
+#' Given a document-feature-matrix, for each document,
 #' multiply its feature counts (columns) with their
-#' corresponding pre-trained word embeddings and average
+#' corresponding pretrained word embeddings and average
 #' (usually referred to as averaged or additive document embeddings).
 #' If specified and a transformation matrix is provided,
 #' multiply the document embeddings by the transformation matrix
 #' to obtain the corresponding `a la carte` document embeddings.
 #' (see eq 2: https://arxiv.org/pdf/1805.05388.pdf)
 #'
-#' @param x a `dfm-class` object
-#' @param pre_trained a F x D matrix of numeric values corresponding to pretrained embeddings
+#' @param x a quanteda (`dfm-class`) document-feature-matrix
+#' @param pre_trained (numeric) a F x D matrix corresponding to pretrained embeddings.
 #' F = number of features and D = embedding dimensions.
-#' rownames(pre_trained) = set of features for which there is a pre-trained embedding
-#' @param transform (logical) if TRUE (default) apply the `a la carte` transformation,
-#' if FALSE ouput untransformed averaged embedding
-#' @param transform_matrix a D x D matrix of numeric values corresponding
-#' to the `a la carte`` transformation matrix
-#' @param verbose logical - report the documents/features that had
-#' no overlap with the provided pre-trained embeddings
+#' rownames(pre_trained) = set of features for which there is a pre-trained embedding.
+#' @param transform (logical) if TRUE (default) apply the 'a la carte' transformation,
+#' if FALSE ouput untransformed averaged embeddings.
+#' @param transform_matrix (numeric) a D x D 'a la carte' transformation matrix.
+#' D = dimensions of pretrained embeddings.
+#' @param verbose (logical) - if TRUE, report the documents that had
+#' no overlapping features with the pretrained embeddings provided.
 #'
-#' @return a `dem-class` object
+#' @return a N x D (`dem-class`) document-embedding-matrix corresponding to the ALC embeddings for each document.
+#' N = number of documents (that could be embedded), D = dimensions of pretrained embeddings. This object
+#' inherits the document variables in `x`, the dfm used. These can be accessed calling the attribute: `@docvars`.
+#' Note, documents with no overlapping features with the pretrained embeddings provided are automatically
+#' dropped. For a list of the documents that were embedded call the attribute: `@Dimnames$docs`.
+#'
 #' @export
 #' @rdname dem
 #' @keywords dem

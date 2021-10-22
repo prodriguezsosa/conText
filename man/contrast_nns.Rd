@@ -20,47 +20,50 @@ contrast_nns(
 )
 }
 \arguments{
-\item{x}{(quanteda) tokens object}
+\item{x}{(quanteda) \code{tokens-class} object}
 
-\item{groups}{a variable with two unique values (can be numeric, factor, character)}
+\item{groups}{(numeric, factor, character) a binary variable of the same length as \code{x}}
 
-\item{pre_trained}{a F x D matrix of numeric values corresponding to pretrained embeddings
+\item{pre_trained}{(numeric) a F x D matrix corresponding to pretrained embeddings.
 F = number of features and D = embedding dimensions.
-rownames(pre_trained) = set of features for which there is a pre-trained embedding}
+rownames(pre_trained) = set of features for which there is a pre-trained embedding.}
 
-\item{transform}{(logical) if TRUE (default) apply the \verb{a la carte} transformation,
-if FALSE ouput untransformed averaged embedding}
+\item{transform}{(logical) if TRUE (default) apply the 'a la carte' transformation,
+if FALSE ouput untransformed averaged embeddings.}
 
-\item{transform_matrix}{a D x D matrix of numeric values corresponding
-to the `a la carte`` transformation matrix}
+\item{transform_matrix}{(numeric) a D x D 'a la carte' transformation matrix.
+D = dimensions of pretrained embeddings.}
 
-\item{bootstrap}{logical - if TRUE, bootstrap cosine similarity ratio - required to get standard errors around cosine similarity ratios}
+\item{bootstrap}{(logical) if TRUE, use bootstrapping -- sample from texts with replacement and
+re-estimate cosine ratios for each sample. Required to get std. errors.}
 
-\item{num_bootstraps}{numeric - number of bootstraps to use}
+\item{num_bootstraps}{(numeric) - number of bootstraps to use}
 
-\item{permute}{logical - if TRUE, compute empirical p-values using permutation test}
+\item{permute}{(logical) - if TRUE, compute empirical p-values using a permutation test}
 
-\item{num_permutations}{numeric - number of permutations to use}
+\item{num_permutations}{(numeric) - number of permutations to use}
 
-\item{candidates}{character vector defining the candidates for nearest neighbors}
+\item{candidates}{(character) vector of candidate features for nearest neighbors}
 
-\item{N}{numeric (default is NULL). If defined,then nearest neighbors are subset to the union of the N neighbors of each group}
+\item{N}{(numeric) - nearest neighbors are subset to the union of the N neighbors of each group (if NULL, ratio is computed for all features)}
 
-\item{verbose}{logical - report the documents/features that had
-no overlap with the provided pre-trained embeddings}
+\item{verbose}{(logical) - if TRUE, report the documents that had
+no overlapping features with the pretrained embeddings provided.}
 }
 \value{
-a \code{data.frame} with following columns:
-\item{\code{feature}}{(character) vector of features from the candidate set,
-one instance for each target.}
-\item{\code{value}}{(numeric) ratio of cosine similarities
-(mean of boostraps if boostrap = TRUE).}
-\item{\code{std.error}}{(numeric) sd/srt(num_bootstrap) of bootstrapped ratio
-of cosine similarities if bootstrap = TRUE, if FALSE, column is dropped.}
-\item{\code{p.value}}{(numeric) empirical p-value.}
+a data.frame with following columns:
+\describe{
+\item{\code{feature}}{(character) vector of feature terms corresponding to the nearest neighbors.}
+\item{\code{value}}{(numeric) ratio of cosine similarities. Average over bootstrapped samples if bootstrap = TRUE.}
+\item{\code{std.error}}{(numeric) std. error of the ratio of cosine similarties. Column is dropped if bootsrap = FALSE.}
+\item{\code{p.value}}{(numeric) empirical p-value. Column is dropped if permute = FALSE.}
+}
 }
 \description{
-Contrast nearest neighbors
+Computes the ratio of cosine similarities between group embeddings and features
+--that is, for any given feature it first computes the similarity between that feature
+and each group embedding, and then takes the ratio of these two similarities.
+This ratio captures how "discriminant" a feature is of a given group.
 }
 \examples{
 

@@ -1,16 +1,35 @@
 #' Bootstrap nearest neighbors
 #'
-#' @param context vector of texts - `context`` variable in get_context output
-#' @param pre_trained a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions
-#' @param transform_matrix a D x D transformation matrix
-#' @param transform logical - if TRUE (default) apply the a la carte transformation, if FALSE ouput untransformed averaged embedding
-#' @param candidates character vector defining the candidates for nearest neighbors - e.g. output from `get_local_vocab`
-#' @param bootstrap logical - if TRUE, bootstrap cosine similarity - required to get standard errors cosine similarity of nearest neighbors
-#' @param num_bootstraps numeric - number of bootstraps to use
-#' @param N number of nearest neighbors to return
-#' @param norm character = c("l2", "none") - set to 'l2' for cosine similarity and to 'none' for inner product (see ?sim2 in text2vec)
+#' Uses bootstrapping --sampling of of texts with replacement--
+#' to identify the top N nearest neighbors based on cosine or inner product
+#' similarity.
 #'
-#' @return data.frame with nearest neighbor tokens, similarity (numeric value) and std.error (given bootstrap)
+#' @param context (character) vector of texts - `context` variable in get_context output
+#' @param pre_trained (numeric) a F x D matrix corresponding to pretrained embeddings.
+#' F = number of features and D = embedding dimensions.
+#' rownames(pre_trained) = set of features for which there is a pre-trained embedding.
+#' @param transform (logical) - if TRUE (default) apply the a la carte transformation, if FALSE ouput untransformed averaged embedding.
+#' @param transform_matrix (numeric) a D x D 'a la carte' transformation matrix.
+#' D = dimensions of pretrained embeddings.
+#' @param candidates (character) vector defining the candidates for nearest neighbors - e.g. output from `get_local_vocab`.
+#' @param bootstrap (logical) if TRUE, bootstrap similarity values - sample from texts with replacement.
+#' Required to get std. errors.
+#' @param num_bootstraps (numeric) - number of bootstraps to use.
+#' @param N (numeric) number of nearest neighbors to return.
+#' @param norm (character) - how to compute the similarity (see ?text2vec::sim2):
+#' \describe{
+#'   \item{`"l2"`}{cosine similarity}
+#'   \item{`"none"`}{inner product}
+#'   }
+#'
+#' @return a `data.frame` with the following columns:
+#' \describe{
+#'  \item{`feature`}{(character)  vector of feature terms corresponding to the nearest neighbors.}
+#'  \item{`value`}{(numeric) cosine/inner product similarity between
+#'  texts and feature. Average over bootstrapped samples if bootstrap = TRUE.}
+#'  \item{`std.error`}{(numeric) std. error of the similarity value. Column is dropped if bootstrap = FALSE.}
+#'  }
+#'
 #' @export
 #' @rdname bootstrap_nns
 #' @keywords bootstrap_nns
@@ -53,7 +72,7 @@ bootstrap_nns <- function(context = NULL, pre_trained = NULL, transform = TRUE, 
     cos_out <- do.call(rbind,bootstrap_out)
     mean_cos <- apply(cos_out, 2, mean)
     stderror_cos <- 1/sqrt(nrow(cos_out)) * apply(cos_out, 2, sd)
-    nns <- dplyr::tibble(Term = names(mean_cos), Estimate = unname(mean_cos), Std.Error = unname(stderror_cos)) %>% dplyr::arrange(-Estimate)}else{
+    nns <- dplyr::tibble(feature = names(mean_cos), value = unname(mean_cos), std.error = unname(stderror_cos)) %>% dplyr::arrange(-value)}else{
 
       # ELSE
 
@@ -65,7 +84,7 @@ bootstrap_nns <- function(context = NULL, pre_trained = NULL, transform = TRUE, 
         cos_sim <- text2vec::sim2(embeds_out$target_embedding, pre_trained, method = 'cosine', norm = norm)
       }
 
-      nns <- dplyr::tibble(Term = colnames(cos_sim), Estimate = cos_sim[1,]) %>% dplyr::arrange(-Estimate)
+      nns <- dplyr::tibble(feature = colnames(cos_sim), value = cos_sim[1,]) %>% dplyr::arrange(-value)
 
     }
 

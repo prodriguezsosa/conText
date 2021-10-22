@@ -1,13 +1,28 @@
-#' Find prototypical contexts (most similar on average to the full set of contexts)
+#' Find most "prototypical" contexts.
 #'
-#' @param context vector of texts - `context`` variable in get_context output
-#' @param pre_trained a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions
-#' @param transform logical - if TRUE (default) apply the a la carte transformation, if FALSE ouput untransformed averaged embedding
-#' @param transform_matrix a D x D transformation matrix
-#' @param N number of contexts to return
-#' @param norm character = c("l2", "none") - set to 'l2' for cosine similarity and to 'none' for inner product (see ?sim2 in text2vec)
+#' Contexts most similar on average to the full set of contexts.
 #'
-#' @return character vector of contexts ordered by average similarity to all contexts
+#' @param context (character) vector of texts - `context` variable in get_context output
+#' @param pre_trained (numeric) a F x D matrix corresponding to pretrained embeddings.
+#' F = number of features and D = embedding dimensions.
+#' rownames(pre_trained) = set of features for which there is a pre-trained embedding.
+#' @param transform (logical) - if TRUE (default) apply the a la carte transformation, if FALSE ouput untransformed averaged embedding.
+#' @param transform_matrix (numeric) a D x D 'a la carte' transformation matrix.
+#' D = dimensions of pretrained embeddings.
+#' @param N (numeric) number of most "prototypical" contexts to return.
+#' @param norm (character) - how to compute similarity (see ?text2vec::sim2):
+#' \describe{
+#'   \item{`"l2"`}{cosine similarity}
+#'   \item{`"none"`}{inner product}
+#'   }
+#'
+#' @return a `data.frame` with the following columns:
+#' \describe{
+#'  \item{`doc_id`}{ (integer) document id.}
+#'  \item{`typicality_score`}{(numeric) average similarity score to all other contexts}
+#'  \item{`context`}{(character) contexts}
+#'  }
+#'
 #' @examples
 #'
 #' # find contexts of immigration

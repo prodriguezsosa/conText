@@ -1,10 +1,16 @@
-#' Plot output of get_nns_ratio
+#' Plot output of `get_nns_ratio()`
+#'
+#' A way of visualizing the top nearest neighbors of a pair of ALC embeddings that captures
+#' how "discriminant" each feature is of each embedding (group).
 #'
 #' @param x output of get_nns_ratio
-#' @param alpha (numerical) betwee 0 and 1;significance threshold to identify significant values
-#' @param horizontal (logical) defines the type of plot
+#' @param alpha (numerical) betwee 0 and 1. Significance threshold to identify significant values.
+#' These are denoted by a `*` on the plot.
+#' @param horizontal (logical) defines the type of plot. if TRUE results are plotted on 1 dimension.
+#' If FALSE, results are plotted on 2 dimensions, with the second dimension catpuring the ranking
+#' of cosine ratio similarties.
 #'
-#' @return a ggplot
+#' @return a `ggplot-class` object.
 #'
 #' @export
 #' @rdname plot_nns_ratio

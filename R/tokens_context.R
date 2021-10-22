@@ -1,17 +1,21 @@
 #' Get the tokens of contexts sorrounding user defined patterns
 #'
-#' This function uses quanteda's kwic function to find the contexts
-#' around user defined target words and return a tokens object
+#' This function uses quanteda's `kwic()` function to find the contexts
+#' around user defined patterns (i.e. target words/phrases) and return a tokens object
 #' with the tokenized contexts and corresponding document variables.
 #'
-#' @param x a (quanteda) tokens object
+#' @param x a (quanteda) `tokens-class` object
 #' @inheritParams quanteda::kwic
-#' @param hard_cut logical - if TRUE then the text must have window x 2 tokens,
-#' if FALSE it can have window x 2 or fewer (e.g. if a doc begins with a target word,
-#' then text will have window tokens rather than window x 2)
-#' @param verbose (logical) if TRUE, report the total number of target instances found.
+#' @param hard_cut (logical) - if TRUE then a context must have `window` x 2 tokens,
+#' if FALSE it can have `window` x 2 or fewer (e.g. if a doc begins with a target word,
+#' then context will have `window` tokens rather than `window` x 2)
+#' @param verbose (logical) if TRUE, report the total number of instances per pattern found
 #'
-#' @return a quanteda tokens object
+#' @return a (quanteda) `tokens-class`. Each document in the output tokens object
+#' inherits the document variables (`docvars`) of the document from whence it came,
+#' along with a column registering corresponding the pattern used.
+#' This information can be retrieved using `docvars()`.
+#'
 #' @export
 #' @rdname tokens_context
 #' @keywords tokens_context

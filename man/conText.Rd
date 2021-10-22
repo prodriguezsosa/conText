@@ -23,22 +23,29 @@ conText(
 )
 }
 \arguments{
-\item{formula}{a symbolic description of the model to be fitted
-to use a phrase as a DV, wrap in quotations e.g. "immigrant refugees" ~ party + gender}
+\item{formula}{a symbolic description of the model to be fitted with a target word as a DV e.g.
+\code{immigrant ~ party + gender}. To use a phrase as a DV, place it quotations e.g.
+\code{"immigrant refugees" ~ party + gender}. To use all covariates included in the data,
+you can use \code{.} on RHS, e.g.\code{immigrant ~ .}. If you wish to treat the full document as you DV, rather
+than a single target word, use \code{.} on the LHS e.g. \code{. ~ party + gender}.}
 
-\item{data}{a quanteda \code{tokens} object}
+\item{data}{a quanteda \code{tokens-class} object with the necessary document variables. Covariates must be
+either binary indicator variables or "trasnformable" into binary indicator variables. conText will automatically
+transform any non-indicator variables into binary indicator variables (multiple if more than 2 classes),
+leaving out a "base" category.}
 
-\item{pre_trained}{a F x D matrix of numeric values corresponding to pretrained embeddings
+\item{pre_trained}{(numeric) a F x D matrix corresponding to pretrained embeddings.
 F = number of features and D = embedding dimensions.
-rownames(pre_trained) = set of features for which there is a pre-trained embedding}
+rownames(pre_trained) = set of features for which there is a pre-trained embedding.}
 
-\item{transform}{(logical) if TRUE (default) apply the \verb{a la carte} transformation,
-if FALSE ouput untransformed averaged embedding}
+\item{transform}{(logical) if TRUE (default) apply the 'a la carte' transformation,
+if FALSE ouput untransformed averaged embeddings.}
 
-\item{transform_matrix}{a D x D matrix of numeric values corresponding
-to the `a la carte`` transformation matrix}
+\item{transform_matrix}{(numeric) a D x D 'a la carte' transformation matrix.
+D = dimensions of pretrained embeddings.}
 
-\item{bootstrap}{(logical) if TRUE, bootstrap regression - required to get standard errors for normed coefficients}
+\item{bootstrap}{(logical) if TRUE, use bootstrapping -- sample from texts with replacement and
+re-run regression on each sample. Required to get std. errors.}
 
 \item{num_bootstraps}{(numeric) number of bootstraps to use}
 
@@ -57,18 +64,30 @@ exact matching. See \link[quanteda]{valuetype} for details.}
 \item{case_insensitive}{logical; if \code{TRUE}, ignore case when matching a
 \code{pattern} or \link[quanteda]{dictionary} values}
 
-\item{hard_cut}{logical - if TRUE then the text must have window x 2 tokens,
-if FALSE it can have window x 2 or fewer (e.g. if a doc begins with a target word,
-then text will have window tokens rather than window x 2)}
+\item{hard_cut}{(logical) - if TRUE then a context must have \code{window} x 2 tokens,
+if FALSE it can have \code{window} x 2 or fewer (e.g. if a doc begins with a target word,
+then context will have \code{window} tokens rather than \code{window} x 2)}
 
-\item{verbose}{logical - report the documents/features that had
-no overlap with the provided pre-trained embeddings}
+\item{verbose}{(logical) - if TRUE, report the documents that had
+no overlapping features with the pretrained embeddings provided.}
 }
 \value{
-a \code{conText-class} object
+a \code{conText-class} object - a D x M matrix with D = dimensions
+of the pre-trained feature embeddings provided and M = number of covariates
+including the intercept. These represent the estimated regression coefficients.
+These can be combined to compute ALC embeddings for different combinations of covariates.
+The object also includes various informative attributes, importantly
+a \code{data.frame} with the following columns:
+\describe{
+\item{\code{coefficient}}{(character) name of (covariate) coefficient.}
+\item{\code{value}}{(numeric) norm of the corresponding beta coefficient.}
+\item{\code{std.error}}{(numeric) (if bootstrap = TRUE) std. error of the norm of the beta coefficient.}
+\item{\code{p.value}}{(numeric) (if permute = TRUE) empirical p.value of the norm of the coefficient.}
+}
 }
 \description{
-Estimate an embedding regression model
+Estimates an embedding regression model with options to use bootstrapping to estimate confidence
+intervals and a permutation test for inference (see https://github.com/prodriguezsosa/conText for details.)
 }
 \examples{
 

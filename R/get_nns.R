@@ -1,26 +1,32 @@
 #' Given a corpus and a set of candidate neighbors, find the top N nearest
 #' neighbors.
 #'
-#' @param x a (quanteda) tokens object
+#' This is a wrapper function for `nns()` that allows users to go from a
+#' tokenized corpus to results with the option to bootstrap cosine similarities
+#' and get the corresponding std. errors.
+#'
+#' @param x a (quanteda) `tokens-class` object
 #' @inheritParams nns
-#' @param groups grouping variable equal in length to the number of documents
+#' @param groups (numeric, factor, character) a binary variable of the same length as `x`
 #' @inheritParams dem
 #' @inheritParams dem_group
-#' @param bootstrap (logical) if TRUE, bootstrap nns - sample from corpus with replacement;
-#' if groups defined, sampling is automatically stratified; top nns are those with
-#' the highest average over all bootstrap samples.
-#' @param num_bootstraps (integer) number of bootstraps to use
+#' @param bootstrap (logical) if TRUE, use bootstrapping -- sample from texts with replacement and
+#' re-estimate cosine similarities for each sample. Required to get std. errors.
+#' If `groups` defined, sampling is automatically stratified.
+#' @param num_bootstraps (integer) number of bootstraps to use.
 #'
 #' @return a `data.frame` or list of data.frames (one for each target)
 #' with the following columns:
-#'  \item{`target`}{ (character) vector with the rownames of the dfm,
-#'  either defining the groups or the target terms}.
-#'  \item{`feature`}{(character) vector of features from the candidate set,
-#'  one instance for each target.}
-#'  \item{`value`}{(numeric) cosine similarity between target
-#'  and candidate (mean of boostraps if boostrap = TRUE).}
-#'  \item{`std.error`}{(numeric) sd of bootstrapped cosine similarities
-#'  if bootstrap = TRUE, if FALSE, column is dropped.}
+#' \describe{
+#'  \item{`target`}{ (character) rownames of `x`,
+#'  the labels of the ALC embeddings.}
+#'  \item{`feature`}{(character) features identified as nearest neighbors.}
+#'  \item{`rank`}{(character) rank of feature in terms of similarity with `x`.}
+#'  \item{`value`}{(numeric) cosine similarity between `x`
+#'  and feature. Average over bootstrapped samples if bootstrap = TRUE.}
+#'  \item{`std.error`}{(numeric) std. error of the similarity value.
+#'  Column is dropped if bootstrap = FALSE.}
+#'  }
 #'
 #' @export
 #' @rdname get_nns

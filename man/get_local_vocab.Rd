@@ -2,23 +2,26 @@
 % Please edit documentation in R/get_local_vocab.R
 \name{get_local_vocab}
 \alias{get_local_vocab}
-\title{Get local vocab}
+\title{Identify words common to a collection of texts and a set of pretrained embeddings.}
 \usage{
 get_local_vocab(context, pre_trained)
 }
 \arguments{
-\item{context}{the text to be used to compute localized embeddings}
+\item{context}{(character) vector of contexts (usually \code{context} in \code{get_context()} output)}
 
-\item{pre_trained}{the pre-trained embeddings to be used to compute localized embeddings}
+\item{pre_trained}{(numeric) a F x D matrix corresponding to pretrained embeddings.
+F = number of features and D = embedding dimensions.
+rownames(pre_trained) = set of features for which there is a pre-trained embedding.}
 }
 \value{
-chr vector - vector of words in vocabulary
+(character) vector of words common to the texts and pretrained embeddings.
 }
 \description{
-Local vocab consists of the intersect between the set of pre-trained embeddings
-and the local contexts.
+Local vocab consists of the intersect between the set of pretrained embeddings
+and the collection of texts.
 }
 \examples{
 # find local vocab (use it to define the candidate of nearest neighbors)
 local_vocab <- get_local_vocab(cr_sample_corpus, pre_trained = cr_glove_subset)
 }
+\keyword{get_local_vocab}

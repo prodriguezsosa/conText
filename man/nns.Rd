@@ -8,7 +8,7 @@ neighbors.}
 nns(x, N = 10, candidates = character(0), pre_trained, as_list = TRUE)
 }
 \arguments{
-\item{x}{a \linkS4class{dem} or \linkS4class{fem} object}
+\item{x}{a (quanteda) \code{dem-class} or \code{fem-class} object.}
 
 \item{N}{(numeric) number of nearest neighbors to return}
 
@@ -17,9 +17,9 @@ You may for example want to only consider features that meet a certian count thr
 or exclude stop words etc. To do so you can simply identify the set of features you
 want to consider and supply these as a character vector in the \code{candidates} argument.}
 
-\item{pre_trained}{a F x D matrix of numeric values corresponding to pretrained embeddings
+\item{pre_trained}{(numeric) a F x D matrix corresponding to pretrained embeddings.
 F = number of features and D = embedding dimensions.
-rownames(pre_trained) = set of features for which there is a pre-trained embedding}
+rownames(pre_trained) = set of features for which there is a pre-trained embedding.}
 
 \item{as_list}{(logical) if FALSE all results are combined into a single data.frame
 If TRUE, a list of data.frames is returned with one data.frame per target.}
@@ -27,12 +27,13 @@ If TRUE, a list of data.frames is returned with one data.frame per target.}
 \value{
 a \code{data.frame} or list of data.frames (one for each target)
 with the following columns:
-\item{\code{target}}{ (character) vector with the rownames of the dfm,
-either defining the groups or the target terms}.
-\item{\code{feature}}{(character) vector of features from the candidate set,
-one instance for each target.}
-\item{\code{value}}{(numeric) cosine similarity between target
-and candidate.}
+\describe{
+\item{\code{target}}{ (character) rownames of \code{x},
+the labels of the ALC embeddings.}
+\item{\code{feature}}{(character) features identified as nearest neighbors.}
+\item{\code{rank}}{(character) rank of feature in terms of similarity with \code{x}.}
+\item{\code{value}}{(numeric) cosine similarity between \code{x} and feature.}
+}
 }
 \description{
 Given a set of embeddings and a set of candidate neighbors, find the top N nearest

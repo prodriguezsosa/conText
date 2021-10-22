@@ -17,29 +17,45 @@ bootstrap_nns(
 )
 }
 \arguments{
-\item{context}{vector of texts - `context`` variable in get_context output}
+\item{context}{(character) vector of texts - \code{context} variable in get_context output}
 
-\item{pre_trained}{a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions}
+\item{pre_trained}{(numeric) a F x D matrix corresponding to pretrained embeddings.
+F = number of features and D = embedding dimensions.
+rownames(pre_trained) = set of features for which there is a pre-trained embedding.}
 
-\item{transform}{logical - if TRUE (default) apply the a la carte transformation, if FALSE ouput untransformed averaged embedding}
+\item{transform}{(logical) - if TRUE (default) apply the a la carte transformation, if FALSE ouput untransformed averaged embedding.}
 
-\item{transform_matrix}{a D x D transformation matrix}
+\item{transform_matrix}{(numeric) a D x D 'a la carte' transformation matrix.
+D = dimensions of pretrained embeddings.}
 
-\item{candidates}{character vector defining the candidates for nearest neighbors - e.g. output from \code{get_local_vocab}}
+\item{candidates}{(character) vector defining the candidates for nearest neighbors - e.g. output from \code{get_local_vocab}.}
 
-\item{bootstrap}{logical - if TRUE, bootstrap cosine similarity - required to get standard errors cosine similarity of nearest neighbors}
+\item{bootstrap}{(logical) if TRUE, bootstrap similarity values - sample from texts with replacement.
+Required to get std. errors.}
 
-\item{num_bootstraps}{numeric - number of bootstraps to use}
+\item{num_bootstraps}{(numeric) - number of bootstraps to use.}
 
-\item{N}{number of nearest neighbors to return}
+\item{N}{(numeric) number of nearest neighbors to return.}
 
-\item{norm}{character = c("l2", "none") - set to 'l2' for cosine similarity and to 'none' for inner product (see ?sim2 in text2vec)}
+\item{norm}{(character) - how to compute the similarity (see ?text2vec::sim2):
+\describe{
+\item{\code{"l2"}}{cosine similarity}
+\item{\code{"none"}}{inner product}
+}}
 }
 \value{
-data.frame with nearest neighbor tokens, similarity (numeric value) and std.error (given bootstrap)
+a \code{data.frame} with the following columns:
+\describe{
+\item{\code{feature}}{(character)  vector of feature terms corresponding to the nearest neighbors.}
+\item{\code{value}}{(numeric) cosine/inner product similarity between
+texts and feature. Average over bootstrapped samples if bootstrap = TRUE.}
+\item{\code{std.error}}{(numeric) std. error of the similarity value. Column is dropped if bootstrap = FALSE.}
+}
 }
 \description{
-Bootstrap nearest neighbors
+Uses bootstrapping --sampling of of texts with replacement--
+to identify the top N nearest neighbors based on cosine or inner product
+similarity.
 }
 \examples{
 

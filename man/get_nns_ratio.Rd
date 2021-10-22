@@ -24,50 +24,59 @@ get_nns_ratio(
 \arguments{
 \item{x}{a (quanteda) tokens object}
 
-\item{N}{number of nearest neighbors to consider}
+\item{N}{(numeric) number of nearest neighbors to return. Nearest neighbors
+consist of the union of the top N nearest neighbors of the embeddings in \code{x}.
+If these overlap, then resulting N will be smaller than 2*N.}
 
 \item{groups}{a character or factor variable equal in length to the number of documents}
 
 \item{numerator}{(character) defines which group is the nuemerator in the ratio.}
 
-\item{candidates}{character vector delimiting the features to consider as nearest neighbor candidates}
+\item{candidates}{(character) vector of features to consider as candidates to be nearest neighbor
+You may for example want to only consider features that meet a certian count threshold
+or exclude stop words etc. To do so you can simply identify the set of features you
+want to consider and supply these as a character vector in the \code{candidates} argument.}
 
-\item{pre_trained}{a F x D matrix of numeric values corresponding to pretrained embeddings
+\item{pre_trained}{(numeric) a F x D matrix corresponding to pretrained embeddings.
 F = number of features and D = embedding dimensions.
-rownames(pre_trained) = set of features for which there is a pre-trained embedding}
+rownames(pre_trained) = set of features for which there is a pre-trained embedding.}
 
-\item{transform}{(logical) if TRUE (default) apply the \verb{a la carte} transformation,
-if FALSE ouput untransformed averaged embedding}
+\item{transform}{(logical) if TRUE (default) apply the 'a la carte' transformation,
+if FALSE ouput untransformed averaged embeddings.}
 
-\item{transform_matrix}{a D x D matrix of numeric values corresponding
-to the `a la carte`` transformation matrix}
+\item{transform_matrix}{(numeric) a D x D 'a la carte' transformation matrix.
+D = dimensions of pretrained embeddings.}
 
-\item{bootstrap}{(logical) if TRUE, bootstrap nns - sample from corpus with replacement;
-if groups defined, sampling is automatically stratified; top nns are those with
-the highest average over all bootstrap samples.}
+\item{bootstrap}{(logical) if TRUE, use bootstrapping -- sample from texts with replacement and
+re-estimate cosine similarity ratios for each sample. Required to get std. errors.
+If \code{groups} defined, sampling is automatically stratified.}
 
-\item{num_bootstraps}{(integer) number of bootstraps to use}
+\item{num_bootstraps}{(integer) number of bootstraps to use.}
 
 \item{permute}{(logical) if TRUE, compute empirical p-values using permutation test}
 
-\item{num_permutations}{(numeric) number of permutations to use}
+\item{num_permutations}{(numeric) number of permutations to use.}
 
 \item{verbose}{provide information on which group is the numerator}
 }
 \value{
 a \code{data.frame} with following columns:
-\item{\code{feature}}{(character) vector of features from the candidate set,
-one instance for each target.}
-\item{\code{value}}{(numeric) ratio of cosine similarities
-(mean of boostraps if boostrap = TRUE).}
-\item{\code{std.error}}{(numeric) sd of bootstrapped ratio
-of cosine similarities if bootstrap = TRUE, if FALSE, column is dropped.}
+\describe{
+\item{\code{feature}}{(character) features in \code{candidates}
+(or all features if \code{candidates} not defined), one instance for each embedding in \code{x}.}
+\item{\code{value}}{(numeric) cosine similarity ratio between \code{x}
+and feature. Average over bootstrapped samples if bootstrap = TRUE.}
+\item{\code{std.error}}{(numeric) std. error of the similarity value.
+Column is dropped if bootstrap = FALSE.}
 \item{\code{p.value}}{(numeric) empirical p-value of bootstrapped ratio
 of cosine similarities if permute = TRUE, if FALSE, column is dropped.}
 }
+}
 \description{
-Given a corpus and a binary grouping variable, computes the ratio of cosine similarities
-over the union of their respective N nearest neighbors.
+This is a wrapper function for \code{nns_ratio()} that allows users to go from a
+tokenized corpus to results with the option to: (1) bootstrap cosine similarity ratios
+and get the corresponding std. errors. (2) use a permutation test to get empirical
+p-values for inference.
 }
 \examples{
 

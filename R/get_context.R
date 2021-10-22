@@ -1,32 +1,34 @@
-#' Get contexts sorrounding a user defined target
+#' Get context words (words within a symmetric window around the target word/phrase)
+#' sorrounding a user defined target.
 #'
-#' For a vector of texts, return a dataframe with the contexts within which a user defined target word appears.
-#' The underlying machinary is quanteda's kwic function.
+#' A wrapper function for quanteda's `kwic()` function that subsets documents to where
+#' target is present before tokenizing to speed up processing, and concatenates
+#' kwic's pre/post variables into a `context` column.
 #'
-#' Required packages: quanteda, dplyr, tidyr
-#'
-#' @param x a character vector - this is the set of documents (corpus) of interest
-#' @param target a character vector - these are the target words whose contexts we want to evaluate
+#' @param x (character) vector - this is the set of documents (corpus) of interest.
+#' @param target (character) vector - these are the target words whose contexts we want to evaluate
 #' This vector may include a single token, a phrase or multiple tokens and/or phrases.
-#' @param window integer - defines the size of a context (words around the target)
-#' @param hard_cut logical - if TRUE then the text must have window x 2 tokens,
-#' if FALSE it can have window x 2 or fewer (e.g. if a doc begins with a target word,
-#' then text will have window tokens rather than window x 2)
-#' @param valuetype the type of pattern matching: "glob" for "glob"-style wildcard expressions;
-#' "regex" for regular expressions; or "fixed" for exact matching.
-#' See quanteda's documentation for the kwic function.
-#' @param case_insensitive logical - if TRUE, ignore case when matching the target.
-#' See quanteda's documentation for the kwic function.
-#' @param what character; which quanteda tokenizer to use. You will rarely want to change this.
-#' For chinese text you may want to set what = 'fastestword'.
-#' @param verbose logical - if TRUE, report the total number of target instances found.
-#' @return a `conText` classed data.frame with three columns: document name (`docname`),
-#' target (`target`) and contexts (`context`).
+#' @param window (numeric) - defines the size of a context (words around the target).
+#' @param hard_cut (logical) - if TRUE then a context must have `window` x 2 tokens,
+#' if FALSE it can have `window` x 2 or fewer (e.g. if a doc begins with a target word,
+#' then context will have `window` tokens rather than `window` x 2)
+#' @inheritParams quanteda::kwic
+#' @param what (character) defines which quanteda tokenizer to use. You will rarely want to change this.
+#' For chinese text you may want to set `what = 'fastestword'`.
+#' @param verbose (logical) - if TRUE, report the total number of target instances found.
 #'
-#' @note `context` in a `conText` classed data.frame excludes the target word,
-#' it is the result of concatenating `pre` and `post` in the `kwic` function.
-#' `target` in the return data.frame is equivalent to `kwic`'s keyword,
+#' @return a `data.frame` with the following columns:
+#' \describe{
+#'  \item{`docname`}{ (character) document name to which instances belong to.}
+#'  \item{`target`}{(character) targets.}
+#'  \item{`context`}{(numeric) pre/post variables in `kwic()` output concatenated.}
+#'  }
+#'
+#' @note `target` in the return data.frame is equivalent to `kwic()`'s `keyword` output variable,
 #' so it may not match the user-defined target exactly if `valuetype` is not fixed.
+#'
+#' @rdname get_context
+#' @keywords get_context
 #' @examples
 #' # get context words sorrounding the term immigration
 #' context_immigration <- get_context(x = cr_sample_corpus, target = 'immigration',
@@ -55,9 +57,6 @@ get_context <- function(x, target, window = 6L, valuetype = "fixed", case_insens
       dplyr::mutate(context = paste(pre, post, sep = " ")) %>% # combine pre and post into one variable named context
       dplyr::select(-c('pre', 'post')) %>% # drop pre & post
       dplyr::rename(target = keyword) # align variable names (we use target instead of keyword)
-
-    # assign conText class
-    class(out) <- c("conText", "data.frame")
 
     # if hard_cut, keep only contexts with 2*window number of words
     if(hard_cut) out <- out %>% dplyr::mutate(num_tokens = quanteda::ntoken(context)) %>% dplyr::filter(num_tokens == window*2) %>% dplyr::select(-num_tokens)

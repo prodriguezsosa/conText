@@ -2,22 +2,35 @@
 % Please edit documentation in R/compute_transform.R
 \name{compute_transform}
 \alias{compute_transform}
-\title{compute transformation matrix A}
+\title{Compute transformation matrix A}
 \usage{
 compute_transform(x, pre_trained, weighting = 500)
 }
 \arguments{
-\item{x}{a \code{fcm}}
+\item{x}{a (quanteda) \code{fcm-class} object.}
 
-\item{pre_trained}{a \code{dgTMatrix-class} matrix of word vectors}
+\item{pre_trained}{(numeric) a F x D matrix corresponding to pretrained embeddings,
+usually trained on the same corpus as that used for \code{x}.
+F = number of features and D = embedding dimensions.
+rownames(pre_trained) = set of features for which there is a pre-trained embedding}
 
-\item{weighting}{1 = no weighting; log = weight by the log of the frequency count; a numeric = threshold based weighting (= 1 if token count meets threshold, 0 ow); use log for small corpora, numeric threshold for larger corpora}
+\item{weighting}{(character or numeric) weighting options:
+\describe{
+\item{\code{1}}{no weighting.}
+\item{\code{"log"}}{weight by the log of the frequency count.}
+\item{\code{numeric}}{threshold based weighting (= 1 if token count meets threshold, 0 ow).}
+}
+Recommended: use \code{log} for small corpora, a numeric threshold for larger corpora.}
 }
 \value{
-a \code{dgTMatrix-class} D x D (D = word vector dimensions)
+a \code{dgTMatrix-class} D x D non-symmetrical matrix
+(D = dimensions of pre-trained embedding space) corresponding
+to an 'a la carte' transformation matrix. This matrix is optimized
+for the corpus and pre-trained embeddings employed.
 }
 \description{
-compute transformation matrix A
+Computes a transformation matrix, given a feature-co-occurrence
+matrix and corresponding pre-trained embeddings.
 }
 \examples{
 

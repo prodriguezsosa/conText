@@ -15,31 +15,40 @@ nns_ratio(
 )
 }
 \arguments{
-\item{x}{a \linkS4class{dem} or \linkS4class{fem} object or in general a matrix of embeddings}
+\item{x}{a (quanteda) \code{dem-class} or \code{fem-class} object.}
 
-\item{N}{number of nearest neighbors to consider}
+\item{N}{(numeric) number of nearest neighbors to return. Nearest neighbors
+consist of the union of the top N nearest neighbors of the embeddings in \code{x}.
+If these overlap, then resulting N will be smaller than 2*N.}
 
-\item{numerator}{(character) defines which group is the nuemerator in the ratio
-Note: if nearest neighbors overlap, the resulting number of features
-will be fewer than 2*N.}
+\item{numerator}{(character) defines which group is the nuemerator in the ratio}
 
-\item{candidates}{character vector delimiting the features to consider as nearest neighbor candidates}
+\item{candidates}{(character) vector of features to consider as candidates to be nearest neighbor
+You may for example want to only consider features that meet a certian count threshold
+or exclude stop words etc. To do so you can simply identify the set of features you
+want to consider and supply these as a character vector in the \code{candidates} argument.}
 
-\item{pre_trained}{a F x D matrix of numeric values corresponding to pretrained embeddings
+\item{pre_trained}{(numeric) a F x D matrix corresponding to pretrained embeddings.
 F = number of features and D = embedding dimensions.
-rownames(pre_trained) = set of features for which there is a pre-trained embedding}
+rownames(pre_trained) = set of features for which there is a pre-trained embedding.}
 
-\item{verbose}{provide information on which group is the numerator}
+\item{verbose}{report which group is the numerator and which group is the denominator.}
 }
 \value{
 a \code{data.frame} with following columns:
-\item{\code{feature}}{(character) vector of features from the candidate set,
-one instance for each target.}
-\item{\code{value}}{(numeric) ratio of cosine similarities}.
+\describe{
+\item{\code{feature}}{(character) features in \code{candidates}
+(or all features if \code{candidates} not defined), one instance for each embedding in \code{x}.}
+\item{\code{value}}{(numeric) ratio of cosine similarities.}
+}
 }
 \description{
-Computes the ratio of cosine similarities for two embeddings over
-the union of their respective top N nearest neighbors.
+Computes the ratio of cosine similarities between group embeddings and features
+--that is, for any given feature it first computes the similarity between that feature
+and each group embedding, and then takes the ratio of these two similarities.
+This ratio captures how "discriminant" a feature is of a given group.
+Values larger (smaller) than 1 mean the feature is more (less)
+discriminant of the group in the numerator (denominator).
 }
 \examples{
 

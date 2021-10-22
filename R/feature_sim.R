@@ -1,14 +1,18 @@
-#' Given two feature embedding matrices, compute "parallel" cosine similarities
+#' Given two feature-embedding-matrices, compute "parallel" cosine similarities
 #' between overlapping features.
 #'
-#' @param x a feature embedding matrix (`fem`)
-#' @param y a feature embedding matrix (`fem`)
+#' Efficient way of comparing two corpora along many features simultaneously.
+#'
+#' @param x a (`fem-class`) feature embedding matrix.
+#' @param y a (`fem-class`) feature embedding matrix.
 #' @param features (character) vector of features for which to compute
-#' similarity scores. If not defined then all features will be used.
+#' similarity scores. If not defined then all overlapping features will be used.
 #'
 #' @return a `data.frame` with following columns:
-#'  \item{`feature`}{(character) vector of features that are being compared}
-#'  \item{`value`}{(numeric) cosine similarity between features in both `fem`s}
+#' \describe{
+#'  \item{`feature`}{(character) overlapping features}
+#'  \item{`value`}{(numeric) cosine similarity between overlapping features.}
+#'  }
 #'
 #' @export
 #' @rdname feature_sim

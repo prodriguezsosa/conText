@@ -20,36 +20,40 @@ get_seq_cos_sim(
 )
 }
 \arguments{
-\item{x}{a character vector - this is the set of documents (corpus) of interest}
+\item{x}{(character) vector - this is the set of documents (corpus) of interest}
 
 \item{seqvar}{ordered variable such as list of dates or ordered iseology scores}
 
-\item{target}{a character vector - target word}
+\item{target}{(character) vector - target word}
 
 \item{candidates}{(character) vector of features of interest}
 
-\item{pre_trained}{a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions}
+\item{pre_trained}{(numeric) a F x D matrix corresponding to pretrained embeddings.
+F = number of features and D = embedding dimensions.
+rownames(pre_trained) = set of features for which there is a pre-trained embedding.}
 
-\item{transform_matrix}{a D x D transformation matrix}
+\item{transform_matrix}{(numeric) a D x D 'a la carte' transformation matrix.
+D = dimensions of pretrained embeddings.}
 
-\item{window}{integer - defines the size of a context (words around the target)}
+\item{window}{(numeric) - defines the size of a context (words around the target).}
 
-\item{valuetype}{the type of pattern matching: "glob" for "glob"-style wildcard expressions;
-"regex" for regular expressions; or "fixed" for exact matching.}
+\item{valuetype}{the type of pattern matching: \code{"glob"} for "glob"-style
+wildcard expressions; \code{"regex"} for regular expressions; or \code{"fixed"} for
+exact matching. See \link[quanteda]{valuetype} for details.}
 
-\item{case_insensitive}{logical - if TRUE, ignore case when matching the target.
-See quanteda's documentation for the kwic function.}
+\item{case_insensitive}{logical; if \code{TRUE}, ignore case when matching a
+\code{pattern} or \link[quanteda]{dictionary} values}
 
-\item{hard_cut}{logical - if TRUE then the text must have window x 2 tokens,
-if FALSE it can have window x 2 or fewer (e.g. if a doc begins with a target word,
-then text will have window tokens rather than window x 2)}
+\item{hard_cut}{(logical) - if TRUE then a context must have \code{window} x 2 tokens,
+if FALSE it can have \code{window} x 2 or fewer (e.g. if a doc begins with a target word,
+then context will have \code{window} tokens rather than \code{window} x 2)}
 
-\item{verbose}{logical - if TRUE, report the total number of target instances found, and
-report the observations that had no overlap the provided pre-trained embeddings}
+\item{verbose}{(logical) - if TRUE, report the total number of target instances found.}
 }
 \value{
 a data.frame with one column for
-each candidate term and one column for seqvar
+each candidate term with corresponding cosine similarity values
+and one column for seqvar.
 }
 \description{
 Calculate cosine similarities between target word and candidates words over

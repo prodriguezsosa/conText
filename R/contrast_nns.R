@@ -1,23 +1,28 @@
 #' Contrast nearest neighbors
 #'
-#' @param x (quanteda) tokens object
-#' @param groups a variable with two unique values (can be numeric, factor, character)
-#' @inheritParams dem
-#' @param bootstrap logical - if TRUE, bootstrap cosine similarity ratio - required to get standard errors around cosine similarity ratios
-#' @param num_bootstraps numeric - number of bootstraps to use
-#' @param permute logical - if TRUE, compute empirical p-values using permutation test
-#' @param num_permutations numeric - number of permutations to use
-#' @param candidates character vector defining the candidates for nearest neighbors
-#' @param N numeric (default is NULL). If defined,then nearest neighbors are subset to the union of the N neighbors of each group
+#' Computes the ratio of cosine similarities between group embeddings and features
+#' --that is, for any given feature it first computes the similarity between that feature
+#' and each group embedding, and then takes the ratio of these two similarities.
+#' This ratio captures how "discriminant" a feature is of a given group.
 #'
-#' @return a `data.frame` with following columns:
-#'  \item{`feature`}{(character) vector of features from the candidate set,
-#'  one instance for each target.}
-#'  \item{`value`}{(numeric) ratio of cosine similarities
-#'  (mean of boostraps if boostrap = TRUE).}
-#'  \item{`std.error`}{(numeric) sd/srt(num_bootstrap) of bootstrapped ratio
-#'  of cosine similarities if bootstrap = TRUE, if FALSE, column is dropped.}
-#'  \item{`p.value`}{(numeric) empirical p-value.}
+#' @param x (quanteda) `tokens-class` object
+#' @param groups (numeric, factor, character) a binary variable of the same length as `x`
+#' @inheritParams dem
+#' @param bootstrap (logical) if TRUE, use bootstrapping -- sample from texts with replacement and
+#' re-estimate cosine ratios for each sample. Required to get std. errors.
+#' @param num_bootstraps (numeric) - number of bootstraps to use
+#' @param permute (logical) - if TRUE, compute empirical p-values using a permutation test
+#' @param num_permutations (numeric) - number of permutations to use
+#' @param candidates (character) vector of candidate features for nearest neighbors
+#' @param N (numeric) - nearest neighbors are subset to the union of the N neighbors of each group (if NULL, ratio is computed for all features)
+#'
+#' @return a data.frame with following columns:
+#' \describe{
+#'  \item{`feature`}{(character) vector of feature terms corresponding to the nearest neighbors.}
+#'  \item{`value`}{(numeric) ratio of cosine similarities. Average over bootstrapped samples if bootstrap = TRUE.}
+#'  \item{`std.error`}{(numeric) std. error of the ratio of cosine similarties. Column is dropped if bootsrap = FALSE.}
+#'  \item{`p.value`}{(numeric) empirical p-value. Column is dropped if permute = FALSE.}
+#'  }
 #'
 #' @export
 #' @rdname contrast_nns

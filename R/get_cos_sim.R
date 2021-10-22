@@ -1,27 +1,33 @@
-#' Given a corpus and a set of features, calculate cosine similarities over
-#' a grouping variable.
+#' Given a tokenized corpus, compute the cosine similarities
+#' of the resulting ALC embeddings and a defined set of features.
 #'
-#' @param x a (quanteda) tokens object
-#' @param groups a grouping variable
+#' This is a wrapper function for `cos_sim()` that allows users to go from a
+#' tokenized corpus to results with the option to bootstrap cosine similarities
+#' and get the corresponding std. errors.
+#'
+#' @param x a (quanteda) `tokens-class` object
+#' @param groups (numeric, factor, character) a binary variable of the same length as `x`
 #' @param features (character) features of interest
 #' @inheritParams dem
 #' @inheritParams cos_sim
 #' @inheritParams dem_group
-#' @param bootstrap (logical) if TRUE, bootstrap nns - sample from corpus with replacement;
-#' if groups defined, sampling is automatically stratified; top nns are those with
-#' the highest average over all bootstrap samples.
-#' @param num_bootstraps (integer) number of bootstraps to use
+#' @param bootstrap (logical) if TRUE, use bootstrapping -- sample from texts with replacement and
+#' re-estimate cosine similarities for each sample. Required to get std. errors.
+#' If `groups` defined, sampling is automatically stratified.
+#' @param num_bootstraps (integer) number of bootstraps to use.
 #'
 #' @return a `data.frame` or list of data.frames (one for each target)
 #' with the following columns:
-#'  \item{`target`}{ (character) vector with the rownames of the dfm,
-#'  either defining the groups or the target terms}.
-#'  \item{`feature`}{(character) vector of feature terms, one
-#'  instance for each target.}
-#'  \item{`value`}{(numeric) cosine similarity between target
-#'  and feature.}
-#'  \item{`std.error`}{(numeric) sd of bootstrapped cosine similarities
-#'  if bootstrap = TRUE, if FALSE, column is dropped.}
+#' \describe{
+#'  \item{`target`}{ (character) rownames of `x`,
+#'  the labels of the ALC embeddings.}
+#'  \item{`feature`}{(character) feature terms defined in
+#'  the `features` argument.}
+#'  \item{`value`}{(numeric) cosine similarity between `x`
+#'  and feature. Average over bootstrapped samples if bootstrap = TRUE.}
+#'  \item{`std.error`}{(numeric) std. error of the similarity value.
+#'  Column is dropped if bootstrap = FALSE.}
+#'  }
 #'
 #' @export
 #' @rdname get_cos_sim

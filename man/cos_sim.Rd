@@ -2,34 +2,36 @@
 % Please edit documentation in R/cos_sim.R
 \name{cos_sim}
 \alias{cos_sim}
-\title{Given a set of embeddings and a set of features, calculate cosine similarities.}
+\title{Compute the cosine similarity between one or more ALC embeddings and a set of features.}
 \usage{
 cos_sim(x, pre_trained, features = NULL, as_list = TRUE)
 }
 \arguments{
-\item{x}{a \linkS4class{dem} or \linkS4class{fem} object}
+\item{x}{a (quanteda) \code{dem-class} or \code{fem-class} object.}
 
-\item{pre_trained}{a F x D matrix of numeric values corresponding to pretrained embeddings
+\item{pre_trained}{(numeric) a F x D matrix corresponding to pretrained embeddings.
 F = number of features and D = embedding dimensions.
-rownames(pre_trained) = set of features for which there is a pre-trained embedding}
+rownames(pre_trained) = set of features for which there is a pre-trained embedding.}
 
-\item{features}{(character) features of interest}
+\item{features}{(character) features of interest.}
 
 \item{as_list}{(logical) if FALSE all results are combined into a single data.frame
 If TRUE, a list of data.frames is returned with one data.frame per feature.}
 }
 \value{
-a \code{data.frame} or list of data.frames (one for each feature)
+a \code{data.frame} or list of data.frames (one for each target)
 with the following columns:
-\item{\code{target}}{ (character) vector with the rownames of the dfm,
-either defining the groups or the target terms}.
-\item{\code{feature}}{(character) vector of feature terms, one
-instance for each target.}
-\item{\code{value}}{(numeric) cosine similarity between target
+\describe{
+\item{\code{target}}{ (character) rownames of \code{x},
+the labels of the ALC embeddings.}
+\item{\code{feature}}{(character) feature terms defined in
+the \code{features} argument.}
+\item{\code{value}}{(numeric) cosine similarity between \code{x}
 and feature.}
 }
+}
 \description{
-Given a set of embeddings and a set of features, calculate cosine similarities.
+Compute the cosine similarity between one or more ALC embeddings and a set of features.
 }
 \examples{
 

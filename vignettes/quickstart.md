@@ -78,7 +78,7 @@ feats <- dfm(toks_nostop, tolower = T, verbose = TRUE) %>% dfm_trim(min_termfreq
 toks <- tokens_select(toks_nostop, feats, padding = TRUE)
 ```
 
-# The building blocks of `a la carte` embeddings
+# The building blocks of ‘a la carte’ embeddings
 
 Suppose we are interested in the semantics surrounding the word
 “immigration” in the U.S. Congress during the Obama years (sessions
@@ -95,7 +95,7 @@ for quanteda::kwic(). Notice, both the input, `x`, and the output are a
 quanteda `tokens` objects. Each document in `immig_toks` –tokens of a
 context around an instance of *immigration*– inherits the document
 variables (`docvars`) of the document from whence it came, along with a
-column registering it’s the pattern used. This information can be
+column registering the corresponding pattern. This information can be
 retrieved using
 `docvars()`.
 
@@ -585,9 +585,9 @@ model1 <- conText(formula = immigration ~ party + gender, data = toks, pre_train
     verbose = FALSE)
 ```
 
-    ##   Coefficient Normed_Estimate  Std.Error Empirical_Pvalue
-    ## 1     party_R       0.8301277 0.08035593                0
-    ## 2    gender_M       0.4295767 0.05099670                0
+    ##   coefficient normed.estimate  std.error p.value
+    ## 1     party_R       0.8301277 0.08035593       0
+    ## 2    gender_M       0.4295767 0.05099670       0
 
 ``` r
 # notice, non-binary covariates are automatically 'dummified'
@@ -658,9 +658,9 @@ To access the normed coefficients for plotting:
 model1@normed_cofficients
 ```
 
-    ##   Coefficient Normed_Estimate  Std.Error Empirical_Pvalue
-    ## 1     party_R       0.8301277 0.08035593                0
-    ## 2    gender_M       0.4295767 0.05099670                0
+    ##   coefficient normed.estimate  std.error p.value
+    ## 1     party_R       0.8301277 0.08035593       0
+    ## 2    gender_M       0.4295767 0.05099670       0
 
 # Local GloVe and transformation matrix
 
@@ -690,19 +690,19 @@ toks_fcm <- fcm(toks, context = "window", window = 6, count = "frequency", tri =
 
 # estimate glove model using text2vec
 glove <- GlobalVectors$new(rank = 300, x_max = 10, learning_rate = 0.05)
-wv_main <- glove$fit_transform(toks_fcm, n_iter = 10, convergence_tol = 0.001, n_threads = parallel::detectCores())
+wv_main <- glove$fit_transform(toks_fcm, n_iter = 10, convergence_tol = 0.001, n_threads = 2)  # set to 'parallel::detectCores()' to use all available cores
 ```
 
-    ## INFO  [09:00:48.580] epoch 1, loss 0.2253 
-    ## INFO  [09:00:50.116] epoch 2, loss 0.0767 
-    ## INFO  [09:00:51.608] epoch 3, loss 0.0501 
-    ## INFO  [09:00:53.127] epoch 4, loss 0.0380 
-    ## INFO  [09:00:54.595] epoch 5, loss 0.0309 
-    ## INFO  [09:00:56.083] epoch 6, loss 0.0262 
-    ## INFO  [09:00:57.571] epoch 7, loss 0.0229 
-    ## INFO  [09:00:59.039] epoch 8, loss 0.0204 
-    ## INFO  [09:01:00.508] epoch 9, loss 0.0184 
-    ## INFO  [09:01:01.978] epoch 10, loss 0.0169
+    ## INFO  [09:14:56.885] epoch 1, loss 0.2253 
+    ## INFO  [09:14:58.463] epoch 2, loss 0.0767 
+    ## INFO  [09:14:59.975] epoch 3, loss 0.0501 
+    ## INFO  [09:15:01.484] epoch 4, loss 0.0380 
+    ## INFO  [09:15:02.990] epoch 5, loss 0.0309 
+    ## INFO  [09:15:04.519] epoch 6, loss 0.0262 
+    ## INFO  [09:15:06.021] epoch 7, loss 0.0229 
+    ## INFO  [09:15:07.521] epoch 8, loss 0.0204 
+    ## INFO  [09:15:09.066] epoch 9, loss 0.0184 
+    ## INFO  [09:15:10.609] epoch 10, loss 0.0169
 
 ``` r
 wv_context <- glove$components
@@ -868,5 +868,5 @@ model2 <- conText(formula = . ~ party, data = short_toks, pre_trained = cr_glove
     verbose = FALSE)
 ```
 
-    ##   Coefficient Normed_Estimate  Std.Error Empirical_Pvalue
-    ## 1     party_R       0.6864511 0.06096584             0.02
+    ##   coefficient normed.estimate  std.error p.value
+    ## 1     party_R       0.6864511 0.06096584    0.02

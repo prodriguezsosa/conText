@@ -2,9 +2,6 @@
 
 export(bootstrap_contrast)
 export(bootstrap_nns)
-export(build_conText)
-export(build_dem)
-export(build_fem)
 export(compute_contrast)
 export(compute_transform)
 export(conText)

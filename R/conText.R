@@ -1,19 +1,39 @@
 #' Embedding regression
 #'
-#' Estimate an embedding regression model
+#' Estimates an embedding regression model with options to use bootstrapping to estimate confidence
+#' intervals and a permutation test for inference (see https://github.com/prodriguezsosa/conText for details.)
 #'
-#' @param formula a symbolic description of the model to be fitted
-#' to use a phrase as a DV, wrap in quotations e.g. "immigrant refugees" ~ party + gender
-#' @param data a quanteda `tokens` object
+#' @param formula a symbolic description of the model to be fitted with a target word as a DV e.g.
+#' `immigrant ~ party + gender`. To use a phrase as a DV, place it quotations e.g.
+#' `"immigrant refugees" ~ party + gender`. To use all covariates included in the data,
+#' you can use `.` on RHS, e.g.`immigrant ~ .`. If you wish to treat the full document as you DV, rather
+#' than a single target word, use `.` on the LHS e.g. `. ~ party + gender`.
+#' @param data a quanteda `tokens-class` object with the necessary document variables. Covariates must be
+#' either binary indicator variables or "trasnformable" into binary indicator variables. conText will automatically
+#' transform any non-indicator variables into binary indicator variables (multiple if more than 2 classes),
+#' leaving out a "base" category.
 #' @inheritParams dem
-#' @param bootstrap (logical) if TRUE, bootstrap regression - required to get standard errors for normed coefficients
+#' @param bootstrap (logical) if TRUE, use bootstrapping -- sample from texts with replacement and
+#' re-run regression on each sample. Required to get std. errors.
 #' @param num_bootstraps (numeric) number of bootstraps to use
 #' @param stratify (logical) if TRUE, stratify by covariates when bootstrapping
 #' @param permute (logical) if TRUE, compute empirical p-values using permutation test
 #' @param num_permutations (numeric) number of permutations to use
 #' @inheritParams tokens_context
 #'
-#' @return a `conText-class` object
+#' @return a `conText-class` object - a D x M matrix with D = dimensions
+#' of the pre-trained feature embeddings provided and M = number of covariates
+#' including the intercept. These represent the estimated regression coefficients.
+#' These can be combined to compute ALC embeddings for different combinations of covariates.
+#' The object also includes various informative attributes, importantly
+#' a `data.frame` with the following columns:
+#' \describe{
+#'  \item{`coefficient`}{(character) name of (covariate) coefficient.}
+#'  \item{`value`}{(numeric) norm of the corresponding beta coefficient.}
+#'  \item{`std.error`}{(numeric) (if bootstrap = TRUE) std. error of the norm of the beta coefficient.}
+#'  \item{`p.value`}{(numeric) (if permute = TRUE) empirical p.value of the norm of the coefficient.}
+#'  }
+#'
 #' @export
 #' @rdname conText
 #' @keywords conText
@@ -118,7 +138,7 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
 
   # outputs
   beta_coefficients <- full_sample_out$betas
-  norm_tibble <- dplyr::tibble(Coefficient = names(full_sample_out$normed_betas), Normed_Estimate = unname(full_sample_out$normed_betas))
+  norm_tibble <- dplyr::tibble(coefficient = names(full_sample_out$normed_betas), normed.estimate = unname(full_sample_out$normed_betas))
 
   # -------------------
   # bootstrapping
@@ -139,7 +159,7 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
     normed_betas <- lapply(bootstrap_out, '[[', 'normed_betas') %>% do.call(rbind,.)
     mean_normed_betas <- apply(normed_betas, 2, mean)
     stderror_normed_betas <- apply(normed_betas, 2, sd)
-    bs_normed_betas <- dplyr::tibble(Coefficient = names(mean_normed_betas), Normed_Estimate = unname(mean_normed_betas), Std.Error = unname(stderror_normed_betas))
+    bs_normed_betas <- dplyr::tibble(coefficient = names(mean_normed_betas), normed.estimate = unname(mean_normed_betas), std.error = unname(stderror_normed_betas))
 
     # output
     beta_coefficients <- bs_betas
@@ -167,7 +187,7 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
     empirical_pvalue <- apply(empirical_pvalue, 2, function(x) sum(x>1)/length(x))
 
     # bind with results
-    norm_tibble <- cbind(norm_tibble, Empirical_Pvalue = unname(empirical_pvalue))
+    norm_tibble <- cbind(norm_tibble, p.value = unname(empirical_pvalue))
 
     if(verbose) cat('done with permutations \n')
 

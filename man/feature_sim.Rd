@@ -2,27 +2,28 @@
 % Please edit documentation in R/feature_sim.R
 \name{feature_sim}
 \alias{feature_sim}
-\title{Given two feature embedding matrices, compute "parallel" cosine similarities
+\title{Given two feature-embedding-matrices, compute "parallel" cosine similarities
 between overlapping features.}
 \usage{
 feature_sim(x, y, features = character(0))
 }
 \arguments{
-\item{x}{a feature embedding matrix (\code{fem})}
+\item{x}{a (\code{fem-class}) feature embedding matrix.}
 
-\item{y}{a feature embedding matrix (\code{fem})}
+\item{y}{a (\code{fem-class}) feature embedding matrix.}
 
 \item{features}{(character) vector of features for which to compute
-similarity scores. If not defined then all features will be used.}
+similarity scores. If not defined then all overlapping features will be used.}
 }
 \value{
 a \code{data.frame} with following columns:
-\item{\code{feature}}{(character) vector of features that are being compared}
-\item{\code{value}}{(numeric) cosine similarity between features in both \code{fem}s}
+\describe{
+\item{\code{feature}}{(character) overlapping features}
+\item{\code{value}}{(numeric) cosine similarity between overlapping features.}
+}
 }
 \description{
-Given two feature embedding matrices, compute "parallel" cosine similarities
-between overlapping features.
+Efficient way of comparing two corpora along many features simultaneously.
 }
 \examples{
 

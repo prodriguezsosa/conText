@@ -2,7 +2,7 @@
 % Please edit documentation in R/prototypical_context.R
 \name{prototypical_context}
 \alias{prototypical_context}
-\title{Find prototypical contexts (most similar on average to the full set of contexts)}
+\title{Find most "prototypical" contexts.}
 \usage{
 prototypical_context(
   context,
@@ -14,23 +14,35 @@ prototypical_context(
 )
 }
 \arguments{
-\item{context}{vector of texts - `context`` variable in get_context output}
+\item{context}{(character) vector of texts - \code{context} variable in get_context output}
 
-\item{pre_trained}{a V x D matrix of numeric values - pretrained embeddings with V = size of vocabulary and D = embedding dimensions}
+\item{pre_trained}{(numeric) a F x D matrix corresponding to pretrained embeddings.
+F = number of features and D = embedding dimensions.
+rownames(pre_trained) = set of features for which there is a pre-trained embedding.}
 
-\item{transform}{logical - if TRUE (default) apply the a la carte transformation, if FALSE ouput untransformed averaged embedding}
+\item{transform}{(logical) - if TRUE (default) apply the a la carte transformation, if FALSE ouput untransformed averaged embedding.}
 
-\item{transform_matrix}{a D x D transformation matrix}
+\item{transform_matrix}{(numeric) a D x D 'a la carte' transformation matrix.
+D = dimensions of pretrained embeddings.}
 
-\item{N}{number of contexts to return}
+\item{N}{(numeric) number of most "prototypical" contexts to return.}
 
-\item{norm}{character = c("l2", "none") - set to 'l2' for cosine similarity and to 'none' for inner product (see ?sim2 in text2vec)}
+\item{norm}{(character) - how to compute similarity (see ?text2vec::sim2):
+\describe{
+\item{\code{"l2"}}{cosine similarity}
+\item{\code{"none"}}{inner product}
+}}
 }
 \value{
-character vector of contexts ordered by average similarity to all contexts
+a \code{data.frame} with the following columns:
+\describe{
+\item{\code{doc_id}}{ (integer) document id.}
+\item{\code{typicality_score}}{(numeric) average similarity score to all other contexts}
+\item{\code{context}}{(character) contexts}
+}
 }
 \description{
-Find prototypical contexts (most similar on average to the full set of contexts)
+Contexts most similar on average to the full set of contexts.
 }
 \examples{
 

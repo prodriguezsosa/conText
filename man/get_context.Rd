@@ -2,7 +2,8 @@
 % Please edit documentation in R/get_context.R
 \name{get_context}
 \alias{get_context}
-\title{Get contexts sorrounding a user defined target}
+\title{Get context words (words within a symmetric window around the target word/phrase)
+sorrounding a user defined target.}
 \usage{
 get_context(
   x,
@@ -16,44 +17,44 @@ get_context(
 )
 }
 \arguments{
-\item{x}{a character vector - this is the set of documents (corpus) of interest}
+\item{x}{(character) vector - this is the set of documents (corpus) of interest.}
 
-\item{target}{a character vector - these are the target words whose contexts we want to evaluate
+\item{target}{(character) vector - these are the target words whose contexts we want to evaluate
 This vector may include a single token, a phrase or multiple tokens and/or phrases.}
 
-\item{window}{integer - defines the size of a context (words around the target)}
+\item{window}{(numeric) - defines the size of a context (words around the target).}
 
-\item{valuetype}{the type of pattern matching: "glob" for "glob"-style wildcard expressions;
-"regex" for regular expressions; or "fixed" for exact matching.
-See quanteda's documentation for the kwic function.}
+\item{valuetype}{the type of pattern matching: \code{"glob"} for "glob"-style
+wildcard expressions; \code{"regex"} for regular expressions; or \code{"fixed"} for
+exact matching. See \link[quanteda]{valuetype} for details.}
 
-\item{case_insensitive}{logical - if TRUE, ignore case when matching the target.
-See quanteda's documentation for the kwic function.}
+\item{case_insensitive}{logical; if \code{TRUE}, ignore case when matching a
+\code{pattern} or \link[quanteda]{dictionary} values}
 
-\item{hard_cut}{logical - if TRUE then the text must have window x 2 tokens,
-if FALSE it can have window x 2 or fewer (e.g. if a doc begins with a target word,
-then text will have window tokens rather than window x 2)}
+\item{hard_cut}{(logical) - if TRUE then a context must have \code{window} x 2 tokens,
+if FALSE it can have \code{window} x 2 or fewer (e.g. if a doc begins with a target word,
+then context will have \code{window} tokens rather than \code{window} x 2)}
 
-\item{what}{character; which quanteda tokenizer to use. You will rarely want to change this.
-For chinese text you may want to set what = 'fastestword'.}
+\item{what}{(character) defines which quanteda tokenizer to use. You will rarely want to change this.
+For chinese text you may want to set \code{what = 'fastestword'}.}
 
-\item{verbose}{logical - if TRUE, report the total number of target instances found.}
+\item{verbose}{(logical) - if TRUE, report the total number of target instances found.}
 }
 \value{
-a \code{conText} classed data.frame with three columns: document name (\code{docname}),
-target (\code{target}) and contexts (\code{context}).
+a \code{data.frame} with the following columns:
+\describe{
+\item{\code{docname}}{ (character) document name to which instances belong to.}
+\item{\code{target}}{(character) targets.}
+\item{\code{context}}{(numeric) pre/post variables in \code{kwic()} output concatenated.}
+}
 }
 \description{
-For a vector of texts, return a dataframe with the contexts within which a user defined target word appears.
-The underlying machinary is quanteda's kwic function.
-}
-\details{
-Required packages: quanteda, dplyr, tidyr
+A wrapper function for quanteda's \code{kwic()} function that subsets documents to where
+target is present before tokenizing to speed up processing, and concatenates
+kwic's pre/post variables into a \code{context} column.
 }
 \note{
-\code{context} in a \code{conText} classed data.frame excludes the target word,
-it is the result of concatenating \code{pre} and \code{post} in the \code{kwic} function.
-\code{target} in the return data.frame is equivalent to \code{kwic}'s keyword,
+\code{target} in the return data.frame is equivalent to \code{kwic()}'s \code{keyword} output variable,
 so it may not match the user-defined target exactly if \code{valuetype} is not fixed.
 }
 \examples{
@@ -62,3 +63,4 @@ context_immigration <- get_context(x = cr_sample_corpus, target = 'immigration',
                                    window = 6, valuetype = "fixed", case_insensitive = FALSE,
                                    hard_cut = FALSE, verbose = FALSE)
 }
+\keyword{get_context}

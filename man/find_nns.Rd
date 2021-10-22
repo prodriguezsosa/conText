@@ -7,18 +7,24 @@
 find_nns(target_embedding, pre_trained, N = 5, candidates = NULL, norm = "l2")
 }
 \arguments{
-\item{target_embedding}{matrix of numeric values}
+\item{target_embedding}{(numeric) 1 x D matrix. D = dimensions of pretrained embeddings.}
 
-\item{pre_trained}{matrix of numeric values - pretrained embeddings}
+\item{pre_trained}{(numeric) a F x D matrix corresponding to pretrained embeddings.
+F = number of features and D = embedding dimensions.
+rownames(pre_trained) = set of features for which there is a pre-trained embedding.}
 
-\item{N}{number of nearest neighbors to return}
+\item{N}{(numeric) number of nearest neighbors to return.}
 
-\item{candidates}{character vector defining vocabulary to subset conmparison to}
+\item{candidates}{(character) vector of candidate features for nearest neighbors}
 
-\item{norm}{character = c("l2", "none") - how to scale input matrices. If they are already scaled - use "none" (see ?sim2)}
+\item{norm}{(character) - how to compute similarity (see ?text2vec::sim2):
+\describe{
+\item{\code{"l2"}}{cosine similarity}
+\item{\code{"none"}}{inner product}
+}}
 }
 \value{
-a character vector of nearest neighbors to target
+(character) vector of nearest neighbors to target
 }
 \description{
 Return nearest neighbors based on cosine similarity
@@ -28,3 +34,4 @@ find_nns(target_embedding = cr_glove_subset['immigration',],
          pre_trained = cr_glove_subset, N = 5,
          candidates = NULL, norm = "l2")
 }
+\keyword{find_nns}

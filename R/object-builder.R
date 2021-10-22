@@ -8,7 +8,6 @@
 #' subset to embeddable documents
 #' @param features features used in computing the embeddings
 #' @param Dimnames row (documents) and columns (NULL) names
-#' @export
 build_dem <- function(Class = 'em',
                      x_dem,
                      docvars = data.frame(),
@@ -30,7 +29,6 @@ build_dem <- function(Class = 'em',
 #' @param features features used in computing the embeddings
 #' @param counts counts of features used in computing embeddings
 #' @param Dimnames row (features) and columns (NULL) names
-#' @export
 build_fem <- function(Class = 'fem',
                       x_fem,
                       features = character(),
@@ -54,7 +52,6 @@ build_fem <- function(Class = 'fem',
 #' other statistics
 #' @param features features used in computing the embeddings
 #' @param Dimnames row (features) and columns (NULL) names
-#' @export
 build_conText <- function(Class = 'conText',
                       x_conText,
                       normed_cofficients = data.frame(),

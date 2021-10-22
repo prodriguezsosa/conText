@@ -2,22 +2,26 @@
 % Please edit documentation in R/plot_nns_ratio.R
 \name{plot_nns_ratio}
 \alias{plot_nns_ratio}
-\title{Plot output of get_nns_ratio}
+\title{Plot output of \code{get_nns_ratio()}}
 \usage{
 plot_nns_ratio(x, alpha = 0.01, horizontal = TRUE)
 }
 \arguments{
 \item{x}{output of get_nns_ratio}
 
-\item{alpha}{(numerical) betwee 0 and 1;significance threshold to identify significant values}
+\item{alpha}{(numerical) betwee 0 and 1. Significance threshold to identify significant values.
+These are denoted by a \code{*} on the plot.}
 
-\item{horizontal}{(logical) defines the type of plot}
+\item{horizontal}{(logical) defines the type of plot. if TRUE results are plotted on 1 dimension.
+If FALSE, results are plotted on 2 dimensions, with the second dimension catpuring the ranking
+of cosine ratio similarties.}
 }
 \value{
-a ggplot
+a \code{ggplot-class} object.
 }
 \description{
-Plot output of get_nns_ratio
+A way of visualizing the top nearest neighbors of a pair of ALC embeddings that captures
+how "discriminant" each feature is of each embedding (group).
 }
 \examples{
 

@@ -1,26 +1,27 @@
 #' Given a set of embeddings and a set of candidate neighbors, find the top N nearest
 #' neighbors.
 #'
-#' @param x a [dem-class] or [fem-class] object
+#' @param x a (quanteda) `dem-class` or `fem-class` object.
 #' @param N (numeric) number of nearest neighbors to return
 #' @param candidates (character) vector of features to consider as candidates to be nearest neighbor
 #' You may for example want to only consider features that meet a certian count threshold
 #' or exclude stop words etc. To do so you can simply identify the set of features you
 #' want to consider and supply these as a character vector in the `candidates` argument.
-#' @param pre_trained a F x D matrix of numeric values corresponding to pretrained embeddings
+#' @param pre_trained (numeric) a F x D matrix corresponding to pretrained embeddings.
 #' F = number of features and D = embedding dimensions.
-#' rownames(pre_trained) = set of features for which there is a pre-trained embedding
+#' rownames(pre_trained) = set of features for which there is a pre-trained embedding.
 #' @param as_list (logical) if FALSE all results are combined into a single data.frame
 #' If TRUE, a list of data.frames is returned with one data.frame per target.
 #'
 #' @return a `data.frame` or list of data.frames (one for each target)
 #' with the following columns:
-#'  \item{`target`}{ (character) vector with the rownames of the dfm,
-#'  either defining the groups or the target terms}.
-#'  \item{`feature`}{(character) vector of features from the candidate set,
-#'  one instance for each target.}
-#'  \item{`value`}{(numeric) cosine similarity between target
-#'  and candidate.}
+#' \describe{
+#'  \item{`target`}{ (character) rownames of `x`,
+#'  the labels of the ALC embeddings.}
+#'  \item{`feature`}{(character) features identified as nearest neighbors.}
+#'  \item{`rank`}{(character) rank of feature in terms of similarity with `x`.}
+#'  \item{`value`}{(numeric) cosine similarity between `x` and feature.}
+#'  }
 #'
 #' @export
 #' @rdname nns

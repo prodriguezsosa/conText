@@ -1,10 +1,26 @@
-#' compute transformation matrix A
+#' Compute transformation matrix A
 #'
-#' @param x a `fcm`
-#' @param pre_trained a `dgTMatrix-class` matrix of word vectors
-#' @param weighting 1 = no weighting; log = weight by the log of the frequency count; a numeric = threshold based weighting (= 1 if token count meets threshold, 0 ow); use log for small corpora, numeric threshold for larger corpora
+#' Computes a transformation matrix, given a feature-co-occurrence
+#' matrix and corresponding pre-trained embeddings.
 #'
-#' @return a `dgTMatrix-class` D x D (D = word vector dimensions)
+#' @param x a (quanteda) `fcm-class` object.
+#' @param pre_trained (numeric) a F x D matrix corresponding to pretrained embeddings,
+#' usually trained on the same corpus as that used for `x`.
+#' F = number of features and D = embedding dimensions.
+#' rownames(pre_trained) = set of features for which there is a pre-trained embedding
+#' @param weighting (character or numeric) weighting options:
+#' \describe{
+#'   \item{`1`}{no weighting.}
+#'   \item{`"log"`}{weight by the log of the frequency count.}
+#'   \item{`numeric`}{threshold based weighting (= 1 if token count meets threshold, 0 ow).}
+#'   }
+#' Recommended: use `log` for small corpora, a numeric threshold for larger corpora.
+#'
+#' @return a `dgTMatrix-class` D x D non-symmetrical matrix
+#' (D = dimensions of pre-trained embedding space) corresponding
+#' to an 'a la carte' transformation matrix. This matrix is optimized
+#' for the corpus and pre-trained embeddings employed.
+#'
 #' @export
 #' @rdname compute_transform
 #' @keywords compute_transform

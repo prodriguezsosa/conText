@@ -19,32 +19,32 @@ get_nns(
 )
 }
 \arguments{
-\item{x}{a (quanteda) tokens object}
+\item{x}{a (quanteda) \code{tokens-class} object}
 
 \item{N}{(numeric) number of nearest neighbors to return}
 
-\item{groups}{grouping variable equal in length to the number of documents}
+\item{groups}{(numeric, factor, character) a binary variable of the same length as \code{x}}
 
 \item{candidates}{(character) vector of features to consider as candidates to be nearest neighbor
 You may for example want to only consider features that meet a certian count threshold
 or exclude stop words etc. To do so you can simply identify the set of features you
 want to consider and supply these as a character vector in the \code{candidates} argument.}
 
-\item{pre_trained}{a F x D matrix of numeric values corresponding to pretrained embeddings
+\item{pre_trained}{(numeric) a F x D matrix corresponding to pretrained embeddings.
 F = number of features and D = embedding dimensions.
-rownames(pre_trained) = set of features for which there is a pre-trained embedding}
+rownames(pre_trained) = set of features for which there is a pre-trained embedding.}
 
-\item{transform}{(logical) if TRUE (default) apply the \verb{a la carte} transformation,
-if FALSE ouput untransformed averaged embedding}
+\item{transform}{(logical) if TRUE (default) apply the 'a la carte' transformation,
+if FALSE ouput untransformed averaged embeddings.}
 
-\item{transform_matrix}{a D x D matrix of numeric values corresponding
-to the `a la carte`` transformation matrix}
+\item{transform_matrix}{(numeric) a D x D 'a la carte' transformation matrix.
+D = dimensions of pretrained embeddings.}
 
-\item{bootstrap}{(logical) if TRUE, bootstrap nns - sample from corpus with replacement;
-if groups defined, sampling is automatically stratified; top nns are those with
-the highest average over all bootstrap samples.}
+\item{bootstrap}{(logical) if TRUE, use bootstrapping -- sample from texts with replacement and
+re-estimate cosine similarities for each sample. Required to get std. errors.
+If \code{groups} defined, sampling is automatically stratified.}
 
-\item{num_bootstraps}{(integer) number of bootstraps to use}
+\item{num_bootstraps}{(integer) number of bootstraps to use.}
 
 \item{as_list}{(logical) if FALSE all results are combined into a single data.frame
 If TRUE, a list of data.frames is returned with one data.frame per target.}
@@ -52,18 +52,21 @@ If TRUE, a list of data.frames is returned with one data.frame per target.}
 \value{
 a \code{data.frame} or list of data.frames (one for each target)
 with the following columns:
-\item{\code{target}}{ (character) vector with the rownames of the dfm,
-either defining the groups or the target terms}.
-\item{\code{feature}}{(character) vector of features from the candidate set,
-one instance for each target.}
-\item{\code{value}}{(numeric) cosine similarity between target
-and candidate (mean of boostraps if boostrap = TRUE).}
-\item{\code{std.error}}{(numeric) sd of bootstrapped cosine similarities
-if bootstrap = TRUE, if FALSE, column is dropped.}
+\describe{
+\item{\code{target}}{ (character) rownames of \code{x},
+the labels of the ALC embeddings.}
+\item{\code{feature}}{(character) features identified as nearest neighbors.}
+\item{\code{rank}}{(character) rank of feature in terms of similarity with \code{x}.}
+\item{\code{value}}{(numeric) cosine similarity between \code{x}
+and feature. Average over bootstrapped samples if bootstrap = TRUE.}
+\item{\code{std.error}}{(numeric) std. error of the similarity value.
+Column is dropped if bootstrap = FALSE.}
+}
 }
 \description{
-Given a corpus and a set of candidate neighbors, find the top N nearest
-neighbors.
+This is a wrapper function for \code{nns()} that allows users to go from a
+tokenized corpus to results with the option to bootstrap cosine similarities
+and get the corresponding std. errors.
 }
 \examples{
 

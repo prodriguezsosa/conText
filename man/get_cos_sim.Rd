@@ -2,8 +2,8 @@
 % Please edit documentation in R/get_cos_sim.R
 \name{get_cos_sim}
 \alias{get_cos_sim}
-\title{Given a corpus and a set of features, calculate cosine similarities over
-a grouping variable.}
+\title{Given a tokenized corpus, compute the cosine similarities
+of the resulting ALC embeddings and a defined set of features.}
 \usage{
 get_cos_sim(
   x,
@@ -19,49 +19,52 @@ get_cos_sim(
 )
 }
 \arguments{
-\item{x}{a (quanteda) tokens object}
+\item{x}{a (quanteda) \code{tokens-class} object}
 
-\item{groups}{a grouping variable}
+\item{groups}{(numeric, factor, character) a binary variable of the same length as \code{x}}
 
 \item{features}{(character) features of interest}
 
-\item{pre_trained}{a F x D matrix of numeric values corresponding to pretrained embeddings
+\item{pre_trained}{(numeric) a F x D matrix corresponding to pretrained embeddings.
 F = number of features and D = embedding dimensions.
-rownames(pre_trained) = set of features for which there is a pre-trained embedding}
+rownames(pre_trained) = set of features for which there is a pre-trained embedding.}
 
-\item{transform}{(logical) if TRUE (default) apply the \verb{a la carte} transformation,
-if FALSE ouput untransformed averaged embedding}
+\item{transform}{(logical) if TRUE (default) apply the 'a la carte' transformation,
+if FALSE ouput untransformed averaged embeddings.}
 
-\item{transform_matrix}{a D x D matrix of numeric values corresponding
-to the `a la carte`` transformation matrix}
+\item{transform_matrix}{(numeric) a D x D 'a la carte' transformation matrix.
+D = dimensions of pretrained embeddings.}
 
-\item{bootstrap}{(logical) if TRUE, bootstrap nns - sample from corpus with replacement;
-if groups defined, sampling is automatically stratified; top nns are those with
-the highest average over all bootstrap samples.}
+\item{bootstrap}{(logical) if TRUE, use bootstrapping -- sample from texts with replacement and
+re-estimate cosine similarities for each sample. Required to get std. errors.
+If \code{groups} defined, sampling is automatically stratified.}
 
-\item{num_bootstraps}{(integer) number of bootstraps to use}
+\item{num_bootstraps}{(integer) number of bootstraps to use.}
 
 \item{as_list}{(logical) if FALSE all results are combined into a single data.frame
 If TRUE, a list of data.frames is returned with one data.frame per feature.}
 
-\item{verbose}{logical - report the documents/features that had
-no overlap with the provided pre-trained embeddings}
+\item{verbose}{(logical) - if TRUE, report the documents that had
+no overlapping features with the pretrained embeddings provided.}
 }
 \value{
 a \code{data.frame} or list of data.frames (one for each target)
 with the following columns:
-\item{\code{target}}{ (character) vector with the rownames of the dfm,
-either defining the groups or the target terms}.
-\item{\code{feature}}{(character) vector of feature terms, one
-instance for each target.}
-\item{\code{value}}{(numeric) cosine similarity between target
-and feature.}
-\item{\code{std.error}}{(numeric) sd of bootstrapped cosine similarities
-if bootstrap = TRUE, if FALSE, column is dropped.}
+\describe{
+\item{\code{target}}{ (character) rownames of \code{x},
+the labels of the ALC embeddings.}
+\item{\code{feature}}{(character) feature terms defined in
+the \code{features} argument.}
+\item{\code{value}}{(numeric) cosine similarity between \code{x}
+and feature. Average over bootstrapped samples if bootstrap = TRUE.}
+\item{\code{std.error}}{(numeric) std. error of the similarity value.
+Column is dropped if bootstrap = FALSE.}
+}
 }
 \description{
-Given a corpus and a set of features, calculate cosine similarities over
-a grouping variable.
+This is a wrapper function for \code{cos_sim()} that allows users to go from a
+tokenized corpus to results with the option to bootstrap cosine similarities
+and get the corresponding std. errors.
 }
 \examples{
 

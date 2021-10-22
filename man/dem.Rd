@@ -2,33 +2,37 @@
 % Please edit documentation in R/dem.R
 \name{dem}
 \alias{dem}
-\title{Create an document-embedding matrix}
+\title{Build a document-embedding matrix}
 \usage{
 dem(x, pre_trained, transform = TRUE, transform_matrix, verbose = TRUE)
 }
 \arguments{
-\item{x}{a \code{dfm-class} object}
+\item{x}{a quanteda (\code{dfm-class}) document-feature-matrix}
 
-\item{pre_trained}{a F x D matrix of numeric values corresponding to pretrained embeddings
+\item{pre_trained}{(numeric) a F x D matrix corresponding to pretrained embeddings.
 F = number of features and D = embedding dimensions.
-rownames(pre_trained) = set of features for which there is a pre-trained embedding}
+rownames(pre_trained) = set of features for which there is a pre-trained embedding.}
 
-\item{transform}{(logical) if TRUE (default) apply the \verb{a la carte} transformation,
-if FALSE ouput untransformed averaged embedding}
+\item{transform}{(logical) if TRUE (default) apply the 'a la carte' transformation,
+if FALSE ouput untransformed averaged embeddings.}
 
-\item{transform_matrix}{a D x D matrix of numeric values corresponding
-to the `a la carte`` transformation matrix}
+\item{transform_matrix}{(numeric) a D x D 'a la carte' transformation matrix.
+D = dimensions of pretrained embeddings.}
 
-\item{verbose}{logical - report the documents/features that had
-no overlap with the provided pre-trained embeddings}
+\item{verbose}{(logical) - if TRUE, report the documents that had
+no overlapping features with the pretrained embeddings provided.}
 }
 \value{
-a \code{dem-class} object
+a N x D (\code{dem-class}) document-embedding-matrix corresponding to the ALC embeddings for each document.
+N = number of documents (that could be embedded), D = dimensions of pretrained embeddings. This object
+inherits the document variables in \code{x}, the dfm used. These can be accessed calling the attribute: \verb{@docvars}.
+Note, documents with no overlapping features with the pretrained embeddings provided are automatically
+dropped. For a list of the documents that were embedded call the attribute: \verb{@Dimnames$docs}.
 }
 \description{
-Given a document-feature matrix for each document,
+Given a document-feature-matrix, for each document,
 multiply its feature counts (columns) with their
-corresponding pre-trained word embeddings and average
+corresponding pretrained word embeddings and average
 (usually referred to as averaged or additive document embeddings).
 If specified and a transformation matrix is provided,
 multiply the document embeddings by the transformation matrix
