@@ -70,6 +70,9 @@ and feature. Average over bootstrapped samples if bootstrap = TRUE.}
 Column is dropped if bootstrap = FALSE.}
 \item{\code{p.value}}{(numeric) empirical p-value of bootstrapped ratio
 of cosine similarities if permute = TRUE, if FALSE, column is dropped.}
+\item{\code{group}}{(character) group in \code{groups} for which feature belongs
+to the top N nearest neighbors. If "shared", the feature appeared as
+top nearest neighbor for both groups.}
 }
 }
 \description{
@@ -102,9 +105,9 @@ immig_nns_ratio <- get_nns_ratio(x = immig_toks,
                                  transform = TRUE,
                                  transform_matrix = cr_transform,
                                  bootstrap = TRUE,
-                                 num_bootstraps = 10,
+                                 num_bootstraps = 5,
                                  permute = TRUE,
-                                 num_permutations = 10,
+                                 num_permutations = 5,
                                  verbose = FALSE)
 
 head(immig_nns_ratio)
