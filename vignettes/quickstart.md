@@ -14,8 +14,13 @@ Guide](https://quanteda.io/articles/quickstart.html)).
 
 ## Installing the package
 
-Since **conText** is not *yet* available on CRAN you will need to
-install it directly from GitHub.
+You can install the package directly from CRAN:
+
+``` r
+install.packages("conText")
+```
+
+Or, for the latest development version, from GitHub:
 
 ``` r
 devtools::install_github("prodriguezsosa/conText")
@@ -693,16 +698,16 @@ glove <- GlobalVectors$new(rank = 300, x_max = 10, learning_rate = 0.05)
 wv_main <- glove$fit_transform(toks_fcm, n_iter = 10, convergence_tol = 0.001, n_threads = 2)  # set to 'parallel::detectCores()' to use all available cores
 ```
 
-    ## INFO  [09:14:56.885] epoch 1, loss 0.2253 
-    ## INFO  [09:14:58.463] epoch 2, loss 0.0767 
-    ## INFO  [09:14:59.975] epoch 3, loss 0.0501 
-    ## INFO  [09:15:01.484] epoch 4, loss 0.0380 
-    ## INFO  [09:15:02.990] epoch 5, loss 0.0309 
-    ## INFO  [09:15:04.519] epoch 6, loss 0.0262 
-    ## INFO  [09:15:06.021] epoch 7, loss 0.0229 
-    ## INFO  [09:15:07.521] epoch 8, loss 0.0204 
-    ## INFO  [09:15:09.066] epoch 9, loss 0.0184 
-    ## INFO  [09:15:10.609] epoch 10, loss 0.0169
+    ## INFO  [09:59:58.160] epoch 1, loss 0.2253 
+    ## INFO  [09:59:59.724] epoch 2, loss 0.0767 
+    ## INFO  [10:00:01.236] epoch 3, loss 0.0501 
+    ## INFO  [10:00:02.744] epoch 4, loss 0.0380 
+    ## INFO  [10:00:04.255] epoch 5, loss 0.0309 
+    ## INFO  [10:00:05.788] epoch 6, loss 0.0262 
+    ## INFO  [10:00:07.288] epoch 7, loss 0.0229 
+    ## INFO  [10:00:08.783] epoch 8, loss 0.0204 
+    ## INFO  [10:00:10.287] epoch 9, loss 0.0184 
+    ## INFO  [10:00:11.789] epoch 10, loss 0.0169
 
 ``` r
 wv_context <- glove$components

@@ -6,7 +6,7 @@
 
 # How to Install
 
-`devtools::install_github("prodriguezsosa/conText")`
+`install.packages("conText")`
 
 # Datasets
 
