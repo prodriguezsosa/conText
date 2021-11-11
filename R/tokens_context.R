@@ -33,10 +33,6 @@ tokens_context <- function(x, pattern, window = 6L, valuetype = c("glob", "regex
   # class check
   if(class(x)[1] != "tokens") stop("data must be of class tokens")
 
-  # extract elements of tokens object
-  x_docvars <- quanteda::docvars(x)
-  x_docnames <- quanteda::docnames(x)
-
   # get kwic for each element in pattern
   kwic_x <- quanteda::kwic(x, pattern = quanteda::phrase(pattern), window = window, valuetype = valuetype, case_insensitive = case_insensitive) %>% data.frame()
 
@@ -54,7 +50,8 @@ tokens_context <- function(x, pattern, window = 6L, valuetype = c("glob", "regex
 
   # tokenize contexts
   result <- quanteda::tokens(kwic_x$context, what =  attr(x, "meta")$object$what) # use same tokenizer as x
-  quanteda::docvars(result) <- kwic_x[,setdiff(colnames(kwic_x), c('docname', 'context'))]
+  if(ncol(docvars(result)) == 0) quanteda::docvars(result) <- data.frame(pattern = kwic_x[,setdiff(colnames(kwic_x), c('docname', 'context'))])
+  else quanteda::docvars(result) <- kwic_x[,setdiff(colnames(kwic_x), c('docname', 'context'))]
 
   # if verbose print how many instances of each pattern word were found
   if(verbose){
