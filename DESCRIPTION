@@ -30,7 +30,7 @@ Encoding: UTF-8
 LazyData: true
 VignetteBuilder: knitr
 Language: en-US
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Roxygen: list(markdown = TRUE)
 Suggests: 
     knitr,
