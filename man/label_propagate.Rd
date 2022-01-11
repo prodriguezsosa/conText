@@ -19,7 +19,7 @@ F = number of features and D = embedding dimensions.}
 \item{norm}{character = c("l2", "none") - how to scale input matrices. If they are already scaled - use "none" (see ?sim2)}
 }
 \value{
-
+a character vector comprising selected words
 }
 \description{
 Generate and select additional semantically related words from topical seed word(s)
