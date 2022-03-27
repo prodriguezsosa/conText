@@ -633,7 +633,7 @@ argument.
 plot_nns_ratio(x = immig_nns_ratio, alpha = 0.01, horizontal = TRUE)
 ```
 
-![](/private/var/folders/81/yb6y5pld4sq8yfdj9v0lwfj80000gn/T/Rtmph5Hx7I/preview-289429efd53.dir/quickstart_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](/private/var/folders/81/yb6y5pld4sq8yfdj9v0lwfj80000gn/T/RtmpasMP48/preview-11e2f7b71d.dir/quickstart_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
 ### Nearest contexts
 
@@ -883,16 +883,16 @@ wv_main <- glove$fit_transform(toks_fcm, n_iter = 10,
                                n_threads = 2) # set to 'parallel::detectCores()' to use all available cores
 ```
 
-    ## INFO  [17:34:12.177] epoch 1, loss 0.2267 
-    ## INFO  [17:34:13.949] epoch 2, loss 0.0768 
-    ## INFO  [17:34:15.720] epoch 3, loss 0.0498 
-    ## INFO  [17:34:17.435] epoch 4, loss 0.0375 
-    ## INFO  [17:34:19.154] epoch 5, loss 0.0303 
-    ## INFO  [17:34:20.930] epoch 6, loss 0.0256 
-    ## INFO  [17:34:22.719] epoch 7, loss 0.0223 
-    ## INFO  [17:34:24.505] epoch 8, loss 0.0198 
-    ## INFO  [17:34:26.266] epoch 9, loss 0.0178 
-    ## INFO  [17:34:28.044] epoch 10, loss 0.0162
+    ## INFO  [17:45:37.272] epoch 1, loss 0.2267 
+    ## INFO  [17:45:39.045] epoch 2, loss 0.0768 
+    ## INFO  [17:45:40.946] epoch 3, loss 0.0498 
+    ## INFO  [17:45:42.742] epoch 4, loss 0.0375 
+    ## INFO  [17:45:44.576] epoch 5, loss 0.0303 
+    ## INFO  [17:45:46.374] epoch 6, loss 0.0256 
+    ## INFO  [17:45:48.153] epoch 7, loss 0.0223 
+    ## INFO  [17:45:50.002] epoch 8, loss 0.0198 
+    ## INFO  [17:45:51.735] epoch 9, loss 0.0178 
+    ## INFO  [17:45:53.428] epoch 10, loss 0.0162
 
 ``` r
 wv_context <- glove$components
