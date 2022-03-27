@@ -11,6 +11,7 @@ nns_ratio(
   numerator = NULL,
   candidates = character(0),
   pre_trained,
+  stem = FALSE,
   verbose = TRUE
 )
 }
@@ -31,6 +32,11 @@ want to consider and supply these as a character vector in the \code{candidates}
 \item{pre_trained}{(numeric) a F x D matrix corresponding to pretrained embeddings.
 F = number of features and D = embedding dimensions.
 rownames(pre_trained) = set of features for which there is a pre-trained embedding.}
+
+\item{stem}{(logical) - whether to stem candidates when evaluating nns. Default is FALSE.
+If TRUE, candidate stems are ranked by their average cosine similarity to the target.
+We recommend you remove misspelled words from candidate set \code{candidates} as these can
+significantly influence the average.}
 
 \item{verbose}{report which group is the numerator and which group is the denominator.}
 }
@@ -75,5 +81,10 @@ immig_wv_party <- dem_group(immig_dem, groups = immig_dem@docvars$party)
 nns_ratio(x = immig_wv_party, N = 10, numerator = "R",
 candidates = immig_wv_party@features,
 pre_trained = cr_glove_subset, verbose = FALSE)
+
+# with stemming
+nns_ratio(x = immig_wv_party, N = 10, numerator = "R",
+candidates = immig_wv_party@features,
+pre_trained = cr_glove_subset, stem = TRUE, verbose = FALSE)
 }
 \keyword{nns_ratio}

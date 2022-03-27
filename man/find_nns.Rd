@@ -4,7 +4,14 @@
 \alias{find_nns}
 \title{Return nearest neighbors based on cosine similarity}
 \usage{
-find_nns(target_embedding, pre_trained, N = 5, candidates = NULL, norm = "l2")
+find_nns(
+  target_embedding,
+  pre_trained,
+  N = 5,
+  candidates = NULL,
+  norm = "l2",
+  stem = FALSE
+)
 }
 \arguments{
 \item{target_embedding}{(numeric) 1 x D matrix. D = dimensions of pretrained embeddings.}
@@ -22,6 +29,11 @@ rownames(pre_trained) = set of features for which there is a pre-trained embeddi
 \item{\code{"l2"}}{cosine similarity}
 \item{\code{"none"}}{inner product}
 }}
+
+\item{stem}{(logical) - whether to stem candidates when evaluating nns. Default is FALSE.
+If TRUE, candidate stems are ranked by their average cosine similarity to the target.
+We recommend you remove misspelled words from candidate set \code{candidates} as these can
+significantly influence the average.}
 }
 \value{
 (character) vector of nearest neighbors to target
@@ -32,6 +44,6 @@ Return nearest neighbors based on cosine similarity
 \examples{
 find_nns(target_embedding = cr_glove_subset['immigration',],
          pre_trained = cr_glove_subset, N = 5,
-         candidates = NULL, norm = "l2")
+         candidates = NULL, norm = "l2", stem = FALSE)
 }
 \keyword{find_nns}

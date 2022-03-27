@@ -11,8 +11,8 @@ conText(
   transform = TRUE,
   transform_matrix,
   bootstrap = TRUE,
-  num_bootstraps = 20,
-  stratify = TRUE,
+  num_bootstraps = 100,
+  stratify = FALSE,
   permute = TRUE,
   num_permutations = 100,
   window = 6L,
@@ -24,10 +24,12 @@ conText(
 }
 \arguments{
 \item{formula}{a symbolic description of the model to be fitted with a target word as a DV e.g.
-\code{immigrant ~ party + gender}. To use a phrase as a DV, place it quotations e.g.
+\code{immigrant ~ party + gender}. To use a phrase as a DV, place it in quotations e.g.
 \code{"immigrant refugees" ~ party + gender}. To use all covariates included in the data,
 you can use \code{.} on RHS, e.g.\code{immigrant ~ .}. If you wish to treat the full document as you DV, rather
-than a single target word, use \code{.} on the LHS e.g. \code{. ~ party + gender}.}
+than a single target word, use \code{.} on the LHS e.g. \code{. ~ party + gender}. If you wish to use all covariates
+on the RHS use \code{immigrant ~ .}. Any \code{character} or \code{factor} covariates will automatically be converted
+to a set of binary (\code{0/1}s) indicator variables for each group, leaving the first level out of the regression.}
 
 \item{data}{a quanteda \code{tokens-class} object with the necessary document variables. Covariates must be
 either binary indicator variables or "trasnformable" into binary indicator variables. conText will automatically
@@ -47,9 +49,9 @@ D = dimensions of pretrained embeddings.}
 \item{bootstrap}{(logical) if TRUE, use bootstrapping -- sample from texts with replacement and
 re-run regression on each sample. Required to get std. errors.}
 
-\item{num_bootstraps}{(numeric) number of bootstraps to use}
+\item{num_bootstraps}{(numeric) number of bootstraps to use.}
 
-\item{stratify}{(logical) if TRUE, stratify by covariates when bootstrapping}
+\item{stratify}{(logical) if TRUE, stratify by discrete covariates when bootstrapping.}
 
 \item{permute}{(logical) if TRUE, compute empirical p-values using permutation test}
 
@@ -96,9 +98,6 @@ library(quanteda)
 # tokenize corpus
 toks <- tokens(cr_sample_corpus)
 
-# build a tokenized corpus of contexts sorrounding a target term
-immig_toks <- tokens_context(x = toks, pattern = "immigr*", window = 6L)
-
 ## given the target word "immigration"
 set.seed(2021L)
 model1 <- conText(formula = immigration ~ party + gender,
@@ -106,12 +105,12 @@ model1 <- conText(formula = immigration ~ party + gender,
                  pre_trained = cr_glove_subset,
                  transform = TRUE, transform_matrix = cr_transform,
                  bootstrap = TRUE, num_bootstraps = 10,
-                 stratify = TRUE,
+                 stratify = FALSE,
                  permute = TRUE, num_permutations = 100,
                  window = 6, case_insensitive = TRUE,
                  verbose = FALSE)
 
-# notice, non-binary covariates are automatically "dummified"
+# notice, character/factor covariates are automatically "dummified"
 rownames(model1)
 
 # the beta coefficient 'partyR' in this case corresponds to the alc embedding

@@ -11,6 +11,7 @@ tokens_context(
   valuetype = c("glob", "regex", "fixed"),
   case_insensitive = TRUE,
   hard_cut = FALSE,
+  rm_keyword = TRUE,
   verbose = TRUE
 )
 }
@@ -32,6 +33,8 @@ exact matching. See \link[quanteda]{valuetype} for details.}
 \item{hard_cut}{(logical) - if TRUE then a context must have \code{window} x 2 tokens,
 if FALSE it can have \code{window} x 2 or fewer (e.g. if a doc begins with a target word,
 then context will have \code{window} tokens rather than \code{window} x 2)}
+
+\item{rm_keyword}{(logical) if FALSE, keyword matching pattern is included in the tokenized contexts}
 
 \item{verbose}{(logical) if TRUE, report the total number of instances per pattern found}
 }

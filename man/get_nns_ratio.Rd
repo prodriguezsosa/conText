@@ -18,6 +18,7 @@ get_nns_ratio(
   num_bootstraps = 10,
   permute = TRUE,
   num_permutations = 100,
+  stem = FALSE,
   verbose = TRUE
 )
 }
@@ -56,6 +57,11 @@ If \code{groups} defined, sampling is automatically stratified.}
 \item{permute}{(logical) if TRUE, compute empirical p-values using permutation test}
 
 \item{num_permutations}{(numeric) number of permutations to use.}
+
+\item{stem}{(logical) - whether to stem candidates when evaluating nns. Default is FALSE.
+If TRUE, candidate stems are ranked by their average cosine similarity to the target.
+We recommend you remove misspelled words from candidate set \code{candidates} as these can
+significantly influence the average.}
 
 \item{verbose}{provide information on which group is the numerator}
 }

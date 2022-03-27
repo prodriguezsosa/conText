@@ -9,7 +9,7 @@ A quanteda corpus with 200 documents and 3 docvars:
 \describe{
 \item{party}{party of speaker, (D)emocrat or (R)epublican}
 \item{gender}{gender of speaker, (F)emale or (M)ale}
-\item{session_id}{id of Congress session in which speech was given}
+\item{nominate_dim1}{dimension 1 of the nominate score}
 ...
 }
 }
@@ -26,5 +26,6 @@ The raw corpus is first subset to speeches
 containing the regular expression "immig*". Then 100 docs from each party-gender pair
 is randomly sampled. For full data and pre-processing file, see:
 https://www.dropbox.com/sh/jsyrag7opfo7l7i/AAB1z7tumLuKihGu2-FDmhmKa?dl=0
+For nominate scores see: https://voteview.com/data
 }
 \keyword{datasets}

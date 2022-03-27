@@ -1,4 +1,4 @@
-#' Given a corpus and a set of candidate neighbors, find the top N nearest
+#' Given a tokenized corpus and a set of candidate neighbors, find the top N nearest
 #' neighbors.
 #'
 #' This is a wrapper function for `nns()` that allows users to go from a
@@ -7,10 +7,9 @@
 #'
 #' @param x a (quanteda) `tokens-class` object
 #' @inheritParams nns
-#' @param groups (numeric, factor, character) a binary variable of the same length as `x`
 #' @inheritParams dem
 #' @inheritParams dem_group
-#' @param bootstrap (logical) if TRUE, use bootstrapping -- sample from texts with replacement and
+#' @param bootstrap (logical) if TRUE, use bootstrapping -- sample from `x` with replacement and
 #' re-estimate cosine similarities for each sample. Required to get std. errors.
 #' If `groups` defined, sampling is automatically stratified.
 #' @param num_bootstraps (integer) number of bootstraps to use.
@@ -19,7 +18,7 @@
 #' with the following columns:
 #' \describe{
 #'  \item{`target`}{ (character) rownames of `x`,
-#'  the labels of the ALC embeddings.}
+#'  the labels of the ALC embeddings. `NA` if `is.null(rownames(x))`.}
 #'  \item{`feature`}{(character) features identified as nearest neighbors.}
 #'  \item{`rank`}{(character) rank of feature in terms of similarity with `x`.}
 #'  \item{`value`}{(numeric) cosine similarity between `x`
@@ -54,6 +53,7 @@
 #'                            transform_matrix = cr_transform,
 #'                            bootstrap = TRUE,
 #'                            num_bootstraps = 10,
+#'                            stem = TRUE,
 #'                            as_list = TRUE)
 #'
 #' # nearest neighbors of "immigration" for Republican party
@@ -67,6 +67,7 @@ get_nns <- function(x,
                     transform_matrix,
                     bootstrap = TRUE,
                     num_bootstraps = 10,
+                    stem = FALSE,
                     as_list = TRUE) {
 
   # initial checks
@@ -87,6 +88,7 @@ get_nns <- function(x,
                            pre_trained = pre_trained,
                            transform = transform,
                            transform_matrix = transform_matrix,
+                           stem = stem,
                            as_list = FALSE),
               simplify = FALSE)
     result <- do.call(rbind, nnsdf_bs) %>%
@@ -115,7 +117,7 @@ get_nns <- function(x,
   }
 
   # find nearest neighbors
-  result <- nns(x = wvs, N = N, candidates = candidates, pre_trained = pre_trained, as_list = FALSE)
+  result <- nns(x = wvs, N = N, candidates = candidates, pre_trained = pre_trained, stem = stem, as_list = FALSE)
   }
 
   # if !as_list return a list object with an item for each target data.frame
@@ -132,6 +134,7 @@ nns_boostrap <- function(x,
                          pre_trained,
                          transform = TRUE,
                          transform_matrix,
+                         stem = FALSE,
                          as_list = FALSE){
 
   # sample tokens with replacement
@@ -155,7 +158,7 @@ nns_boostrap <- function(x,
     }
 
   # find nearest neighbors
-  result <- nns(x = wvs, N = Inf, candidates = candidates, pre_trained = pre_trained, as_list = FALSE)
+  result <- nns(x = wvs, N = Inf, candidates = candidates, pre_trained = pre_trained, stem = stem, as_list = as_list)
 
   return(result)
 

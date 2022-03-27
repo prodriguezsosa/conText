@@ -4,10 +4,12 @@
 #' intervals and a permutation test for inference (see https://github.com/prodriguezsosa/conText for details.)
 #'
 #' @param formula a symbolic description of the model to be fitted with a target word as a DV e.g.
-#' `immigrant ~ party + gender`. To use a phrase as a DV, place it quotations e.g.
+#' `immigrant ~ party + gender`. To use a phrase as a DV, place it in quotations e.g.
 #' `"immigrant refugees" ~ party + gender`. To use all covariates included in the data,
 #' you can use `.` on RHS, e.g.`immigrant ~ .`. If you wish to treat the full document as you DV, rather
-#' than a single target word, use `.` on the LHS e.g. `. ~ party + gender`.
+#' than a single target word, use `.` on the LHS e.g. `. ~ party + gender`. If you wish to use all covariates
+#' on the RHS use `immigrant ~ .`. Any `character` or `factor` covariates will automatically be converted
+#' to a set of binary (`0/1`s) indicator variables for each group, leaving the first level out of the regression.
 #' @param data a quanteda `tokens-class` object with the necessary document variables. Covariates must be
 #' either binary indicator variables or "trasnformable" into binary indicator variables. conText will automatically
 #' transform any non-indicator variables into binary indicator variables (multiple if more than 2 classes),
@@ -15,8 +17,8 @@
 #' @inheritParams dem
 #' @param bootstrap (logical) if TRUE, use bootstrapping -- sample from texts with replacement and
 #' re-run regression on each sample. Required to get std. errors.
-#' @param num_bootstraps (numeric) number of bootstraps to use
-#' @param stratify (logical) if TRUE, stratify by covariates when bootstrapping
+#' @param num_bootstraps (numeric) number of bootstraps to use.
+#' @param stratify (logical) if TRUE, stratify by discrete covariates when bootstrapping.
 #' @param permute (logical) if TRUE, compute empirical p-values using permutation test
 #' @param num_permutations (numeric) number of permutations to use
 #' @inheritParams tokens_context
@@ -44,9 +46,6 @@
 #' # tokenize corpus
 #' toks <- tokens(cr_sample_corpus)
 #'
-#' # build a tokenized corpus of contexts sorrounding a target term
-#' immig_toks <- tokens_context(x = toks, pattern = "immigr*", window = 6L)
-#'
 #' ## given the target word "immigration"
 #' set.seed(2021L)
 #' model1 <- conText(formula = immigration ~ party + gender,
@@ -54,12 +53,12 @@
 #'                  pre_trained = cr_glove_subset,
 #'                  transform = TRUE, transform_matrix = cr_transform,
 #'                  bootstrap = TRUE, num_bootstraps = 10,
-#'                  stratify = TRUE,
+#'                  stratify = FALSE,
 #'                  permute = TRUE, num_permutations = 100,
 #'                  window = 6, case_insensitive = TRUE,
 #'                  verbose = FALSE)
 #'
-#' # notice, non-binary covariates are automatically "dummified"
+#' # notice, character/factor covariates are automatically "dummified"
 #' rownames(model1)
 #'
 #' # the beta coefficient 'partyR' in this case corresponds to the alc embedding
@@ -68,23 +67,27 @@
 #' # (normed) coefficient table
 #' model1@normed_cofficients
 #'
-conText <- function(formula, data, pre_trained, transform = TRUE, transform_matrix, bootstrap = TRUE, num_bootstraps = 20, stratify = TRUE, permute = TRUE, num_permutations = 100, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
+conText <- function(formula, data, pre_trained, transform = TRUE, transform_matrix, bootstrap = TRUE, num_bootstraps = 100, stratify = FALSE, permute = TRUE, num_permutations = 100, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
 
   # initial checks
-  if(class(data)[1] != "tokens") stop("data must be of class tokens")
-  if(!transform & !is.null(transform_matrix)) warning("Warning: transform = FALSE means transform_matrix argument was ignored. If that was not your intention, use transform = TRUE.")
+  if(class(data)[1] != "tokens") stop("data must be of class tokens", call. = FALSE)
+  if(!transform && !is.null(transform_matrix)) warning('Warning: transform = FALSE means transform_matrix argument was ignored. If that was not your intention, use transform = TRUE.', call. = FALSE)
+  if(any(grepl("factor\\(|\\)", formula))) stop('It seems you are using factor() in "formula" to create a factor a variable. \n Please create it directly in "data" and re-run conText.', call. = FALSE) # pre-empt users using lm type notation
 
   # extract dependent variable
   target <- as.character(formula[[2]])
+  if(length(target) > 1) target <- target[2:length(target)]
 
   # mirror lm convention: if DV is "." then full text is embedded, ow find and embed the context around DV
   if(target != "."){
 
     # create a corpus of contexts
     toks <- tokens_context(x = data, pattern = target, window = window, valuetype = valuetype, case_insensitive = case_insensitive, hard_cut = hard_cut, verbose = verbose)
+    docvars <- quanteda::docvars(toks) %>% dplyr::select(-pattern)
 
   }else{
     toks <- data
+    docvars <- quanteda::docvars(toks)
   }
 
   #----------------------
@@ -92,28 +95,23 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
   #----------------------
 
   # extract covariates names
-  docvars <- quanteda::docvars(toks)
   if(formula[[3]] == "."){covariates <- names(docvars)}else{ # follows lm convention, if DV = ., regress on all variables in data
     covariates <- setdiff(stringr::str_squish(unlist(strsplit(as.character(formula[[3]]), '+', fixed = TRUE))), '') # to allow for phrase DVs
-    if(any(!(covariates %in% names(docvars))))stop("one or more of the covariates could not be found in the data.")
+    covs_not_in_data <- covariates[!(covariates %in% names(docvars))]
+    if(length(covs_not_in_data) > 0) stop("the following covariates could not be found in the data: ", paste0(covs_not_in_data, collapse = ", "))
   }
 
   # select covariates
   cov_vars <- docvars %>% dplyr::select(dplyr::all_of(covariates))
 
-  # check covariates are binary dummy variables
-  indicator_check <- apply(cov_vars, 2, function(i) all((class(i) %in% c('integer', 'numeric')) & (length(setdiff(i, c(0,1))) == 0)))
+  # check which covariates are binary dummy variables
+  numeric_vars <- c(names(which(sapply(cov_vars, is.numeric))), names(which(sapply(cov_vars, is.integer))))
+  non_numeric_vars <- setdiff(covariates, numeric_vars)
 
-  # if there are non-indicator variables
-  if(!all(indicator_check)){
-    non_indicator_vars <- names(which(indicator_check == FALSE))
-
-    # check whether they can be "dummified" (i.e. must be character or factor variables)
-    class_check <- sapply(dplyr::tibble(cov_vars[,non_indicator_vars]), function(i) is.character(i) | is.factor(i))
-
-    # if they can be "dummified", do so (see: https://cran.r-project.org/web/packages/fastDummies/fastDummies.pdf)
-    if(!all(class_check))stop("covariates must be either a binary indicator variable (0/1s), a character variable or a factor variable")
-    cov_vars <- fastDummies::dummy_cols(cov_vars, select_columns = non_indicator_vars, remove_first_dummy = TRUE, remove_selected_columns = TRUE, ignore_na = TRUE)
+  # dummify non-numeric/integer variables
+  # see: https://cran.r-project.org/web/packages/fastDummies/fastDummies.pdf
+  if(length(non_numeric_vars)>0){
+    cov_vars <- fastDummies::dummy_cols(cov_vars, select_columns = non_numeric_vars, remove_first_dummy = TRUE, remove_selected_columns = TRUE, ignore_na = TRUE)
   }
 
   # add intercept
@@ -256,9 +254,25 @@ bootstrap_ols <- function(Y = NULL, X = NULL, stratify = NULL){
   X_bs <- cbind(obs = 1:nrow(X), X)
 
   # sample observations with replacement
-  if(stratify) X_bs <- X_bs %>% dplyr::group_by_at(setdiff(names(X), "(Intercept)")) %>% dplyr::sample_n(size = dplyr::n(), replace = TRUE) %>% dplyr::ungroup() else{
+  if (stratify) {
+
+    # identify discrete covariates to stratify over
+    discrete_vars <- setdiff(colnames(X_bs)[sapply(X_bs, is.numeric)], c("obs", "(Intercept)"))
+
+    # sample with stratification if there are discrete variables to stratify over
+    if(length(discrete_vars) > 0) X_bs <- X_bs %>% dplyr::group_by_at(discrete_vars) %>% dplyr::sample_n(size = dplyr::n(), replace = TRUE) %>% dplyr::ungroup()
+    else{
+      warning('no discrete covariate to stratify over. Will proceed without stratifying.', call. = FALSE)
+      X_bs <- dplyr::sample_n(X_bs, size = nrow(X_bs), replace = TRUE)
+    }
+
+  } else{
+
     X_bs <- dplyr::sample_n(X_bs, size = nrow(X_bs), replace = TRUE)
+
   }
+
+  #X_bs <- dplyr::sample_n(X_bs, size = nrow(X_bs), replace = TRUE)
 
   # subset Y to sampled observations
   Y_bs <- Y[X_bs$obs,]
@@ -299,4 +313,3 @@ run_ols <- function(Y = NULL, X = NULL){
   return(list('betas' = betas, 'normed_betas' = normed_betas))
 
 }
-

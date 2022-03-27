@@ -84,7 +84,7 @@ dem <- function(x, pre_trained, transform = TRUE, transform_matrix, verbose = TR
                      docvars = quanteda::docvars(x)[included,,drop=FALSE],
                      features = overlapping_features,
                      Dimnames = list(
-                       docs = rownames(x)[included],
+                       docs = as.character(quanteda::docid(x)[included]),
                        columns = NULL))
 
 

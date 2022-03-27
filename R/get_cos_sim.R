@@ -54,6 +54,7 @@
 #'            transform_matrix = cr_transform,
 #'             bootstrap = TRUE,
 #'             num_bootstraps = 10,
+#'             stem = TRUE,
 #'             as_list = FALSE)
 get_cos_sim <- function(x,
                         groups = NULL,
@@ -63,11 +64,11 @@ get_cos_sim <- function(x,
                         transform_matrix,
                         bootstrap = TRUE,
                         num_bootstraps = 10,
-                        as_list = TRUE,
-                        verbose = TRUE) {
+                        stem = FALSE,
+                        as_list = TRUE) {
 
   # initial checks
-  if(class(x)[1] != "tokens") stop("data must be of class tokens")
+  if(class(x)[1] != "tokens") stop("data must be of class tokens", call. = FALSE)
 
   # add grouping variable to docvars
   if(!is.null(groups)) quanteda::docvars(x) <- NULL; quanteda::docvars(x, "group") <- groups
@@ -80,6 +81,7 @@ get_cos_sim <- function(x,
                                            pre_trained = pre_trained,
                                            transform = transform,
                                            transform_matrix = transform_matrix,
+                                           stem = stem,
                                            as_list = FALSE),
                           simplify = FALSE)
     result <- do.call(rbind, cossimdf_bs) %>%
@@ -105,7 +107,7 @@ get_cos_sim <- function(x,
     }
 
     # compute cosine similarity
-    result <- cos_sim(x = wvs, pre_trained = pre_trained, features = features)
+    result <- cos_sim(x = wvs, pre_trained = pre_trained, features = features, stem = stem, as_list = FALSE)
   }
 
   # if !as_list return a list object with an item for each feature data.frame
@@ -121,6 +123,7 @@ cos_sim_boostrap <- function(x,
                              pre_trained,
                              transform = TRUE,
                              transform_matrix,
+                             stem = stem,
                              as_list = FALSE){
 
   # sample tokens with replacement
@@ -144,7 +147,7 @@ cos_sim_boostrap <- function(x,
   }
 
   # compute cosine similarity
-  result <- cos_sim(x = wvs, pre_trained = pre_trained, features = features, as_list = FALSE)
+  result <- cos_sim(x = wvs, pre_trained = pre_trained, features = features, stem = stem, as_list = FALSE)
 
   return(result)
 

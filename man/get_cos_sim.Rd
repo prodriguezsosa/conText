@@ -14,8 +14,8 @@ get_cos_sim(
   transform_matrix,
   bootstrap = TRUE,
   num_bootstraps = 10,
-  as_list = TRUE,
-  verbose = TRUE
+  stem = FALSE,
+  as_list = TRUE
 )
 }
 \arguments{
@@ -41,11 +41,13 @@ If \code{groups} defined, sampling is automatically stratified.}
 
 \item{num_bootstraps}{(integer) number of bootstraps to use.}
 
+\item{stem}{(logical) - If TRUE, both \code{features} and \code{rownames(pre_trained)}
+are stemmed and average cosine similarities are reported.
+We recommend you remove misspelled words from  \code{pre_trained} as these can
+significantly influence the average.}
+
 \item{as_list}{(logical) if FALSE all results are combined into a single data.frame
 If TRUE, a list of data.frames is returned with one data.frame per feature.}
-
-\item{verbose}{(logical) - if TRUE, report the documents that had
-no overlapping features with the pretrained embeddings provided.}
 }
 \value{
 a \code{data.frame} or list of data.frames (one for each target)
@@ -87,6 +89,7 @@ get_cos_sim(x = immig_toks,
            transform_matrix = cr_transform,
             bootstrap = TRUE,
             num_bootstraps = 10,
+            stem = TRUE,
             as_list = FALSE)
 }
 \keyword{get_cos_sim}

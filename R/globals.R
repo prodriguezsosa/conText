@@ -1,6 +1,7 @@
-utils::globalVariables(c("Estimate", ".", "context", "docname", "keyword",
+utils::globalVariables(c(".", "context", "docname", "keyword",
                          "num_tokens", "post", "pre", "pre_trained", "term_count",
                          "transform_matrix", "typicality_score", "term",
                          "value", "feature", "N", "target",
                          "absdev", "p.value", "significant", "valueJitter",
-                         "group", "featureID"))
+                         "group", "featureID", "pattern", "token",
+                         "contexts", "contexts_dem", "docid", "where"))

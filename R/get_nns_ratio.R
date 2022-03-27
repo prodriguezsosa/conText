@@ -18,6 +18,10 @@
 #' @param num_bootstraps (integer) number of bootstraps to use.
 #' @param permute (logical) if TRUE, compute empirical p-values using permutation test
 #' @param num_permutations (numeric) number of permutations to use.
+#' @param stem (logical) - whether to stem candidates when evaluating nns. Default is FALSE.
+#' If TRUE, candidate stems are ranked by their average cosine similarity to the target.
+#' We recommend you remove misspelled words from candidate set `candidates` as these can
+#' significantly influence the average.
 #' @param verbose provide information on which group is the numerator
 #'
 #' @return a `data.frame` with following columns:
@@ -80,6 +84,7 @@ get_nns_ratio <- function(x,
                           num_bootstraps = 10,
                           permute = TRUE,
                           num_permutations = 100,
+                          stem = FALSE,
                           verbose = TRUE){
 
   # initial checks
@@ -109,7 +114,7 @@ get_nns_ratio <- function(x,
   if(length(candidates) > 0) candidates <- intersect(candidates, rownames(pre_trained))
 
   # get top N nns (if N is Inf or NULL, use all features)
-  nnsdfs <- nns(x = wvs, N = Inf, candidates = candidates, pre_trained = pre_trained, as_list = TRUE)
+  nnsdfs <- nns(x = wvs, N = Inf, candidates = candidates, pre_trained = pre_trained, stem = stem, as_list = TRUE)
   nnsdf1 <- if(is.null(N)) nnsdfs[[numerator]]$feature else nnsdfs[[numerator]]$feature[1:N]
   nnsdf2 <- if(is.null(N)) nnsdfs[[denominator]]$feature else nnsdfs[[denominator]]$feature[1:N]
 
@@ -119,7 +124,7 @@ get_nns_ratio <- function(x,
   if(!bootstrap){
 
     # find nearest neighbors ratio
-    result <- nns_ratio(x = wvs, N = N, numerator = numerator, candidates = union_nns, pre_trained = pre_trained)
+    result <- nns_ratio(x = wvs, N = N, numerator = numerator, candidates = candidates, pre_trained = pre_trained, stem = stem) %>% dplyr::filter(feature %in% union_nns)
 
   }else{
 
@@ -129,10 +134,11 @@ get_nns_ratio <- function(x,
                                nns_ratio_boostrap(x = x,
                                        groups = groups,
                                        numerator = numerator,
-                                       candidates = union_nns,
+                                       candidates = candidates,
                                        pre_trained = pre_trained,
                                        transform = transform,
-                                       transform_matrix = transform_matrix),
+                                       transform_matrix = transform_matrix,
+                                       stem = stem),
                           simplify = FALSE)
     result <- do.call(rbind, nnsratiodf_bs) %>%
       dplyr::group_by(feature) %>%
@@ -141,6 +147,7 @@ get_nns_ratio <- function(x,
                 .groups = 'keep') %>%
       dplyr::ungroup() %>%
       dplyr::select('feature','value', 'std.error') %>%
+      dplyr::filter(feature %in% union_nns) %>%
       dplyr::arrange(-value)
 
     cat('done with bootstraps \n')
@@ -155,14 +162,16 @@ get_nns_ratio <- function(x,
     permute_out <- replicate(num_permutations, nns_ratio_permute(x,
                                                                  groups = groups,
                                                                  numerator = numerator,
-                                                                 candidates = union_nns,
+                                                                 candidates = candidates,
                                                                  pre_trained = pre_trained,
                                                                  transform = transform,
-                                                                 transform_matrix = transform_matrix),
+                                                                 transform_matrix = transform_matrix,
+                                                                 stem = stem),
                              simplify = FALSE)
 
     # compute deviations of the observed ratios from 1
     dev1 <- result %>% dplyr::mutate(value = abs(value - 1)) %>% as.data.frame()
+    permute_out <- lapply(permute_out, function(perm) perm %>% dplyr::filter(feature %in% union_nns))
     dev1_perm <- lapply(permute_out, function(perm) perm[order(match(perm[,1],dev1[,1])),'value'])
     dev1_perm <- do.call(rbind, dev1_perm)
     dev1_perm <- abs(dev1_perm - 1)
@@ -179,7 +188,7 @@ get_nns_ratio <- function(x,
 
   # add an attribute specifying which group is the numerator and communicated this to user
   attr(result, "numerator") <- numerator
-  if(verbose) cat("NOTE: values refer to the ratio", paste0(numerator, "/", denominator, "."))
+  if(verbose) cat("NOTE: values refer to the ratio", paste0(numerator, "/", denominator, "."), "\n")
 
   return(result)
 }
@@ -191,7 +200,8 @@ nns_ratio_boostrap <- function(x,
                          candidates = character(0),
                          pre_trained = pre_trained,
                          transform = TRUE,
-                         transform_matrix = transform_matrix){
+                         transform_matrix = transform_matrix,
+                         stem = stem){
 
 
   # sample tokens with replacement
@@ -207,7 +217,7 @@ nns_ratio_boostrap <- function(x,
   wvs <- dem_group(x = x_dem, groups = x_dem@docvars$group)
 
   # find nearest neighbors
-  result <- nns_ratio(x = wvs, N = NULL, numerator = numerator, candidates = candidates, pre_trained = pre_trained, verbose = FALSE)
+  result <- nns_ratio(x = wvs, N = NULL, numerator = numerator, candidates = candidates, pre_trained = pre_trained, stem = stem, verbose = FALSE)
 
   return(result)
 
@@ -220,7 +230,8 @@ nns_ratio_permute <- function(x,
                               candidates = character(0),
                               pre_trained,
                               transform = TRUE,
-                              transform_matrix){
+                              transform_matrix,
+                              stem = stem){
 
   # shuffle tokenized texts
   quanteda::docvars(x, 'group') <- sample(groups)
@@ -235,7 +246,7 @@ nns_ratio_permute <- function(x,
   wvs <- dem_group(x = x_dem, groups = x_dem@docvars$group)
 
   # find nearest neighbors
-  result <- nns_ratio(x = wvs, N = NULL, numerator = numerator, candidates = candidates, pre_trained = pre_trained, verbose = FALSE)
+  result <- nns_ratio(x = wvs, N = NULL, numerator = numerator, candidates = candidates, pre_trained = pre_trained, stem = stem, verbose = FALSE)
 
   return(result)
 }

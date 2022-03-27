@@ -9,6 +9,7 @@
 #' @param hard_cut (logical) - if TRUE then a context must have `window` x 2 tokens,
 #' if FALSE it can have `window` x 2 or fewer (e.g. if a doc begins with a target word,
 #' then context will have `window` tokens rather than `window` x 2)
+#' @param rm_keyword (logical) if FALSE, keyword matching pattern is included in the tokenized contexts
 #' @param verbose (logical) if TRUE, report the total number of instances per pattern found
 #'
 #' @return a (quanteda) `tokens-class`. Each document in the output tokens object
@@ -28,7 +29,7 @@
 #'
 #' # build a tokenized corpus of contexts sorrounding a target term
 #' immig_toks <- tokens_context(x = toks, pattern = "immigr*", window = 6L)
-tokens_context <- function(x, pattern, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
+tokens_context <- function(x, pattern, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, rm_keyword = TRUE, verbose = TRUE){
 
   # class check
   if(class(x)[1] != "tokens") stop("data must be of class tokens")
@@ -40,17 +41,18 @@ tokens_context <- function(x, pattern, window = 6L, valuetype = c("glob", "regex
   if(nrow(kwic_x) == 0) stop("no instances of pattern found in corpus")
 
   # create context variable by concatenating pre/post
-  kwic_x <- kwic_x %>% dplyr::mutate(context = paste(pre, post, sep = " ")) %>% dplyr::select(docname, context, pattern)
+  if(!rm_keyword) kwic_x <- kwic_x %>% tidyr::unite("context", pre:post, sep = ' ', remove = FALSE) %>% dplyr::select(docname, context, pattern = keyword)
+  else kwic_x <- kwic_x <- kwic_x %>% tidyr::unite("context", c(pre, post), sep = ' ', remove = FALSE) %>% dplyr::select(docname, context, pattern = keyword)
 
   # if hard_cut, keep only contexts with 2*window number of words
   if(hard_cut) kwic_x <- kwic_x %>% dplyr::mutate(num_tokens = quanteda::ntoken(context)) %>% dplyr::filter(num_tokens == window*2) %>% dplyr::select(-num_tokens)
 
   # merge with docvars
-  kwic_x <- dplyr::left_join(kwic_x, cbind("docname" = quanteda::docnames(x), quanteda::docvars(x)), by = "docname")
+  if(length(quanteda::docvars(x)) > 0) kwic_x <- dplyr::left_join(kwic_x, cbind("docname" = quanteda::docnames(x), quanteda::docvars(x)), by = "docname")
 
   # tokenize contexts
   result <- quanteda::tokens(kwic_x$context, what =  attr(x, "meta")$object$what) # use same tokenizer as x
-  if(ncol(docvars(result)) == 0) quanteda::docvars(result) <- data.frame(pattern = kwic_x[,setdiff(colnames(kwic_x), c('docname', 'context'))])
+  if(ncol(kwic_x) <= 3) quanteda::docvars(result) <- data.frame(pattern = kwic_x[,setdiff(colnames(kwic_x), c('docname', 'context'))])
   else quanteda::docvars(result) <- kwic_x[,setdiff(colnames(kwic_x), c('docname', 'context'))]
 
   # if verbose print how many instances of each pattern word were found
