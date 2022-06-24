@@ -4,4 +4,5 @@ utils::globalVariables(c(".", "context", "docname", "keyword",
                          "value", "feature", "N", "target",
                          "absdev", "p.value", "significant", "valueJitter",
                          "group", "featureID", "pattern", "token",
-                         "contexts", "contexts_dem", "docid", "where"))
+                         "contexts", "contexts_dem", "docid", "where",
+                         "tmp_by", "lower.ci", "upper.ci", "tokens_subset"))

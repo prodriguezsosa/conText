@@ -12,6 +12,7 @@ conText(
   transform_matrix,
   bootstrap = TRUE,
   num_bootstraps = 100,
+  confidence_level = 0.95,
   stratify = FALSE,
   permute = TRUE,
   num_permutations = 100,
@@ -51,6 +52,8 @@ re-run regression on each sample. Required to get std. errors.}
 
 \item{num_bootstraps}{(numeric) number of bootstraps to use.}
 
+\item{confidence_level}{(numeric in (0,1)) confidence level e.g. 0.95}
+
 \item{stratify}{(logical) if TRUE, stratify by discrete covariates when bootstrapping.}
 
 \item{permute}{(logical) if TRUE, compute empirical p-values using permutation test}
@@ -84,6 +87,8 @@ a \code{data.frame} with the following columns:
 \item{\code{coefficient}}{(character) name of (covariate) coefficient.}
 \item{\code{value}}{(numeric) norm of the corresponding beta coefficient.}
 \item{\code{std.error}}{(numeric) (if bootstrap = TRUE) std. error of the norm of the beta coefficient.}
+\item{\code{lower.ci}}{(numeric) (if bootstrap = TRUE) lower bound of the confidence interval.}
+\item{\code{upper.ci}}{(numeric) (if bootstrap = TRUE) upper bound of the confidence interval.}
 \item{\code{p.value}}{(numeric) (if permute = TRUE) empirical p.value of the norm of the coefficient.}
 }
 }
@@ -104,7 +109,8 @@ model1 <- conText(formula = immigration ~ party + gender,
                  data = toks,
                  pre_trained = cr_glove_subset,
                  transform = TRUE, transform_matrix = cr_transform,
-                 bootstrap = TRUE, num_bootstraps = 10,
+                 bootstrap = TRUE, num_bootstraps = 100,
+                 confidence_level = 0.95,
                  stratify = FALSE,
                  permute = TRUE, num_permutations = 100,
                  window = 6, case_insensitive = TRUE,
@@ -117,7 +123,7 @@ rownames(model1)
 # of "immigration" for Republican party speeches
 
 # (normed) coefficient table
-model1@normed_cofficients
+model1@normed_coefficients
 
 }
 \keyword{conText}

@@ -7,7 +7,7 @@
 build_conText(
   Class = "conText",
   x_conText,
-  normed_cofficients = data.frame(),
+  normed_coefficients = data.frame(),
   features = character(),
   Dimnames = list()
 )
@@ -17,7 +17,7 @@ build_conText(
 
 \item{x_conText}{a \verb{dgCMatrix class} matrix}
 
-\item{normed_cofficients}{a data.frame withe the normed coefficients and
+\item{normed_coefficients}{a data.frame withe the normed coefficients and
 other statistics}
 
 \item{features}{features used in computing the embeddings}

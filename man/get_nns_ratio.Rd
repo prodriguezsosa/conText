@@ -15,7 +15,8 @@ get_nns_ratio(
   transform = TRUE,
   transform_matrix,
   bootstrap = TRUE,
-  num_bootstraps = 10,
+  num_bootstraps = 100,
+  confidence_level = 0.95,
   permute = TRUE,
   num_permutations = 100,
   stem = FALSE,
@@ -54,6 +55,8 @@ If \code{groups} defined, sampling is automatically stratified.}
 
 \item{num_bootstraps}{(integer) number of bootstraps to use.}
 
+\item{confidence_level}{(numeric in (0,1)) confidence level e.g. 0.95}
+
 \item{permute}{(logical) if TRUE, compute empirical p-values using permutation test}
 
 \item{num_permutations}{(numeric) number of permutations to use.}
@@ -74,6 +77,8 @@ a \code{data.frame} with following columns:
 and feature. Average over bootstrapped samples if bootstrap = TRUE.}
 \item{\code{std.error}}{(numeric) std. error of the similarity value.
 Column is dropped if bootstrap = FALSE.}
+\item{\code{lower.ci}}{(numeric) (if bootstrap = TRUE) lower bound of the confidence interval.}
+\item{\code{upper.ci}}{(numeric) (if bootstrap = TRUE) upper bound of the confidence interval.}
 \item{\code{p.value}}{(numeric) empirical p-value of bootstrapped ratio
 of cosine similarities if permute = TRUE, if FALSE, column is dropped.}
 \item{\code{group}}{(character) group in \code{groups} for which feature belongs
@@ -111,9 +116,9 @@ immig_nns_ratio <- get_nns_ratio(x = immig_toks,
                                  transform = TRUE,
                                  transform_matrix = cr_transform,
                                  bootstrap = TRUE,
-                                 num_bootstraps = 5,
+                                 num_bootstraps = 100,
                                  permute = TRUE,
-                                 num_permutations = 5,
+                                 num_permutations = 10,
                                  verbose = FALSE)
 
 head(immig_nns_ratio)

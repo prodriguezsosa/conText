@@ -15,7 +15,7 @@
 #' re-estimate cosine similarities for each sample. Required to get std. errors.
 #' If `groups` defined, sampling is automatically stratified.
 #' @param num_bootstraps (integer) number of bootstraps to use.
-#'
+#' @param confidence_level (numeric in (0,1)) confidence level e.g. 0.95
 #' @return a `data.frame` or list of data.frames (one for each target)
 #' with the following columns:
 #' \describe{
@@ -27,6 +27,8 @@
 #'  and feature. Average over bootstrapped samples if bootstrap = TRUE.}
 #'  \item{`std.error`}{(numeric) std. error of the similarity value.
 #'  Column is dropped if bootstrap = FALSE.}
+#'  \item{`lower.ci`}{(numeric) (if bootstrap = TRUE) lower bound of the confidence interval.}
+#'  \item{`upper.ci`}{(numeric) (if bootstrap = TRUE) upper bound of the confidence interval.}
 #'  }
 #'
 #' @export
@@ -51,9 +53,10 @@
 #'             features = c("reform", "enforce"),
 #'             pre_trained = cr_glove_subset,
 #'             transform = TRUE,
-#'            transform_matrix = cr_transform,
+#'             transform_matrix = cr_transform,
 #'             bootstrap = TRUE,
-#'             num_bootstraps = 10,
+#'             num_bootstraps = 100,
+#'             confidence_level = 0.95,
 #'             stem = TRUE,
 #'             as_list = FALSE)
 get_cos_sim <- function(x,
@@ -63,41 +66,48 @@ get_cos_sim <- function(x,
                         transform = TRUE,
                         transform_matrix,
                         bootstrap = TRUE,
-                        num_bootstraps = 10,
+                        num_bootstraps = 100,
+                        confidence_level = 0.95,
                         stem = FALSE,
                         as_list = TRUE) {
 
   # initial checks
+  if(bootstrap && (confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
+  if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100', call. = FALSE) # check num_bootstraps >= 100
   if(class(x)[1] != "tokens") stop("data must be of class tokens", call. = FALSE)
 
   # add grouping variable to docvars
   if(!is.null(groups)) quanteda::docvars(x) <- NULL; quanteda::docvars(x, "group") <- groups
 
+  # create document-feature matrix
+  x_dfm <- quanteda::dfm(x, tolower = FALSE)
+
+  # compute document-embedding matrix
+  x_dem <- dem(x = x_dfm, pre_trained = pre_trained, transform = transform, transform_matrix = transform_matrix, verbose = FALSE)
+
   if(bootstrap){
+    cat('starting bootstraps \n')
     cossimdf_bs <- replicate(num_bootstraps,
-                          cos_sim_boostrap(x = x,
-                                           groups = groups,
+                          cos_sim_boostrap(x = x_dem,
+                                           by = x_dem@docvars$group,
                                            features = features,
                                            pre_trained = pre_trained,
-                                           transform = transform,
-                                           transform_matrix = transform_matrix,
                                            stem = stem,
                                            as_list = FALSE),
                           simplify = FALSE)
     result <- do.call(rbind, cossimdf_bs) %>%
       dplyr::group_by(target, feature) %>%
+      dplyr::mutate(lower.ci = dplyr::nth(value, round((1-confidence_level)*num_bootstraps), order_by = value),
+                    upper.ci = dplyr::nth(value, round(confidence_level*num_bootstraps), order_by = value)) %>%
       dplyr::summarise(std.error = sd(value),
                        value = mean(value),
+                       lower.ci = mean(lower.ci),
+                       upper.ci = mean(upper.ci),
                        .groups = 'keep') %>%
       dplyr::ungroup() %>%
-      dplyr::select('target', 'feature', 'value', 'std.error')
+      dplyr::select('target', 'feature', 'value', 'std.error', 'lower.ci', 'upper.ci')
+    cat('done with bootstraps \n')
   }else{
-
-    # create document-feature matrix
-    x_dfm <- quanteda::dfm(x, tolower = FALSE)
-
-    # compute document-embedding matrix
-    x_dem <- dem(x = x_dfm, pre_trained = pre_trained, transform = transform, transform_matrix = transform_matrix, verbose = FALSE)
 
     # aggregate dems by group var
     if(!is.null(groups)){
@@ -110,44 +120,34 @@ get_cos_sim <- function(x,
     result <- cos_sim(x = wvs, pre_trained = pre_trained, features = features, stem = stem, as_list = FALSE)
   }
 
-  # if !as_list return a list object with an item for each feature data.frame
-  if(as_list) result <- lapply(unique(result$feature), function(i) result[result$feature == i,] %>% dplyr::mutate(feature = as.character(feature))) %>% setNames(unique(result$feature))
-
+  # if !as_list return a list object with an item for each target data.frame
+  if(as_list){
+    if(is.null(groups)) cat("NOTE: as_list cannot be TRUE if groups is NULL, proceeding with as_list = FALSE")
+    else result <- lapply(unique(result$target), function(i) result[result$target == i,] %>% dplyr::mutate(target = as.character(target))) %>% setNames(unique(result$target))
+  }
   return(result)
 }
 
 # sub-function
 cos_sim_boostrap <- function(x,
-                             groups = NULL,
+                             by = NULL,
                              features = character(0),
-                             pre_trained,
-                             transform = TRUE,
-                             transform_matrix,
+                             pre_trained = pre_trained,
                              stem = stem,
                              as_list = FALSE){
 
-  # sample tokens with replacement
-  if(!is.null(groups)) {
-    x <- quanteda::tokens_sample(x = x, size = table(groups), replace = TRUE, by = groups)
-  } else {
-    x <- quanteda::tokens_sample(x = x, size = quanteda::ndoc(x), replace = TRUE)
-  }
-
-  # create document-feature matrix
-  x_dfm <- quanteda::dfm(x, tolower = FALSE)
-
-  # compute document-embedding matrix
-  x_dem <- dem(x = x_dfm, pre_trained = pre_trained, transform = transform, transform_matrix = transform_matrix, verbose = FALSE)
+  # sample dems with replacement
+  x_sample_dem <- dem_sample(x = x, size = nrow(x), replace = TRUE, by = by)
 
   # aggregate dems by group var if defined
-  if(!is.null(groups)){
-    wvs <- dem_group(x = x_dem, groups = x_dem@docvars$group)
+  if(!is.null(by)){
+    wvs <- dem_group(x = x_sample_dem, groups = x_sample_dem@docvars$group)
   } else {
-    wvs <- matrix(colMeans(x_dem), ncol = ncol(x_dem))
+    wvs <- matrix(colMeans(x_sample_dem), ncol = ncol(x_sample_dem))
   }
 
   # compute cosine similarity
-  result <- cos_sim(x = wvs, pre_trained = pre_trained, features = features, stem = stem, as_list = FALSE)
+  result <- cos_sim(x = wvs, pre_trained = pre_trained, features = features, stem = stem, as_list = as_list)
 
   return(result)
 

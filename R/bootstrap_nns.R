@@ -15,6 +15,7 @@
 #' @param bootstrap (logical) if TRUE, bootstrap similarity values - sample from texts with replacement.
 #' Required to get std. errors.
 #' @param num_bootstraps (numeric) - number of bootstraps to use.
+#' @param confidence_level (numeric in (0,1)) confidence level e.g. 0.95
 #' @param N (numeric) number of nearest neighbors to return.
 #' @param norm (character) - how to compute the similarity (see ?text2vec::sim2):
 #' \describe{
@@ -28,6 +29,8 @@
 #'  \item{`value`}{(numeric) cosine/inner product similarity between
 #'  texts and feature. Average over bootstrapped samples if bootstrap = TRUE.}
 #'  \item{`std.error`}{(numeric) std. error of the similarity value. Column is dropped if bootstrap = FALSE.}
+#'  \item{`lower.ci`}{(numeric) (if bootstrap = TRUE) lower bound of the confidence interval.}
+#'  \item{`upper.ci`}{(numeric) (if bootstrap = TRUE) upper bound of the confidence interval.}
 #'  }
 #'
 #' @export
@@ -53,11 +56,19 @@
 #'                                  transform = TRUE,
 #'                                  candidates = local_vocab,
 #'                                  bootstrap = TRUE,
-#'                                  num_bootstraps = 20, N = 50,
+#'                                  num_bootstraps = 100,
+#'                                  confidence_level = 0.95,
+#'                                  N = 50,
 #'                                  norm = "l2")
 #'
+#' head(nns_immigration)
+#'
 #' @export
-bootstrap_nns <- function(context = NULL, pre_trained = NULL, transform = TRUE, transform_matrix = NULL, candidates = NULL, bootstrap = TRUE, num_bootstraps = 20, N = 50, norm = "l2"){
+bootstrap_nns <- function(context = NULL, pre_trained = NULL, transform = TRUE, transform_matrix = NULL, candidates = NULL, bootstrap = TRUE, num_bootstraps = 100, confidence_level = 0.95, N = 50, norm = "l2"){
+
+  # initial checks
+  if(bootstrap && (confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
+  if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100', call. = FALSE) # check num_bootstraps >= 100
 
   # IF BOOTSTRAP
   if(bootstrap){
@@ -71,8 +82,9 @@ bootstrap_nns <- function(context = NULL, pre_trained = NULL, transform = TRUE, 
     # mean similarity
     cos_out <- do.call(rbind,bootstrap_out)
     mean_cos <- apply(cos_out, 2, mean)
-    stderror_cos <- 1/sqrt(nrow(cos_out)) * apply(cos_out, 2, sd)
-    nns <- dplyr::tibble(feature = names(mean_cos), value = unname(mean_cos), std.error = unname(stderror_cos)) %>% dplyr::arrange(-value)}else{
+    stderror_cos <- apply(cos_out, 2, sd)
+    ci_cos <- apply(cos_out, 2, function(x) x[order(x)])[c(round((1-confidence_level)*num_bootstraps),round(confidence_level*num_bootstraps)),]
+    nns <- dplyr::tibble(feature = names(mean_cos), value = unname(mean_cos), std.error = unname(stderror_cos), lower.ci = unname(ci_cos[1,]), upper.ci = unname(ci_cos[2,])) %>% dplyr::arrange(-value)}else{
 
       # ELSE
 

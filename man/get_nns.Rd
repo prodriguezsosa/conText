@@ -14,7 +14,8 @@ get_nns(
   transform = TRUE,
   transform_matrix,
   bootstrap = TRUE,
-  num_bootstraps = 10,
+  num_bootstraps = 100,
+  confidence_level = 0.95,
   stem = FALSE,
   as_list = TRUE
 )
@@ -47,6 +48,8 @@ If \code{groups} defined, sampling is automatically stratified.}
 
 \item{num_bootstraps}{(integer) number of bootstraps to use.}
 
+\item{confidence_level}{(numeric in (0,1)) confidence level e.g. 0.95}
+
 \item{stem}{(logical) - whether to stem candidates when evaluating nns. Default is FALSE.
 If TRUE, candidate stems are ranked by their average cosine similarity to the target.
 We recommend you remove misspelled words from candidate set \code{candidates} as these can
@@ -67,6 +70,8 @@ the labels of the ALC embeddings. \code{NA} if \code{is.null(rownames(x))}.}
 and feature. Average over bootstrapped samples if bootstrap = TRUE.}
 \item{\code{std.error}}{(numeric) std. error of the similarity value.
 Column is dropped if bootstrap = FALSE.}
+\item{\code{lower.ci}}{(numeric) (if bootstrap = TRUE) lower bound of the confidence interval.}
+\item{\code{upper.ci}}{(numeric) (if bootstrap = TRUE) upper bound of the confidence interval.}
 }
 }
 \description{
@@ -96,7 +101,7 @@ immig_party_nns <- get_nns(x = immig_toks, N = 10,
                            transform = TRUE,
                            transform_matrix = cr_transform,
                            bootstrap = TRUE,
-                           num_bootstraps = 10,
+                           num_bootstraps = 100,
                            stem = TRUE,
                            as_list = TRUE)
 

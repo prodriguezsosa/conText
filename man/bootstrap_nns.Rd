@@ -11,7 +11,8 @@ bootstrap_nns(
   transform_matrix = NULL,
   candidates = NULL,
   bootstrap = TRUE,
-  num_bootstraps = 20,
+  num_bootstraps = 100,
+  confidence_level = 0.95,
   N = 50,
   norm = "l2"
 )
@@ -35,6 +36,8 @@ Required to get std. errors.}
 
 \item{num_bootstraps}{(numeric) - number of bootstraps to use.}
 
+\item{confidence_level}{(numeric in (0,1)) confidence level e.g. 0.95}
+
 \item{N}{(numeric) number of nearest neighbors to return.}
 
 \item{norm}{(character) - how to compute the similarity (see ?text2vec::sim2):
@@ -50,6 +53,8 @@ a \code{data.frame} with the following columns:
 \item{\code{value}}{(numeric) cosine/inner product similarity between
 texts and feature. Average over bootstrapped samples if bootstrap = TRUE.}
 \item{\code{std.error}}{(numeric) std. error of the similarity value. Column is dropped if bootstrap = FALSE.}
+\item{\code{lower.ci}}{(numeric) (if bootstrap = TRUE) lower bound of the confidence interval.}
+\item{\code{upper.ci}}{(numeric) (if bootstrap = TRUE) upper bound of the confidence interval.}
 }
 }
 \description{
@@ -77,8 +82,12 @@ nns_immigration <- bootstrap_nns(context = context_immigration$context,
                                  transform = TRUE,
                                  candidates = local_vocab,
                                  bootstrap = TRUE,
-                                 num_bootstraps = 20, N = 50,
+                                 num_bootstraps = 100,
+                                 confidence_level = 0.95,
+                                 N = 50,
                                  norm = "l2")
+
+head(nns_immigration)
 
 }
 \keyword{bootstrap_nns}

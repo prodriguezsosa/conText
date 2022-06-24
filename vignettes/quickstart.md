@@ -62,8 +62,7 @@ outline how a typical pre-processing pipeline might look. Note,
 these steps may be redundant but are left for completeness. It is
 generally a good idea to set `padding = TRUE` in `tokens_select()` to
 avoid making non-adjacent words adjacent prior to computing the
-embeddings. This is increasingly important as more features are
-removed.
+embeddings. This is increasingly important as more features are removed.
 
 ``` r
 # tokenize corpus removing unnecessary (i.e. semantically uninformative) elements
@@ -76,7 +75,7 @@ toks_nostop <- tokens_select(toks, pattern = stopwords("en"), selection = "remov
 feats <- dfm(toks_nostop, tolower=T, verbose = FALSE) %>% dfm_trim(min_termfreq = 5) %>% featnames()
 
 # leave the pads so that non-adjacent words will not become adjacent
-toks <- tokens_select(toks_nostop, feats, padding = TRUE)
+toks_nostop_feats <- tokens_select(toks_nostop, feats, padding = TRUE)
 ```
 
 # The building blocks of ‘a la carte’ embeddings
@@ -85,24 +84,23 @@ Suppose we are interested in the semantics surrounding the word
 “immigration” in the U.S. Congress during the Obama years (sessions
 111th - 114th).
 
-## 1\. Build a (tokenized) corpus of contexts
+## 1. Build a (tokenized) corpus of contexts
 
 We begin by identifying all instances of the *target* term
 –“immigration”– in our corpus and, for each instance, store it’s
 context– the N words (N = 6 in this example) preceding and following the
-instance, and tokenize. Given our tokenized corpus, `toks`, we can do
-this in one step using `conText::tokens_context()` –a wrapper function
-for quanteda::kwic(). Notice, both the input, `x`, and the output are a
-quanteda `tokens` objects. Each document in `immig_toks` –tokens of a
-context around an instance of *immigration*– inherits the document
-variables (`docvars`) of the document from whence it came, along with a
-column registering the corresponding pattern. This information can be
-retrieved using
-`docvars()`.
+instance, and tokenize. Given our tokenized corpus, `toks_nostop_feats`,
+we can do this in one step using `conText::tokens_context()` –a wrapper
+function for quanteda::kwic(). Notice, both the input, `x`, and the
+output are a quanteda `tokens` objects. Each document in `immig_toks`
+–tokens of a context around an instance of *immigration*– inherits the
+document variables (`docvars`) of the document from whence it came,
+along with a column registering the corresponding pattern. This
+information can be retrieved using `docvars()`.
 
 ``` r
 # build a tokenized corpus of contexts sorrounding the target term "immigration"
-immig_toks <- tokens_context(x = toks, pattern = "immigr*", window = 6L)
+immig_toks <- tokens_context(x = toks_nostop_feats, pattern = "immigr*", window = 6L)
 ```
 
     ## 125 instances of "immigrant" found.
@@ -118,7 +116,7 @@ head(docvars(immig_toks), 3)
     ## 2 immigration     D      F        -0.402
     ## 3   immigrant     D      F        -0.402
 
-## 2\. Build a document-feature-matrix
+## 2. Build a document-feature-matrix
 
 Given a tokenized corpus of contexts, we next build it’s corresponding
 document-feature-matrix, namely a matrix where each row represents a
@@ -138,7 +136,7 @@ immig_dfm[1:3,1:3]
     ##   text2            0     0     0
     ##   text3            0     0     0
 
-## 3\. Build a document-embedding-matrix
+## 3. Build a document-embedding-matrix
 
 Given a ‘dfm’, `immig_dfm`, a set of pre-trained embeddings,
 `cr_glove_subset` and a corresponding transformation matrix,
@@ -180,7 +178,7 @@ immig_dem <- dem(x = immig_dfm, pre_trained = cr_glove_subset, transform = TRUE,
 #head(immig_dem@features)
 ```
 
-## 4\. Average over document embeddings
+## 4. Average over document embeddings
 
 We now have an ALC embedding for each instance of “immigration” in our
 sample corpus. To get a single corpus-wide ALC embedding for
@@ -195,7 +193,10 @@ defined by one or a combination of the ‘docvars’. We do this using
 `conText::dem_group()` (very similar in flavor to quanteda’s
 [`dfm_group()`](https://tutorials.quanteda.io/basic-operations/dfm/dfm_group/)).
 In our example below, this results in an ALC embedding of “immigration”
-for each party, hence the dimensions \(2\) by \(300\).
+for each party, hence the dimensions
+![2](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;2 "2")
+by
+![300](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;300 "300").
 
 ``` r
 # to get group-specific embeddings, average within party
@@ -205,7 +206,7 @@ dim(immig_wv_party)
 
     ## [1]   2 300
 
-## 5\. Comparing group embeddings
+## 5. Comparing group embeddings
 
 Given an ALC embedding for each party, we can proceed to do some
 exploratory analysis.
@@ -242,11 +243,11 @@ immig_nns[["R"]]
 
 We can also look at the relationship between each group’s ALC embedding
 of “immigration” and a specific set of features. For example, how does
-each party’s understanding of immigration compare on the “reform” vs.
-“enforcement” dimension? To answer this, we use `conText::cos_sim()`.
-Results (on this limited sample of the data) suggest Democrats are more
-prone to speak of “reform” in the context of “immigration” whereas
-Republicans are more likely to speak of
+each party’s understanding of immigration compare on the “reform”
+vs. “enforcement” dimension? To answer this, we use
+`conText::cos_sim()`. Results (on this limited sample of the data)
+suggest Democrats are more prone to speak of “reform” in the context of
+“immigration” whereas Republicans are more likely to speak of
 “enforcement”.
 
 ``` r
@@ -268,12 +269,12 @@ cosine similarities between group embeddings and features –that is, for
 any given feature it first computes the similarity between that feature
 and each group embedding, and then takes the ratio of these two
 similarities. This ratio captures how “discriminant” a feature is of a
-given group. Values larger (smaller) than \(1\) mean the feature is more
-(less) discriminant of the group in the numerator (denominator). Use the
-`numerator` argument to define which group represents the numerator in
-this ratio. If `N` is defined, this ratio is computed for union of the
-top `N` nearest
-neighbors.
+given group. Values larger (smaller) than
+![1](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;1 "1")
+mean the feature is more (less) discriminant of the group in the
+numerator (denominator). Use the `numerator` argument to define which
+group represents the numerator in this ratio. If `N` is defined, this
+ratio is computed for union of the top `N` nearest neighbors.
 
 ``` r
 # compute the cosine similarity between each party's embedding and a specific set of features
@@ -307,8 +308,7 @@ target term that are semantically close –i.e. high cosine similarity– to
 the ALC embedding of that term. To explore nearest contexts we use the
 `ncs()` function. `ncs()` computes the cosine similarities between the
 ALC (group) embeddings and the single-instance ALC embeddings of the
-underlying
-contexts.
+underlying contexts.
 
 ``` r
 # compute the cosine similarity between each party's embedding and a set of tokenized contexts
@@ -331,18 +331,25 @@ immig_ncs[["R"]]
 
 All functions to explore nearest neighbors –`nns`, `cos_sim`,
 `nns_ratio`– have to option to add stemming. This can be useful to group
-nearest neighbors with the same stem e.g. “reform”, “reforms”,
+nearest neighbors with the same stem e.g. “reform”, “reforms”,
 “reformed”. Under the hood, candidate nearest neighbors are stemmed
 using the `Snowball` library and cosine similarities with the target
 embeddings are averaged across nearest neighbors with the same stem. To
-avoid noisy words influencing this average e.g. “reformedthesystem”, we
+avoid noisy words influencing this average e.g. “reformedthesystem”, we
 recommend you remove misspelled words from the candidate set
 `candidates` (you can automate this using the `hunspell` library). See
 example below.
 
 ``` r
-# consider removing noisy candidate nearest neighbors
-library(hunspell) # spellcheck library
+# extract candidate features from the dem object
+immig_feats <- immig_wv_party@features
+
+# check spelling. toupper avoids names being considered misspelled
+if (requireNamespace("hunspell", quietly = TRUE)) { 
+  library(hunspell) # spellcheck library
+  spellcheck <-  hunspell_check(toupper(immig_feats), dict = hunspell::dictionary("en_US"))
+  immig_feats <- immig_feats[spellcheck]
+  }
 ```
 
     ## 
@@ -353,13 +360,6 @@ library(hunspell) # spellcheck library
     ##     dictionary
 
 ``` r
-# extract candidate features from the dem object
-immig_feats <- immig_wv_party@features
-
-# check spelling. toupper avoids names being considered misspelled
-spellcheck <-  hunspell_check(toupper(immig_feats), dict = hunspell::dictionary("en_US")) #
-immig_feats <- immig_feats[spellcheck]
-
 # find nearest neighbors by party using stemming
 immig_nns_stem <- nns(immig_wv_party, pre_trained = cr_glove_subset, N = 5, candidates = immig_feats, stem = TRUE, as_list = TRUE)
 
@@ -380,12 +380,12 @@ immig_nns_stem[["R"]]
 
 In the above example we had one target word, “immigration”. However, we
 can also explore the semantics of multiple targets simultaneously,
-including phrases\! We simply provide a vector of patterns in the
+including phrases! We simply provide a vector of patterns in the
 `pattern` argument of `tokens_context()`.
 
 ``` r
 # build a corpus of contexts sorrounding the target term "immigration"
-mkws_toks <- tokens_context(x = toks, pattern = c("immigration", "welfare", "immigration reform", "economy"), window = 6L, verbose = FALSE)
+mkws_toks <- tokens_context(x = toks_nostop_feats, pattern = c("immigration", "welfare", "immigration reform", "economy"), window = 6L, verbose = FALSE)
 
 # create document-feature matrix
 mkws_dfm <- dfm(mkws_toks)
@@ -423,7 +423,7 @@ single collection of contexts for the purposes of computing each party’s
 
 ``` r
 # build a corpus of contexts sorrounding the immigration related words
-topical_toks <- tokens_context(x = toks, pattern = c("immigration", "immigrant", "immigration reform"), window = 6L, verbose = FALSE)
+topical_toks <- tokens_context(x = toks_nostop_feats, pattern = c("immigration", "immigrant", "immigration reform"), window = 6L, verbose = FALSE)
 
 # create document-feature matrix
 topical_dfm <- dfm(topical_toks)
@@ -475,15 +475,15 @@ function for `nns()`.
 ### Nearest neighbors
 
 We use the same tokenized corpus of “immigration” contexts
-–`immig_toks`– as above, and again limit candidate nearest neighbors
-to the set of features in our corpus. To group by *party* we set `groups
-= docvars(immig_corpus, 'party')` –the `groups` argument can include
-more than two groups. If no grouping variable is provided, the full set
-of (tokenized) contexts are aggregated into one single embedding. To
-estimate standard errors for the cosine similarities between each
-party’s embedding and their corresponding nearest neighbors we set
-`bootstrap = TRUE` and define the desired number of bootstraps with
-`num_bootstrap`. Notice the output now has an additional column
+–`immig_toks`– as above, and again limit candidate nearest neighbors to
+the set of features in our corpus. To group by *party* we set
+`groups = docvars(immig_corpus, 'party')` –the `groups` argument can
+include more than two groups. If no grouping variable is provided, the
+full set of (tokenized) contexts are aggregated into one single
+embedding. To estimate standard errors for the cosine similarities
+between each party’s embedding and their corresponding nearest neighbors
+we set `bootstrap = TRUE` and define the desired number of bootstraps
+with `num_bootstrap`. Notice the output now has an additional column
 `std.error`. This is simply the standard deviation of the sampling
 distribution of cosine similarities obtained via bootstrapping. Note,
 values may differ slightly to the step-by-step process outlined above as
@@ -502,26 +502,31 @@ immig_party_nns <- get_nns(x = immig_toks, N = 10,
         transform = TRUE,
         transform_matrix = cr_transform,
         bootstrap = TRUE,
-        num_bootstraps = 10, 
+        num_bootstraps = 100, 
         as_list = TRUE)
+```
 
+    ## starting bootstraps 
+    ## done with bootstraps
+
+``` r
 # nearest neighbors of "immigration" for Republican party
 immig_party_nns[["R"]]
 ```
 
-    ## # A tibble: 10 × 5
-    ##    target feature       rank value std.error
-    ##    <chr>  <chr>        <int> <dbl>     <dbl>
-    ##  1 R      immigration      1 0.842   0.00565
-    ##  2 R      illegal          2 0.758   0.0108 
-    ##  3 R      immigrants       3 0.739   0.00899
-    ##  4 R      illegally        4 0.661   0.0106 
-    ##  5 R      amnesty          5 0.655   0.0128 
-    ##  6 R      laws             6 0.589   0.0132 
-    ##  7 R      enforcement      7 0.588   0.0116 
-    ##  8 R      enforce          8 0.577   0.0124 
-    ##  9 R      legal            9 0.567   0.0125 
-    ## 10 R      undocumented    10 0.565   0.00984
+    ## # A tibble: 10 × 7
+    ##    target feature      rank value std.error lower.ci upper.ci
+    ##    <chr>  <chr>       <int> <dbl>     <dbl>    <dbl>    <dbl>
+    ##  1 R      immigration     1 0.842   0.00690    0.830    0.853
+    ##  2 R      illegal         2 0.765   0.00708    0.754    0.775
+    ##  3 R      immigrants      3 0.731   0.00978    0.714    0.743
+    ##  4 R      illegally       4 0.662   0.00633    0.653    0.672
+    ##  5 R      amnesty         5 0.655   0.00726    0.640    0.667
+    ##  6 R      laws            6 0.595   0.0112     0.578    0.613
+    ##  7 R      enforcement     7 0.594   0.0103     0.575    0.610
+    ##  8 R      enforce         8 0.586   0.0110     0.570    0.605
+    ##  9 R      border          9 0.570   0.0109     0.551    0.587
+    ## 10 R      legal          10 0.566   0.00826    0.552    0.579
 
 ### Cosine similarity
 
@@ -542,17 +547,20 @@ get_cos_sim(x = immig_toks,
             transform = TRUE,
             transform_matrix = cr_transform,
             bootstrap = TRUE,
-            num_bootstraps = 10,
+            num_bootstraps = 100,
             as_list = FALSE)
 ```
 
-    ## # A tibble: 4 × 4
-    ##   target feature value std.error
-    ##   <fct>  <fct>   <dbl>     <dbl>
-    ## 1 D      reform  0.592   0.0191 
-    ## 2 D      enforce 0.484   0.00976
-    ## 3 R      reform  0.427   0.0159 
-    ## 4 R      enforce 0.577   0.0124
+    ## starting bootstraps 
+    ## done with bootstraps
+
+    ## # A tibble: 4 × 6
+    ##   target feature value std.error lower.ci upper.ci
+    ##   <fct>  <fct>   <dbl>     <dbl>    <dbl>    <dbl>
+    ## 1 D      reform  0.593   0.0123     0.574    0.614
+    ## 2 D      enforce 0.486   0.00887    0.471    0.500
+    ## 3 R      reform  0.428   0.0109     0.411    0.446
+    ## 4 R      enforce 0.586   0.0110     0.570    0.605
 
 ### Nearest neighbors cosine similarity ratio
 
@@ -567,19 +575,23 @@ in this case of the cosine similarity ratios.
 
 Finally, `get_nns_ratio()` allows us to make inferences using a
 permutation test, specifically around the *absolute deviation of the
-observed cosine similarity ratio from \(1\)* (this captures how
-discriminant a given nearest neighbor is). Specifically, for each
-permutation, the grouping variable is randomly shuffled and the absolute
-deviation of the cosine similarity ratios from \(1\) is computed. The
-empirical p.value is then the proportion of these “permuted” deviations
-that are larger than the observed deviation.
+observed cosine similarity ratio from
+![1](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;1 "1")*
+(this captures how discriminant a given nearest neighbor is).
+Specifically, for each permutation, the grouping variable is randomly
+shuffled and the absolute deviation of the cosine similarity ratios from
+![1](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;1 "1")
+is computed. The empirical p.value is then the proportion of these
+“permuted” deviations that are larger than the observed deviation.
 
 The output of `get_nns_ratio()` contains three additional columns
 (relative to `nns_ratio()`) if `bootstrap = TRUE` and `permute = TRUE`.
 These are the standard errors around the cosine similarity ratios, the
 corresponding (empirical) `p.value` and a `group` variable identifying
 which group the nearest neighbor belonged to – `shared` means it
-appeared in both groups’ top \(N\) nearest neighbors.
+appeared in both groups’ top
+![N](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;N "N")
+nearest neighbors.
 
 ``` r
 # we limit candidates to features in our corpus
@@ -596,9 +608,9 @@ immig_nns_ratio <- get_nns_ratio(x = immig_toks,
               transform = TRUE,
               transform_matrix = cr_transform,
               bootstrap = TRUE,
-              num_bootstraps = 10,
+              num_bootstraps = 100,
               permute = TRUE,
-              num_permutations = 10,
+              num_permutations = 100,
               verbose = FALSE)
 ```
 
@@ -611,29 +623,29 @@ immig_nns_ratio <- get_nns_ratio(x = immig_toks,
 head(immig_nns_ratio)
 ```
 
-    ## # A tibble: 6 × 5
-    ##   feature   value std.error p.value group 
-    ##   <chr>     <dbl>     <dbl>   <dbl> <chr> 
-    ## 1 enforce    1.19    0.0306     0   R     
-    ## 2 illegal    1.17    0.0233     0   shared
-    ## 3 amnesty    1.17    0.0211     0   R     
-    ## 4 illegally  1.13    0.0246     0   shared
-    ## 5 laws       1.08    0.0424     0   R     
-    ## 6 legal      1.03    0.0382     0.1 R
+    ## # A tibble: 6 × 7
+    ##   feature   value std.error lower.ci upper.ci p.value group 
+    ##   <chr>     <dbl>     <dbl>    <dbl>    <dbl>   <dbl> <chr> 
+    ## 1 enforce    1.21    0.0332    1.16      1.27    0    R     
+    ## 2 illegal    1.18    0.0225    1.15      1.21    0    shared
+    ## 3 amnesty    1.17    0.0204    1.14      1.21    0    R     
+    ## 4 illegally  1.12    0.0223    1.08      1.16    0    shared
+    ## 5 laws       1.09    0.0290    1.04      1.13    0.03 R     
+    ## 6 legal      1.02    0.0219    0.987     1.06    0.54 R
 
 **conText** also includes a plotting function, `plot_nns_ratio`,
 specific to `get_nns_ratio()`, providing a nice visualization of its
 output. `alpha` defines the desired significance threshold to denote
-“significant” results on the plot (indicated by a \(*\) next to the
-feature). Also, you can choose between two different visualizations of
-the same results using the `horizontal`
-argument.
+“significant” results on the plot (indicated by a
+![\*](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%2A "*")
+next to the feature). Also, you can choose between two different
+visualizations of the same results using the `horizontal` argument.
 
 ``` r
 plot_nns_ratio(x = immig_nns_ratio, alpha = 0.01, horizontal = TRUE)
 ```
 
-![](/private/var/folders/81/yb6y5pld4sq8yfdj9v0lwfj80000gn/T/RtmpasMP48/preview-11e2f7b71d.dir/quickstart_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](/private/var/folders/f6/yb9q7mnn2yv1k1bl9vqxb09h0000gn/T/Rtmp69tzIb/preview-f38d69ef9c79.dir/quickstart_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
 ### Nearest contexts
 
@@ -652,26 +664,31 @@ immig_party_ncs <- get_ncs(x = immig_toks,
                             transform = TRUE,
                             transform_matrix = cr_transform,
                             bootstrap = TRUE,
-                            num_bootstraps = 10,
+                            num_bootstraps = 100,
                             as_list = TRUE)
+```
 
+    ## starting bootstraps 
+    ## done with bootstraps
+
+``` r
 # nearest neighbors of "immigration" for Republican party
 immig_party_ncs[["R"]]
 ```
 
-    ## # A tibble: 10 × 5
-    ##    target context                                           rank value std.error
-    ##    <chr>  <chr>                                            <int> <dbl>     <dbl>
-    ##  1 R      america suggest immigration can good thing ille…     1 0.815   0.00830
-    ##  2 R      immigration can good thing immigration illegal …     2 0.789   0.00880
-    ##  3 R      immigration law prior illegal immigration refor…     3 0.783   0.00917
-    ##  4 R      good thing immigration illegal immigration lega…     4 0.771   0.00717
-    ##  5 R      going cost hardworking taxpayers america sugges…     5 0.756   0.00921
-    ##  6 R      actually increase illegal immigration reducing …     6 0.734   0.00561
-    ##  7 R      immigration enforcement along southwest border …     7 0.728   0.00697
-    ##  8 R      late right thing hold president responsible pol…     8 0.721   0.00785
-    ##  9 R      backlog met likely lead reduction legal increas…     9 0.719   0.0111 
-    ## 10 R      responsible immigration policies ignoring immig…    10 0.717   0.00942
+    ## # A tibble: 10 × 7
+    ##    target context                         rank value std.error lower.ci upper.ci
+    ##    <chr>  <chr>                          <int> <dbl>     <dbl>    <dbl>    <dbl>
+    ##  1 R      america suggest immigration c…     1 0.815   0.00781    0.804    0.828
+    ##  2 R      immigration can good thing im…     2 0.786   0.00806    0.772    0.799
+    ##  3 R      immigration law prior illegal…     3 0.784   0.00819    0.770    0.796
+    ##  4 R      good thing immigration illega…     4 0.772   0.00711    0.760    0.785
+    ##  5 R      going cost hardworking taxpay…     5 0.758   0.00781    0.745    0.770
+    ##  6 R      actually increase illegal imm…     6 0.734   0.00562    0.724    0.743
+    ##  7 R      immigration enforcement along…     7 0.732   0.00793    0.718    0.744
+    ##  8 R      late right thing hold preside…     8 0.723   0.00981    0.708    0.738
+    ##  9 R      responsible immigration polic…     9 0.722   0.00921    0.707    0.736
+    ## 10 R      backlog met likely lead reduc…    10 0.718   0.00778    0.706    0.729
 
 # Embedding regression
 
@@ -687,29 +704,29 @@ that allows us to do just that. The corresponding package function is
 `conText()` tries to follow a similar syntax as R’s `lm()` and `glm()`
 functions. `data` must be a quanteda tokens object with covariates
 stored as document variables (`docvars`). We next specify a formula
-consisting of the target word of interest, e.g. “immigration” and the
+consisting of the target word of interest, e.g. “immigration” and the
 set of covariates. To use all covariates in `data`, we can speficy
-`immigration ~ .`. `formula` can also take vectors of target words e.g.
-`c("immigration", "immigrants") ~ party + gender` and phrases e.g.
-`"immigration reform" ~ party + gender` – place phrases in quotation
-marks.
+`immigration ~ .`. `formula` can also take vectors of target words
+e.g. `c("immigration", "immigrants") ~ party + gender` and phrases
+e.g. `"immigration reform" ~ party + gender` – place phrases in
+quotation marks.
 
 ``` r
 # two factor covariates
 set.seed(2021L)
 model1 <- conText(formula = immigration ~ party + gender,
-                  data = toks,
+                  data = toks_nostop_feats,
                   pre_trained = cr_glove_subset,
                   transform = TRUE, transform_matrix = cr_transform,
-                  bootstrap = TRUE, num_bootstraps = 10,
+                  bootstrap = TRUE, num_bootstraps = 100,
                   permute = TRUE, num_permutations = 100,
                   window = 6, case_insensitive = TRUE,
                   verbose = FALSE)
 ```
 
-    ##   coefficient normed.estimate  std.error p.value
-    ## 1     party_R       0.5988860 0.05041898       0
-    ## 2    gender_M       0.5355259 0.03126510       0
+    ##   coefficient normed.estimate  std.error  lower.ci  upper.ci p.value
+    ## 1     party_R       0.6100437 0.05993146 0.5090822 0.7178218       0
+    ## 2    gender_M       0.5278585 0.05693682 0.4413191 0.6418341       0
 
 ``` r
 # notice, non-binary covariates are automatically "dummified"
@@ -747,31 +764,31 @@ nns(rbind(DF_wv,DM_wv), N = 10, pre_trained = cr_glove_subset, candidates = mode
     ## # A tibble: 10 × 4
     ##    target feature        rank value
     ##    <chr>  <chr>         <int> <dbl>
-    ##  1 DM_wv  immigration       1 0.844
-    ##  2 DM_wv  broken            2 0.693
-    ##  3 DM_wv  reform            3 0.660
-    ##  4 DM_wv  comprehensive     4 0.646
-    ##  5 DM_wv  immigrants        5 0.596
-    ##  6 DM_wv  illegal           6 0.589
-    ##  7 DM_wv  enforcement       7 0.567
-    ##  8 DM_wv  border            8 0.555
-    ##  9 DM_wv  system            9 0.545
-    ## 10 DM_wv  fix              10 0.538
+    ##  1 DM_wv  immigration       1 0.837
+    ##  2 DM_wv  broken            2 0.698
+    ##  3 DM_wv  reform            3 0.670
+    ##  4 DM_wv  comprehensive     4 0.659
+    ##  5 DM_wv  immigrants        5 0.590
+    ##  6 DM_wv  illegal           6 0.582
+    ##  7 DM_wv  enforcement       7 0.562
+    ##  8 DM_wv  system            8 0.550
+    ##  9 DM_wv  border            9 0.550
+    ## 10 DM_wv  fix              10 0.547
     ## 
     ## $DF_wv
     ## # A tibble: 10 × 4
     ##    target feature        rank value
     ##    <chr>  <chr>         <int> <dbl>
-    ##  1 DF_wv  immigration       1 0.835
-    ##  2 DF_wv  comprehensive     2 0.641
-    ##  3 DF_wv  enforcement       3 0.640
-    ##  4 DF_wv  immigrants        4 0.629
-    ##  5 DF_wv  broken            5 0.613
+    ##  1 DF_wv  immigration       1 0.831
+    ##  2 DF_wv  comprehensive     2 0.637
+    ##  3 DF_wv  immigrants        3 0.635
+    ##  4 DF_wv  enforcement       4 0.627
+    ##  5 DF_wv  broken            5 0.623
     ##  6 DF_wv  reform            6 0.608
-    ##  7 DF_wv  law               7 0.595
+    ##  7 DF_wv  law               7 0.596
     ##  8 DF_wv  illegal           8 0.589
-    ##  9 DF_wv  laws              9 0.567
-    ## 10 DF_wv  border           10 0.565
+    ##  9 DF_wv  laws              9 0.569
+    ## 10 DF_wv  status           10 0.568
 
 To access the normed coefficients for plotting:
 
@@ -779,9 +796,9 @@ To access the normed coefficients for plotting:
 model1@normed_cofficients
 ```
 
-    ##   coefficient normed.estimate  std.error p.value
-    ## 1     party_R       0.5988860 0.05041898       0
-    ## 2    gender_M       0.5355259 0.03126510       0
+    ##   coefficient normed.estimate  std.error  lower.ci  upper.ci p.value
+    ## 1     party_R       0.6100437 0.05993146 0.5090822 0.7178218       0
+    ## 2    gender_M       0.5278585 0.05693682 0.4413191 0.6418341       0
 
 `conText` can also take continuous covariates. In the example below we
 estimate a model using the first dimension of the NOMINATE
@@ -798,17 +815,17 @@ greater its similarity with the feature `reform`.
 # continuous covariate
 set.seed(2021L)
 model2 <- conText(formula = immigration ~ nominate_dim1,
-                  data = toks,
+                  data = toks_nostop_feats,
                   pre_trained = cr_glove_subset,
                   transform = TRUE, transform_matrix = cr_transform,
-                  bootstrap = TRUE, num_bootstraps = 10,
+                  bootstrap = TRUE, num_bootstraps = 100,
                   permute = TRUE, num_permutations = 100,
                   window = 6, case_insensitive = TRUE,
                   verbose = FALSE)
 ```
 
-    ##     coefficient normed.estimate  std.error p.value
-    ## 1 nominate_dim1       0.6720702 0.06397647       0
+    ##     coefficient normed.estimate  std.error  lower.ci  upper.ci p.value
+    ## 1 nominate_dim1       0.6640346 0.07038282 0.5523477 0.7860009       0
 
 ``` r
 # look at percentiles of nominate
@@ -821,32 +838,32 @@ rbind(head(percentile_sim[["reform"]], 5),tail(percentile_sim[["reform"]], 5))
 ```
 
     ##    target feature     value
-    ## 1      5%  reform 0.6645026
-    ## 2     10%  reform 0.6598026
-    ## 3     15%  reform 0.6557875
-    ## 4     20%  reform 0.6532968
-    ## 5     25%  reform 0.6501394
-    ## 15    75%  reform 0.5045321
-    ## 16    80%  reform 0.4909143
-    ## 17    85%  reform 0.4841337
-    ## 18    90%  reform 0.4787336
-    ## 19    95%  reform 0.4735839
+    ## 1      5%  reform 0.6685867
+    ## 2     10%  reform 0.6637985
+    ## 3     15%  reform 0.6596817
+    ## 4     20%  reform 0.6571185
+    ## 5     25%  reform 0.6538607
+    ## 15    75%  reform 0.5015567
+    ## 16    80%  reform 0.4873665
+    ## 17    85%  reform 0.4803103
+    ## 18    90%  reform 0.4746953
+    ## 19    95%  reform 0.4693446
 
 ``` r
 rbind(head(percentile_sim[["enforce"]], 5),tail(percentile_sim[["enforce"]], 5))
 ```
 
     ##    target feature     value
-    ## 20     5% enforce 0.4558998
-    ## 21    10% enforce 0.4695425
-    ## 22    15% enforce 0.4797996
-    ## 23    20% enforce 0.4856559
-    ## 24    25% enforce 0.4926141
-    ## 34    75% enforce 0.6294170
-    ## 35    80% enforce 0.6346377
-    ## 36    85% enforce 0.6369822
-    ## 37    90% enforce 0.6387348
-    ## 38    95% enforce 0.6403148
+    ## 20     5% enforce 0.4588883
+    ## 21    10% enforce 0.4729510
+    ## 22    15% enforce 0.4835118
+    ## 23    20% enforce 0.4895358
+    ## 24    25% enforce 0.4966872
+    ## 34    75% enforce 0.6337590
+    ## 35    80% enforce 0.6386407
+    ## 36    85% enforce 0.6408066
+    ## 37    90% enforce 0.6424128
+    ## 38    95% enforce 0.6438501
 
 # Local GloVe and transformation matrix
 
@@ -854,9 +871,9 @@ If (a) you have a large enough corpus to train a full GloVe embeddings
 model and (b) your corpus is distinctive in some way –e.g. a collection
 of articles from scientific journals–, then you may want to consider
 estimating your own set of embeddings and transformation matrix
-–otherwise you should be good to go using GloVe pre-trained
-embeddings. The first step is to estimate GloVe embeddings on the full
-corpus which you will then use as your pre-trained embeddings.
+–otherwise you should be good to go using GloVe pre-trained embeddings.
+The first step is to estimate GloVe embeddings on the full corpus which
+you will then use as your pre-trained embeddings.
 
 ## Estimate GloVe embeddings
 
@@ -871,8 +888,8 @@ library(text2vec)
 # estimate glove model
 #---------------------------------
 
-# construct the feature co-occurrence matrix for our toks object (see above)
-toks_fcm <- fcm(toks, context = "window", window = 6, count = "frequency", tri = FALSE) # important to set tri = FALSE
+# construct the feature co-occurrence matrix for our toks_nostop_feats object (see above)
+toks_fcm <- fcm(toks_nostop_feats, context = "window", window = 6, count = "frequency", tri = FALSE) # important to set tri = FALSE
 
 # estimate glove model using text2vec
 glove <- GlobalVectors$new(rank = 300, 
@@ -883,16 +900,16 @@ wv_main <- glove$fit_transform(toks_fcm, n_iter = 10,
                                n_threads = 2) # set to 'parallel::detectCores()' to use all available cores
 ```
 
-    ## INFO  [17:45:37.272] epoch 1, loss 0.2267 
-    ## INFO  [17:45:39.045] epoch 2, loss 0.0768 
-    ## INFO  [17:45:40.946] epoch 3, loss 0.0498 
-    ## INFO  [17:45:42.742] epoch 4, loss 0.0375 
-    ## INFO  [17:45:44.576] epoch 5, loss 0.0303 
-    ## INFO  [17:45:46.374] epoch 6, loss 0.0256 
-    ## INFO  [17:45:48.153] epoch 7, loss 0.0223 
-    ## INFO  [17:45:50.002] epoch 8, loss 0.0198 
-    ## INFO  [17:45:51.735] epoch 9, loss 0.0178 
-    ## INFO  [17:45:53.428] epoch 10, loss 0.0162
+    ## INFO  [13:48:46.899] epoch 1, loss 0.2268 
+    ## INFO  [13:48:47.904] epoch 2, loss 0.0768 
+    ## INFO  [13:48:48.896] epoch 3, loss 0.0497 
+    ## INFO  [13:48:49.878] epoch 4, loss 0.0375 
+    ## INFO  [13:48:50.870] epoch 5, loss 0.0303 
+    ## INFO  [13:48:51.856] epoch 6, loss 0.0256 
+    ## INFO  [13:48:52.833] epoch 7, loss 0.0223 
+    ## INFO  [13:48:53.808] epoch 8, loss 0.0198 
+    ## INFO  [13:48:54.772] epoch 9, loss 0.0178 
+    ## INFO  [13:48:55.748] epoch 10, loss 0.0163
 
 ``` r
 wv_context <- glove$components
@@ -902,7 +919,7 @@ local_glove <- wv_main + t(wv_context) # word vectors
 find_nns(local_glove['immigration',], pre_trained = local_glove, N = 5, candidates = feats)
 ```
 
-    ## [1] "immigration" "bill"        "people"      "law"         "congress"
+    ## [1] "immigration" "president"   "bill"        "law"         "congress"
 
 ## Estimating the transformation matrix
 
@@ -943,8 +960,8 @@ immig_wv_local <- colMeans(immig_dem_local)
 find_nns(immig_wv_local, pre_trained = local_glove, N = 10, candidates = immig_dem_local@features)
 ```
 
-    ##  [1] "immigration" "bill"        "people"      "law"         "reform"     
-    ##  [6] "illegal"     "can"         "system"      "president"   "country"
+    ##  [1] "immigration" "bill"        "illegal"     "country"     "states"     
+    ##  [6] "law"         "president"   "united"      "reform"      "people"
 
 ``` r
 # we can also compare to corresponding pre-trained embedding
@@ -952,7 +969,7 @@ sim2(x = matrix(immig_wv_local, nrow = 1), y = matrix(local_glove['immigration',
 ```
 
     ##           [,1]
-    ## [1,] 0.7849437
+    ## [1,] 0.7926645
 
 # Other
 
@@ -963,13 +980,12 @@ be useful to (1) compare two corpora along many features simultaneously
 and/or (2) estimate context-specific feature embeddings that can
 subsequently be fed into a downstream classification task. We’ll focus
 on (1) here. Using the same tokenized `cr_sample_corpus` we start by
-building a feature-co-occurrence matrix for each group
-(party).
+building a feature-co-occurrence matrix for each group (party).
 
 ``` r
 # create feature co-occurrence matrix for each party (set tri = FALSE to work with fem)
-fcm_D <- fcm(toks[docvars(toks, 'party') == "D",], context = "window", window = 6, count = "frequency", tri = FALSE)
-fcm_R <- fcm(toks[docvars(toks, 'party') == "R",], context = "window", window = 6, count = "frequency", tri = FALSE)
+fcm_D <- fcm(toks_nostop_feats[docvars(toks_nostop_feats, 'party') == "D",], context = "window", window = 6, count = "frequency", tri = FALSE)
+fcm_R <- fcm(toks_nostop_feats[docvars(toks_nostop_feats, 'party') == "R",], context = "window", window = 6, count = "frequency", tri = FALSE)
 ```
 
 Given an `fcm` for each group, we can proceed to compute a corresponding
@@ -1029,9 +1045,9 @@ tail(feat_comp)
 ## Embedding full (short) documents
 
 In all the examples above we’ve focused on contexts defined as “windows”
-around a target word. In [Rodriguez et al.
-(2021)](https://github.com/prodriguezsosa/EmbeddingRegression) we show
-that the same procedure works well on contexts defined as the full
+around a target word. In [Rodriguez et
+al. (2021)](https://github.com/prodriguezsosa/EmbeddingRegression) we
+show that the same procedure works well on contexts defined as the full
 document, as long as the full document is relatively short –exactly what
 threshold to use to define “short” is still an open question. Responses
 to open-ended survey questions is a good example (discussed in the
@@ -1041,18 +1057,18 @@ indicate that the full document should be used as the DV.
 
 ``` r
 # identify documents with fewer than 100 words
-short_toks <- toks[sapply(toks, length) <= 100,]
+short_toks <- toks_nostop_feats[sapply(toks_nostop_feats, length) <= 100,]
 
 # run regression on full documents
 model3 <- conText(formula = . ~ party,
                   data = short_toks,
                   pre_trained = cr_glove_subset,
                   transform = TRUE, transform_matrix = cr_transform,
-                  bootstrap = TRUE, num_bootstraps = 10,
+                  bootstrap = TRUE, num_bootstraps = 100,
                   permute = TRUE, num_permutations = 100,
                   window = 6, case_insensitive = TRUE,
                   verbose = FALSE)
 ```
 
-    ##   coefficient normed.estimate  std.error p.value
-    ## 1     party_R       0.7175612 0.06838156    0.03
+    ##   coefficient normed.estimate  std.error lower.ci  upper.ci p.value
+    ## 1     party_R       0.6628125 0.07988763 0.555887 0.8079034       0

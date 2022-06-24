@@ -18,6 +18,7 @@
 #' @param bootstrap (logical) if TRUE, use bootstrapping -- sample from texts with replacement and
 #' re-run regression on each sample. Required to get std. errors.
 #' @param num_bootstraps (numeric) number of bootstraps to use.
+#' @param confidence_level (numeric in (0,1)) confidence level e.g. 0.95
 #' @param stratify (logical) if TRUE, stratify by discrete covariates when bootstrapping.
 #' @param permute (logical) if TRUE, compute empirical p-values using permutation test
 #' @param num_permutations (numeric) number of permutations to use
@@ -33,6 +34,8 @@
 #'  \item{`coefficient`}{(character) name of (covariate) coefficient.}
 #'  \item{`value`}{(numeric) norm of the corresponding beta coefficient.}
 #'  \item{`std.error`}{(numeric) (if bootstrap = TRUE) std. error of the norm of the beta coefficient.}
+#'  \item{`lower.ci`}{(numeric) (if bootstrap = TRUE) lower bound of the confidence interval.}
+#'  \item{`upper.ci`}{(numeric) (if bootstrap = TRUE) upper bound of the confidence interval.}
 #'  \item{`p.value`}{(numeric) (if permute = TRUE) empirical p.value of the norm of the coefficient.}
 #'  }
 #'
@@ -52,7 +55,8 @@
 #'                  data = toks,
 #'                  pre_trained = cr_glove_subset,
 #'                  transform = TRUE, transform_matrix = cr_transform,
-#'                  bootstrap = TRUE, num_bootstraps = 10,
+#'                  bootstrap = TRUE, num_bootstraps = 100,
+#'                  confidence_level = 0.95,
 #'                  stratify = FALSE,
 #'                  permute = TRUE, num_permutations = 100,
 #'                  window = 6, case_insensitive = TRUE,
@@ -65,14 +69,17 @@
 #' # of "immigration" for Republican party speeches
 #'
 #' # (normed) coefficient table
-#' model1@normed_cofficients
+#' model1@normed_coefficients
 #'
-conText <- function(formula, data, pre_trained, transform = TRUE, transform_matrix, bootstrap = TRUE, num_bootstraps = 100, stratify = FALSE, permute = TRUE, num_permutations = 100, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
+conText <- function(formula, data, pre_trained, transform = TRUE, transform_matrix, bootstrap = TRUE, num_bootstraps = 100, confidence_level = 0.95, stratify = FALSE, permute = TRUE, num_permutations = 100, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
 
   # initial checks
   if(class(data)[1] != "tokens") stop("data must be of class tokens", call. = FALSE)
   if(!transform && !is.null(transform_matrix)) warning('Warning: transform = FALSE means transform_matrix argument was ignored. If that was not your intention, use transform = TRUE.', call. = FALSE)
   if(any(grepl("factor\\(|\\)", formula))) stop('It seems you are using factor() in "formula" to create a factor a variable. \n Please create it directly in "data" and re-run conText.', call. = FALSE) # pre-empt users using lm type notation
+  if(bootstrap && (confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
+  if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100', call. = FALSE) # check num_bootstraps >= 100
+
 
   # extract dependent variable
   target <- as.character(formula[[2]])
@@ -157,7 +164,8 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
     normed_betas <- lapply(bootstrap_out, '[[', 'normed_betas') %>% do.call(rbind,.)
     mean_normed_betas <- apply(normed_betas, 2, mean)
     stderror_normed_betas <- apply(normed_betas, 2, sd)
-    bs_normed_betas <- dplyr::tibble(coefficient = names(mean_normed_betas), normed.estimate = unname(mean_normed_betas), std.error = unname(stderror_normed_betas))
+    ci_normed_betas <- apply(normed_betas, 2, function(x) x[order(x)])[c(round((1-confidence_level)*num_bootstraps),round(confidence_level*num_bootstraps)),] %>% as.matrix()
+    bs_normed_betas <- dplyr::tibble(coefficient = names(mean_normed_betas), normed.estimate = unname(mean_normed_betas), std.error = unname(stderror_normed_betas), lower.ci = unname(ci_normed_betas[1,]), upper.ci = unname(ci_normed_betas[2,]))
 
     # output
     beta_coefficients <- bs_betas
@@ -196,7 +204,7 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
   # -------------------
   result <- build_conText(Class = 'conText',
                           x_conText = beta_coefficients,
-                          normed_cofficients = norm_tibble,
+                          normed_coefficients = norm_tibble,
                           features = toks_dem@features,
                           Dimnames = list(
                             rows = rownames(beta_coefficients),

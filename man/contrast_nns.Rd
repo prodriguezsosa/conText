@@ -11,7 +11,8 @@ contrast_nns(
   transform = TRUE,
   transform_matrix = NULL,
   bootstrap = TRUE,
-  num_bootstraps = 20,
+  num_bootstraps = 100,
+  confidence_level = 0.95,
   permute = TRUE,
   num_permutations = 100,
   candidates = NULL,
@@ -39,6 +40,8 @@ re-estimate cosine ratios for each sample. Required to get std. errors.}
 
 \item{num_bootstraps}{(numeric) - number of bootstraps to use}
 
+\item{confidence_level}{(numeric in (0,1)) confidence level e.g. 0.95}
+
 \item{permute}{(logical) - if TRUE, compute empirical p-values using a permutation test}
 
 \item{num_permutations}{(numeric) - number of permutations to use}
@@ -56,6 +59,8 @@ a data.frame with following columns:
 \item{\code{feature}}{(character) vector of feature terms corresponding to the nearest neighbors.}
 \item{\code{value}}{(numeric) ratio of cosine similarities. Average over bootstrapped samples if bootstrap = TRUE.}
 \item{\code{std.error}}{(numeric) std. error of the ratio of cosine similarties. Column is dropped if bootsrap = FALSE.}
+\item{\code{lower.ci}}{(numeric) (if bootstrap = TRUE) lower bound of the confidence interval.}
+\item{\code{upper.ci}}{(numeric) (if bootstrap = TRUE) upper bound of the confidence interval.}
 \item{\code{p.value}}{(numeric) empirical p-value. Column is dropped if permute = FALSE.}
 }
 }
@@ -79,9 +84,12 @@ party_nns <- contrast_nns(x = immig_toks,
 groups = docvars(immig_toks, 'party'),
 pre_trained = cr_glove_subset,
 transform = TRUE, transform_matrix = cr_transform,
-bootstrap = TRUE, num_bootstraps = 10,
+bootstrap = TRUE, num_bootstraps = 100,
+confidence_level = 0.95,
 permute = TRUE, num_permutations = 100,
 candidates = NULL, N = 20,
 verbose = FALSE)
+
+head(party_nns)
 }
 \keyword{contrast_nns}

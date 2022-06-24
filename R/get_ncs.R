@@ -13,6 +13,7 @@
 #' re-estimate cosine similarities for each sample. Required to get std. errors.
 #' If `groups` defined, sampling is automatically stratified.
 #' @param num_bootstraps (integer) number of bootstraps to use.
+#' @param confidence_level (numeric in (0,1)) confidence level e.g. 0.95
 #'
 #' @return a `data.frame` or list of data.frames (one for each target)
 #' with the following columns:
@@ -24,6 +25,8 @@
 #'  \item{`value`}{(numeric) cosine similarity between `x` and context.}
 #'  \item{`std.error`}{(numeric) std. error of the similarity value.
 #'  Column is dropped if bootstrap = FALSE.}
+#'  \item{`lower.ci`}{(numeric) (if bootstrap = TRUE) lower bound of the confidence interval.}
+#'  \item{`upper.ci`}{(numeric) (if bootstrap = TRUE) upper bound of the confidence interval.}
 #'  }
 #'
 #' @export
@@ -44,12 +47,13 @@
 #' set.seed(2021L)
 #' immig_party_ncs <- get_ncs(x = immig_toks,
 #'                            N = 10,
-#'                            groups = docvars(immig_toks, 'party'),
+#'                            groups = docvars(immig_toks)$party,
 #'                            pre_trained = cr_glove_subset,
 #'                            transform = TRUE,
 #'                            transform_matrix = cr_transform,
 #'                            bootstrap = TRUE,
-#'                            num_bootstraps = 10,
+#'                            num_bootstraps = 100,
+#'                            confidence_level = 0.95,
 #'                            as_list = TRUE)
 #'
 #' # nearest neighbors of "immigration" for Republican party
@@ -61,42 +65,51 @@ get_ncs <- function(x,
                     transform = TRUE,
                     transform_matrix,
                     bootstrap = TRUE,
-                    num_bootstraps = 10,
+                    num_bootstraps = 100,
+                    confidence_level = 0.95,
                     as_list = TRUE) {
 
   # initial checks
+  if(bootstrap && (confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
+  if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100', call. = FALSE) # check num_bootstraps >= 100
   if(class(x)[1] != "tokens") stop("data must be of class tokens", call. = FALSE)
 
   # add grouping variable to docvars
   if(!is.null(groups)) quanteda::docvars(x) <- NULL; quanteda::docvars(x, "group") <- groups
 
+  # create document-feature matrix
+  x_dfm <- quanteda::dfm(x, tolower = FALSE)
+
+  # compute document-embedding matrix
+  x_dem <- dem(x = x_dfm, pre_trained = pre_trained, transform = transform, transform_matrix = transform_matrix, verbose = FALSE)
+  x_contexts <- tokens_subset(x, docid(x) %in% x_dem@Dimnames$docs)
+
   # if bootstrap
   if(bootstrap){
+    cat('starting bootstraps \n')
     ncsdf_bs <- replicate(num_bootstraps,
-                          ncs_bootstrap(x = x,
-                                        groups = groups,
-                                        pre_trained = pre_trained,
-                                        transform = transform,
-                                        transform_matrix = transform_matrix,
+                          ncs_bootstrap(x = x_dem,
+                                        x_contexts = x_contexts,
+                                        by = groups,
                                         as_list = FALSE),
                           simplify = FALSE)
     result <- do.call(rbind, ncsdf_bs) %>%
       dplyr::group_by(target, context) %>%
+      dplyr::mutate(lower.ci = dplyr::nth(value, round((1-confidence_level)*num_bootstraps), order_by = value),
+                    upper.ci = dplyr::nth(value, round(confidence_level*num_bootstraps), order_by = value)) %>%
       dplyr::summarise(std.error = sd(value),
                        value = mean(value),
+                       lower.ci = mean(lower.ci),
+                       upper.ci = mean(upper.ci),
                        .groups = 'keep') %>%
       dplyr::group_by(target) %>%
       dplyr::slice_max(order_by = value, n = N) %>%
       dplyr::mutate(rank = 1:dplyr::n()) %>%
       dplyr::ungroup() %>%
-      dplyr::select('target', 'context', 'rank', 'value', 'std.error')
+      dplyr::select('target', 'context', 'rank', 'value', 'std.error', 'lower.ci', 'upper.ci')
+
+    cat('done with bootstraps \n')
   }else{
-
-    # create document-feature matrix
-    x_dfm <- quanteda::dfm(x, tolower = FALSE)
-
-    # compute document-embedding matrix
-    x_dem <- dem(x = x_dfm, pre_trained = pre_trained, transform = transform, transform_matrix = transform_matrix, verbose = FALSE)
 
     # aggregate dems by group var
     if(!is.null(groups)){
@@ -111,41 +124,31 @@ get_ncs <- function(x,
   }
 
   # if !as_list return a list object with an item for each target data.frame
-  if(as_list) result <- lapply(unique(result$target), function(i) result[result$target == i,] %>% dplyr::mutate(target = as.character(target))) %>% setNames(unique(result$target))
-
+  if(as_list){
+    if(is.null(groups)) cat("NOTE: as_list cannot be TRUE if groups is NULL, proceeding with as_list = FALSE")
+    else result <- lapply(unique(result$target), function(i) result[result$target == i,] %>% dplyr::mutate(target = as.character(target))) %>% setNames(unique(result$target))
+  }
   return(result)
 }
 
 # sub-function
-ncs_bootstrap <- function(x,
-                          groups = NULL,
-                          pre_trained,
-                          transform = TRUE,
-                          transform_matrix,
+ncs_bootstrap <- function(x = NULL,
+                          x_contexts = NULL,
+                          by = NULL,
                           as_list = FALSE){
 
-  # sample tokens with replacement
-  if(!is.null(groups)) {
-    x_sample <- quanteda::tokens_sample(x = x, size = table(groups), replace = TRUE, by = groups)
-  } else {
-    x_sample <- quanteda::tokens_sample(x = x, size = quanteda::ndoc(x), replace = TRUE)
-  }
-
-  # create document-feature matrix
-  x_sample_dfm <- quanteda::dfm(x_sample, tolower = FALSE)
-
-  # compute document-embedding matrix
-  x_sample_dem <- dem(x = x_sample_dfm, pre_trained = pre_trained, transform = transform, transform_matrix = transform_matrix, verbose = FALSE)
+  # sample dems with replacement
+  x_sample_dem <- dem_sample(x = x, size = nrow(x), replace = TRUE, by = by)
 
   # aggregate dems by group var if defined
-  if(!is.null(groups)){
+  if(!is.null(by)){
     wvs <- dem_group(x = x_sample_dem, groups = x_sample_dem@docvars$group)
   } else {
     wvs <- matrix(colMeans(x_sample_dem), ncol = ncol(x_sample_dem))
   }
 
   # find nearest contexts
-  result <- ncs(x = wvs, contexts_dem = x_sample_dem, contexts = x, N = Inf, as_list = FALSE)
+  result <- ncs(x = wvs, contexts_dem = x, contexts = x_contexts, N = Inf, as_list = as_list)
 
   return(result)
 

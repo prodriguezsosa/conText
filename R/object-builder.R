@@ -48,18 +48,18 @@ build_fem <- function(Class = 'fem',
 #'
 #' @param Class defines the class of this object (fixed)
 #' @param x_conText a `dgCMatrix class` matrix
-#' @param normed_cofficients a data.frame withe the normed coefficients and
+#' @param normed_coefficients a data.frame withe the normed coefficients and
 #' other statistics
 #' @param features features used in computing the embeddings
 #' @param Dimnames row (features) and columns (NULL) names
 build_conText <- function(Class = 'conText',
                       x_conText,
-                      normed_cofficients = data.frame(),
+                      normed_coefficients = data.frame(),
                       features = character(),
                       Dimnames = list()){
   result <-  new(Class = Class,
                  as(x_conText, "dgCMatrix"),
-                 normed_cofficients = normed_cofficients,
+                 normed_coefficients = normed_coefficients,
                  features = features,
                  Dimnames = Dimnames)
 

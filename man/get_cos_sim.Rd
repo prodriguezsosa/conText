@@ -13,7 +13,8 @@ get_cos_sim(
   transform = TRUE,
   transform_matrix,
   bootstrap = TRUE,
-  num_bootstraps = 10,
+  num_bootstraps = 100,
+  confidence_level = 0.95,
   stem = FALSE,
   as_list = TRUE
 )
@@ -41,6 +42,8 @@ If \code{groups} defined, sampling is automatically stratified.}
 
 \item{num_bootstraps}{(integer) number of bootstraps to use.}
 
+\item{confidence_level}{(numeric in (0,1)) confidence level e.g. 0.95}
+
 \item{stem}{(logical) - If TRUE, both \code{features} and \code{rownames(pre_trained)}
 are stemmed and average cosine similarities are reported.
 We recommend you remove misspelled words from  \code{pre_trained} as these can
@@ -61,6 +64,8 @@ the \code{features} argument.}
 and feature. Average over bootstrapped samples if bootstrap = TRUE.}
 \item{\code{std.error}}{(numeric) std. error of the similarity value.
 Column is dropped if bootstrap = FALSE.}
+\item{\code{lower.ci}}{(numeric) (if bootstrap = TRUE) lower bound of the confidence interval.}
+\item{\code{upper.ci}}{(numeric) (if bootstrap = TRUE) upper bound of the confidence interval.}
 }
 }
 \description{
@@ -86,9 +91,10 @@ get_cos_sim(x = immig_toks,
             features = c("reform", "enforce"),
             pre_trained = cr_glove_subset,
             transform = TRUE,
-           transform_matrix = cr_transform,
+            transform_matrix = cr_transform,
             bootstrap = TRUE,
-            num_bootstraps = 10,
+            num_bootstraps = 100,
+            confidence_level = 0.95,
             stem = TRUE,
             as_list = FALSE)
 }

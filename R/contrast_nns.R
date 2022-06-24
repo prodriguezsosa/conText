@@ -11,6 +11,7 @@
 #' @param bootstrap (logical) if TRUE, use bootstrapping -- sample from texts with replacement and
 #' re-estimate cosine ratios for each sample. Required to get std. errors.
 #' @param num_bootstraps (numeric) - number of bootstraps to use
+#' @param confidence_level (numeric in (0,1)) confidence level e.g. 0.95
 #' @param permute (logical) - if TRUE, compute empirical p-values using a permutation test
 #' @param num_permutations (numeric) - number of permutations to use
 #' @param candidates (character) vector of candidate features for nearest neighbors
@@ -21,6 +22,8 @@
 #'  \item{`feature`}{(character) vector of feature terms corresponding to the nearest neighbors.}
 #'  \item{`value`}{(numeric) ratio of cosine similarities. Average over bootstrapped samples if bootstrap = TRUE.}
 #'  \item{`std.error`}{(numeric) std. error of the ratio of cosine similarties. Column is dropped if bootsrap = FALSE.}
+#'  \item{`lower.ci`}{(numeric) (if bootstrap = TRUE) lower bound of the confidence interval.}
+#'  \item{`upper.ci`}{(numeric) (if bootstrap = TRUE) upper bound of the confidence interval.}
 #'  \item{`p.value`}{(numeric) empirical p-value. Column is dropped if permute = FALSE.}
 #'  }
 #'
@@ -41,13 +44,18 @@
 #' groups = docvars(immig_toks, 'party'),
 #' pre_trained = cr_glove_subset,
 #' transform = TRUE, transform_matrix = cr_transform,
-#' bootstrap = TRUE, num_bootstraps = 10,
+#' bootstrap = TRUE, num_bootstraps = 100,
+#' confidence_level = 0.95,
 #' permute = TRUE, num_permutations = 100,
 #' candidates = NULL, N = 20,
 #' verbose = FALSE)
-contrast_nns <- function(x, groups = NULL, pre_trained = NULL, transform = TRUE, transform_matrix = NULL, bootstrap = TRUE, num_bootstraps = 20, permute = TRUE, num_permutations = 100, candidates = NULL, N = 20, verbose = TRUE){
+#'
+#' head(party_nns)
+contrast_nns <- function(x, groups = NULL, pre_trained = NULL, transform = TRUE, transform_matrix = NULL, bootstrap = TRUE, num_bootstraps = 100, confidence_level = 0.95, permute = TRUE, num_permutations = 100, candidates = NULL, N = 20, verbose = TRUE){
 
   # checks
+  if(bootstrap && (confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
+  if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100', call. = FALSE) # check num_bootstraps >= 100
   if(class(x)[1] != "tokens") stop("data must be of class tokens")
   groupvals <- unique(groups)
   if(length(groupvals)!=2) stop("groups must be binary")
@@ -75,20 +83,23 @@ contrast_nns <- function(x, groups = NULL, pre_trained = NULL, transform = TRUE,
     bs_sim_out1 <- lapply(bootstrap_out, '[[', 'cos_sim1') %>% do.call(rbind,.)
     sim_out1 <- apply(bs_sim_out1, 2, mean)
     stderror_sim_out1 <- apply(bs_sim_out1, 2, sd)
-    nns1 <- dplyr::tibble(feature = names(sim_out1), value = unname(sim_out1), std.error = unname(stderror_sim_out1))
+    ci_sim_out1 <- apply(bs_sim_out1, 2, function(x) x[order(x)])[c(round((1-confidence_level)*num_bootstraps),round(confidence_level*num_bootstraps)),]
+    nns1 <- dplyr::tibble(feature = names(sim_out1), value = unname(sim_out1), std.error = unname(stderror_sim_out1), lower.ci = unname(ci_sim_out1[1,]), upper.ci = unname(ci_sim_out1[2,]))
 
     # sim_out2
     bs_sim_out2 <- lapply(bootstrap_out, '[[', 'cos_sim2') %>% do.call(rbind,.)
     sim_out2 <- apply(bs_sim_out2, 2, mean)
     stderror_sim_out2 <- apply(bs_sim_out2, 2, sd)
-    nns2 <- dplyr::tibble(feature = names(sim_out2), value = unname(sim_out2), std.error = unname(stderror_sim_out2))
+    ci_sim_out2 <- apply(bs_sim_out2, 2, function(x) x[order(x)])[c(round((1-confidence_level)*num_bootstraps),round(confidence_level*num_bootstraps)),]
+    nns2 <- dplyr::tibble(feature = names(sim_out2), value = unname(sim_out2), std.error = unname(stderror_sim_out2), lower.ci = unname(ci_sim_out2[1,]), upper.ci = unname(ci_sim_out2[2,]))
 
     # sim_ratio
     bs_sim_ratio <- lapply(bootstrap_out, '[[', 'sim_ratio') %>% do.call(rbind,.)
     sim_ratio <- apply(bs_sim_ratio, 2, mean)
     dev1 <- abs(sim_ratio - 1)
     stderror_sim_ratio <- apply(bs_sim_ratio, 2, sd)
-    nns_ratio <- dplyr::tibble(feature = names(sim_ratio), value = unname(sim_ratio), std.error = unname(stderror_sim_ratio))
+    ci_sim_ratio <- apply(bs_sim_ratio, 2, function(x) x[order(x)])[c(round((1-confidence_level)*num_bootstraps),round(confidence_level*num_bootstraps)),]
+    nns_ratio <- dplyr::tibble(feature = names(sim_ratio), value = unname(sim_ratio), std.error = unname(stderror_sim_ratio), lower.ci = unname(ci_sim_ratio[1,]), upper.ci = unname(ci_sim_ratio[2,]))
     cat('done bootstrapping \n')
 
   }else{

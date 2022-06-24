@@ -16,6 +16,7 @@
 #' re-estimate cosine similarity ratios for each sample. Required to get std. errors.
 #' If `groups` defined, sampling is automatically stratified.
 #' @param num_bootstraps (integer) number of bootstraps to use.
+#' @param confidence_level (numeric in (0,1)) confidence level e.g. 0.95
 #' @param permute (logical) if TRUE, compute empirical p-values using permutation test
 #' @param num_permutations (numeric) number of permutations to use.
 #' @param stem (logical) - whether to stem candidates when evaluating nns. Default is FALSE.
@@ -32,6 +33,8 @@
 #'  and feature. Average over bootstrapped samples if bootstrap = TRUE.}
 #'  \item{`std.error`}{(numeric) std. error of the similarity value.
 #'  Column is dropped if bootstrap = FALSE.}
+#'  \item{`lower.ci`}{(numeric) (if bootstrap = TRUE) lower bound of the confidence interval.}
+#'  \item{`upper.ci`}{(numeric) (if bootstrap = TRUE) upper bound of the confidence interval.}
 #'  \item{`p.value`}{(numeric) empirical p-value of bootstrapped ratio
 #'  of cosine similarities if permute = TRUE, if FALSE, column is dropped.}
 #'  \item{`group`}{(character) group in `groups` for which feature belongs
@@ -66,9 +69,9 @@
 #'                                  transform = TRUE,
 #'                                  transform_matrix = cr_transform,
 #'                                  bootstrap = TRUE,
-#'                                  num_bootstraps = 5,
+#'                                  num_bootstraps = 100,
 #'                                  permute = TRUE,
-#'                                  num_permutations = 5,
+#'                                  num_permutations = 10,
 #'                                  verbose = FALSE)
 #'
 #' head(immig_nns_ratio)
@@ -81,7 +84,8 @@ get_nns_ratio <- function(x,
                           transform = TRUE,
                           transform_matrix,
                           bootstrap = TRUE,
-                          num_bootstraps = 10,
+                          num_bootstraps = 100,
+                          confidence_level = 0.95,
                           permute = TRUE,
                           num_permutations = 100,
                           stem = FALSE,
@@ -89,13 +93,18 @@ get_nns_ratio <- function(x,
 
   # initial checks
   if(class(x)[1] != "tokens") stop("data must be of class tokens")
+  if(bootstrap && (confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
+  if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100', call. = FALSE) # check num_bootstraps >= 100
 
   # checks
   group_vars <- unique(groups)
   if(is.null(group_vars) | length(group_vars)!=2) stop("a binary grouping variable must be provided")
   if(!is.null(numerator)){
     if(!(numerator %in% group_vars)) stop("numerator must refer to one of the two groups in the groups argument")
-  }
+  }else{
+    numerator <- group_vars[1]
+    cat("NOTE: setting", numerator, "as the numerator", "\n")
+    }
   denominator <- setdiff(group_vars, numerator)
 
   # add grouping variable to docvars
@@ -131,22 +140,24 @@ get_nns_ratio <- function(x,
     cat('starting bootstraps \n')
     # bootstrap ratio
     nnsratiodf_bs <- replicate(num_bootstraps,
-                               nns_ratio_boostrap(x = x,
-                                       groups = groups,
+                               nns_ratio_boostrap(x = x_dem,
+                                       groups = x_dem@docvars$group,
                                        numerator = numerator,
                                        candidates = candidates,
                                        pre_trained = pre_trained,
-                                       transform = transform,
-                                       transform_matrix = transform_matrix,
                                        stem = stem),
                           simplify = FALSE)
     result <- do.call(rbind, nnsratiodf_bs) %>%
       dplyr::group_by(feature) %>%
+      dplyr::mutate(lower.ci = dplyr::nth(value, round((1-confidence_level)*num_bootstraps), order_by = value),
+                    upper.ci = dplyr::nth(value, round(confidence_level*num_bootstraps), order_by = value)) %>%
       dplyr::summarise(std.error = sd(value),
-                value = mean(value),
-                .groups = 'keep') %>%
+                       value = mean(value),
+                       lower.ci = mean(lower.ci),
+                       upper.ci = mean(upper.ci),
+                       .groups = 'keep') %>%
       dplyr::ungroup() %>%
-      dplyr::select('feature','value', 'std.error') %>%
+      dplyr::select('feature','value', 'std.error', 'lower.ci', 'upper.ci') %>%
       dplyr::filter(feature %in% union_nns) %>%
       dplyr::arrange(-value)
 
@@ -199,22 +210,13 @@ nns_ratio_boostrap <- function(x,
                          numerator = NULL,
                          candidates = character(0),
                          pre_trained = pre_trained,
-                         transform = TRUE,
-                         transform_matrix = transform_matrix,
                          stem = stem){
 
-
-  # sample tokens with replacement
-  x <- quanteda::tokens_sample(x = x, size = table(groups), replace = TRUE, by = groups)
-
-  # create document-feature matrix
-  x_dfm <- quanteda::dfm(x, tolower = FALSE)
-
-  # compute document-embedding matrix
-  x_dem <- dem(x = x_dfm, pre_trained = pre_trained, transform = transform, transform_matrix = transform_matrix, verbose = FALSE)
+  # sample dems with replacement
+  x_sample_dem <- dem_sample(x = x, size = nrow(x), replace = TRUE, by = groups)
 
   # aggregate dems by group
-  wvs <- dem_group(x = x_dem, groups = x_dem@docvars$group)
+  wvs <- dem_group(x = x_sample_dem, groups = x_sample_dem@docvars$group)
 
   # find nearest neighbors
   result <- nns_ratio(x = wvs, N = NULL, numerator = numerator, candidates = candidates, pre_trained = pre_trained, stem = stem, verbose = FALSE)

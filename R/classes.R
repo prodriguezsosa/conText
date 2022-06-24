@@ -40,7 +40,7 @@ setClass("fem",
 #' The `conText-class` is `dgCMatrix class` matrix corresponding to
 #' the beta coefficients (embeddings) with additional slots:
 #'
-#' @slot normed_cofficients `normed_betas` a data.frame containing the following variables:
+#' @slot normed_coefficients `normed_betas` a data.frame containing the following variables:
 #' \describe{
 #' \item{`Coefficient`}{(character) non-intercept coefficient names}
 #' \item{`Normed_Estimate`}{(numeric) norm of non-intercept beta coefficients}
@@ -53,11 +53,11 @@ setClass("fem",
 #' @keywords internal conText
 setClass("conText",
          slots = c(
-           normed_cofficients = "data.frame",
+           normed_coefficients = "data.frame",
            features = "character"),
          prototype = list(Dim = integer(2),
                           Dimnames = list(rows = character(), columns = NULL),
-                          normed_cofficients = data.frame(row.names = integer()),
+                          normed_coefficients = data.frame(row.names = integer()),
                           features = character()),
          contains = "dgCMatrix")
 

@@ -36,7 +36,7 @@
 dem_group <- function(x, groups = NULL){
 
   # check grouping variable is of appropriate length
-  if(length(groups) != nrow(x)) stop("grouping variable must be of same length as the number of rows in the dem provided")
+  if(length(groups) != nrow(x)) stop("grouping variable must be of same length as the number of rows in the dem provided", call. = FALSE)
 
   # group counts
   groups_count = table(groups)

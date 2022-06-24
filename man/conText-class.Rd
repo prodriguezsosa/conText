@@ -11,7 +11,7 @@ the beta coefficients (embeddings) with additional slots:
 \section{Slots}{
 
 \describe{
-\item{\code{normed_cofficients}}{\code{normed_betas} a data.frame containing the following variables:
+\item{\code{normed_coefficients}}{\code{normed_betas} a data.frame containing the following variables:
 \describe{
 \item{\code{Coefficient}}{(character) non-intercept coefficient names}
 \item{\code{Normed_Estimate}}{(numeric) norm of non-intercept beta coefficients}

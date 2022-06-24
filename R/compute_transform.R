@@ -52,7 +52,7 @@ compute_transform <- function(x, pre_trained, weighting = 500){
   # extract feature frequency from fcm object
   feature_frequency <- x@meta$object$margin
   feature_frequency <- feature_frequency[intersect(names(feature_frequency), attr(context_embeddings, 'features'))]
-  if(weighting == 'log') feature_frequency <- feature_frequency[feature_frequency >= 1] # avoig negatives when taking logs
+  if(weighting == 'log') feature_frequency <- feature_frequency[feature_frequency >= 1] # avoid negatives when taking logs
 
   # apply weighting if given
   if(is.numeric(weighting)) feature_frequency <- feature_frequency[feature_frequency >= weighting]

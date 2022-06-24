@@ -1,5 +1,5 @@
 Package: conText
-Version: 1.1.0
+Version: 1.3.0
 Title: 'a la Carte' on Text (ConText) Embedding Regression
 Description: A fast, flexible and transparent framework to estimate context-specific word and short document embeddings using the 'a la carte' 
     embeddings approach developed by Khodak et al. (2018) <arXiv:1805.05388> and evaluate hypotheses about covariate effects on embeddings using 
@@ -31,7 +31,7 @@ Encoding: UTF-8
 LazyData: true
 VignetteBuilder: knitr
 Language: en-US
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.0
 Roxygen: list(markdown = TRUE)
 Suggests: 
     SnowballC (>= 0.7.0),
