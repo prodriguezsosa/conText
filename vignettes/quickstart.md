@@ -185,6 +185,12 @@ sample corpus. To get a single corpus-wide ALC embedding for
 “immigration”, we can simply take the column-average of the
 single-instance ALC embeddings.
 
+``` r
+# to get a single "corpus-wide" embedding, take the column average
+immig_wv <- matrix(colMeans(immig_dem), ncol = ncol(immig_dem)) %>%  `rownames<-`("immigration")
+dim(immig_wv)
+```
+
     ## [1]   1 300
 
 However, we are usually interested in exploring semantic differences
@@ -315,6 +321,7 @@ underlying contexts.
 immig_ncs <- ncs(x = immig_wv_party, contexts_dem = immig_dem, contexts = immig_toks, N = 5, as_list = TRUE)
 
 # nearest contexts to Republican embedding of target term
+# note, these may included contexts originating from Democrat speakers
 immig_ncs[["R"]]
 ```
 
@@ -326,6 +333,13 @@ immig_ncs[["R"]]
     ## 3 R      immigration law prior illegal immigration reform responsib…     3 0.785
     ## 4 R      good thing immigration illegal immigration legal mean mean…     4 0.773
     ## 5 R      going cost hardworking taxpayers america suggest can good …     5 0.758
+
+``` r
+# you can limit candidate contexts to those of a specific party
+immig_ncs <- ncs(x = immig_wv_party["R",], contexts_dem = immig_dem[immig_dem@docvars$party == "R",], contexts = immig_toks, N = 5, as_list = TRUE)
+```
+
+    ## although as_list = TRUE, will return a single data.frame as there is only one word vector
 
 ## Stemming
 
@@ -463,14 +477,14 @@ functions –`nns()`, `cos_sim()`, `nns_ratio()` and `ncs()`– described
 above has its corresponding wrapper function.
 
 An key advantage of the wrapper functions is that they make it easy to
-obtain standard errors around the sample statistics of interest via
-*bootstrapping*. Bootstrapping works by sampling with replacement
-documents from our tokenized corpus of contexts (within group if the
-argument `groups` is specified) and going through the above steps for
-each of our exploratory analysis functions (i.e. computing an ‘a la
-carte’ embedding on each bootstrapped sample, then computing the cosine
-similarities etc.). Let’s start with `conText::get_nns()`, a wrapper
-function for `nns()`.
+obtain standard errors and confidence intervals around the sample
+statistics of interest via *bootstrapping*. Bootstrapping works by
+sampling with replacement documents from our tokenized corpus of
+contexts (within group if the argument `groups` is specified) and going
+through the above steps for each of our exploratory analysis functions
+(i.e. computing an ‘a la carte’ embedding on each bootstrapped sample,
+then computing the cosine similarities etc.). Let’s start with
+`conText::get_nns()`, a wrapper function for `nns()`.
 
 ### Nearest neighbors
 
@@ -483,9 +497,10 @@ full set of (tokenized) contexts are aggregated into one single
 embedding. To estimate standard errors for the cosine similarities
 between each party’s embedding and their corresponding nearest neighbors
 we set `bootstrap = TRUE` and define the desired number of bootstraps
-with `num_bootstrap`. Notice the output now has an additional column
-`std.error`. This is simply the standard deviation of the sampling
-distribution of cosine similarities obtained via bootstrapping. Note,
+with `num_bootstrap`. Notice the output now has three additional
+columns: `std.error` –the standard deviation of the sampling
+distribution of cosine similarities obtained via bootstrapping–,
+`lower.ci` and `upper.ci` –the bootstrapped confidence interval. Note,
 values may differ slightly to the step-by-step process outlined above as
 they represent averages over bootstrapped samples.
 
@@ -503,6 +518,7 @@ immig_party_nns <- get_nns(x = immig_toks, N = 10,
         transform_matrix = cr_transform,
         bootstrap = TRUE,
         num_bootstraps = 100, 
+        confidence_level = 0.95,
         as_list = TRUE)
 ```
 
@@ -645,7 +661,7 @@ visualizations of the same results using the `horizontal` argument.
 plot_nns_ratio(x = immig_nns_ratio, alpha = 0.01, horizontal = TRUE)
 ```
 
-![](/private/var/folders/f6/yb9q7mnn2yv1k1bl9vqxb09h0000gn/T/Rtmp69tzIb/preview-f38d69ef9c79.dir/quickstart_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](/private/var/folders/f6/yb9q7mnn2yv1k1bl9vqxb09h0000gn/T/RtmpcMrYRQ/preview-9c423fcf2d5.dir/quickstart_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
 ### Nearest contexts
 
@@ -793,7 +809,7 @@ nns(rbind(DF_wv,DM_wv), N = 10, pre_trained = cr_glove_subset, candidates = mode
 To access the normed coefficients for plotting:
 
 ``` r
-model1@normed_cofficients
+model1@normed_coefficients
 ```
 
     ##   coefficient normed.estimate  std.error  lower.ci  upper.ci p.value
@@ -900,16 +916,16 @@ wv_main <- glove$fit_transform(toks_fcm, n_iter = 10,
                                n_threads = 2) # set to 'parallel::detectCores()' to use all available cores
 ```
 
-    ## INFO  [13:48:46.899] epoch 1, loss 0.2268 
-    ## INFO  [13:48:47.904] epoch 2, loss 0.0768 
-    ## INFO  [13:48:48.896] epoch 3, loss 0.0497 
-    ## INFO  [13:48:49.878] epoch 4, loss 0.0375 
-    ## INFO  [13:48:50.870] epoch 5, loss 0.0303 
-    ## INFO  [13:48:51.856] epoch 6, loss 0.0256 
-    ## INFO  [13:48:52.833] epoch 7, loss 0.0223 
-    ## INFO  [13:48:53.808] epoch 8, loss 0.0198 
-    ## INFO  [13:48:54.772] epoch 9, loss 0.0178 
-    ## INFO  [13:48:55.748] epoch 10, loss 0.0163
+    ## INFO  [16:07:29.474] epoch 1, loss 0.2268 
+    ## INFO  [16:07:30.342] epoch 2, loss 0.0768 
+    ## INFO  [16:07:31.193] epoch 3, loss 0.0497 
+    ## INFO  [16:07:32.042] epoch 4, loss 0.0375 
+    ## INFO  [16:07:32.887] epoch 5, loss 0.0303 
+    ## INFO  [16:07:33.731] epoch 6, loss 0.0256 
+    ## INFO  [16:07:34.584] epoch 7, loss 0.0223 
+    ## INFO  [16:07:35.431] epoch 8, loss 0.0198 
+    ## INFO  [16:07:36.276] epoch 9, loss 0.0178 
+    ## INFO  [16:07:37.140] epoch 10, loss 0.0163
 
 ``` r
 wv_context <- glove$components
