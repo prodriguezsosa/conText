@@ -721,8 +721,8 @@ that allows us to do just that. The corresponding package function is
 functions. `data` must be a quanteda tokens object with covariates
 stored as document variables (`docvars`). We next specify a formula
 consisting of the target word of interest, e.g. “immigration” and the
-set of covariates. To use all covariates in `data`, we can speficy
-`immigration ~ .`. `formula` can also take vectors of target words
+set of covariates. To use all covariates in `data`, we can specify
+`immigration ~ .`. Note that `formula` can also take vectors of target words
 e.g. `c("immigration", "immigrants") ~ party + gender` and phrases
 e.g. `"immigration reform" ~ party + gender` – place phrases in
 quotation marks.
