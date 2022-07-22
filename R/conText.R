@@ -76,25 +76,28 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
   # initial checks
   if(class(data)[1] != "tokens") stop("data must be of class tokens", call. = FALSE)
   if(!transform && !is.null(transform_matrix)) warning('Warning: transform = FALSE means transform_matrix argument was ignored. If that was not your intention, use transform = TRUE.', call. = FALSE)
-  if(any(grepl("factor\\(|\\)", formula))) stop('It seems you are using factor() in "formula" to create a factor a variable. \n Please create it directly in "data" and re-run conText.', call. = FALSE) # pre-empt users using lm type notation
+  if(any(grepl("factor\\(", formula))) stop('It seems you are using factor() in "formula" to create a factor variable. \n Please create it directly in "data" and re-run conText.', call. = FALSE) # pre-empt users using lm type notation
   if(bootstrap && (confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
   if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100', call. = FALSE) # check num_bootstraps >= 100
 
 
   # extract dependent variable
   target <- as.character(formula[[2]])
-  if(length(target) > 1) target <- target[2:length(target)]
 
   # mirror lm convention: if DV is "." then full text is embedded, ow find and embed the context around DV
-  if(target != "."){
+  if(length(target) == 1 && target == "."){
+
+    toks <- data
+    docvars <- quanteda::docvars(toks)
+
+  }else{
+
+    if(length(target) > 1) target <- target[2:length(target)]
 
     # create a corpus of contexts
     toks <- tokens_context(x = data, pattern = target, window = window, valuetype = valuetype, case_insensitive = case_insensitive, hard_cut = hard_cut, verbose = verbose)
     docvars <- quanteda::docvars(toks) %>% dplyr::select(-pattern)
 
-  }else{
-    toks <- data
-    docvars <- quanteda::docvars(toks)
   }
 
   #----------------------
