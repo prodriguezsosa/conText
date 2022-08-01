@@ -97,10 +97,11 @@ get_nns_ratio <- function(x,
   if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100', call. = FALSE) # check num_bootstraps >= 100
 
   # checks
-  group_vars <- unique(groups)
+  group_vars <- as.character(unique(groups))
   if(is.null(group_vars) | length(group_vars)!=2) stop("a binary grouping variable must be provided")
   if(!is.null(numerator)){
     if(!(numerator %in% group_vars)) stop("numerator must refer to one of the two groups in the groups argument")
+    numerator <- as.character(numerator)
   }else{
     numerator <- group_vars[1]
     cat("NOTE: setting", numerator, "as the numerator", "\n")
