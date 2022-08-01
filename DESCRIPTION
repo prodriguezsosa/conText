@@ -5,7 +5,7 @@ Description: A fast, flexible and transparent framework to estimate context-spec
     embeddings approach developed by Khodak et al. (2018) <arXiv:1805.05388> and evaluate hypotheses about covariate effects on embeddings using 
     the regression framework developed by Rodriguez et al. (2021)<https://github.com/prodriguezsosa/EmbeddingRegression>.
 Authors@R: c(
-    person("Pedro L.", "Rodriguez", email = "pedro.rodriguez@Vanderbilt.Edu", role = c("aut", "cre", "cph"), comment = c(ORCID = "0000-0003-4762-4550")),
+    person("Pedro L.", "Rodriguez", email = "pedro.rodriguezsosa@gmail.com", role = c("aut", "cre", "cph"), comment = c(ORCID = "0000-0003-4762-4550")),
     person("Arthur", "Spirling", email = "as9934@nyu.edu", role = "aut", comment = c(ORCID = "0000-0001-9959-1805")),
     person("Brandon", "Stewart", email = "bms4@princeton.edu", role = "aut", comment = c(ORCID = "0000-0002-7657-3089")),
     person("Christopher", "Barrie", email = "christopher.barrie@ed.ac.uk", role = "ctb", comment = c(ORCID = "0000-0002-9156-990X"))
