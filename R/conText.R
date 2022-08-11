@@ -318,7 +318,7 @@ run_ols <- function(Y = NULL, X = NULL){
 
   # normed betas
   vars <- setdiff(colnames(X), "(Intercept)") # identify non-intercept covariates (norm of intercept is not all that informative)
-  normed_betas <- apply(matrix(betas[vars,], nrow = length(vars)), 1, function(x) norm(matrix(x, nrow = 1))) %>% setNames(vars)
+  normed_betas <- apply(matrix(betas[vars,], nrow = length(vars)), 1, function(x) norm(matrix(x, nrow = 1), type = "f")) %>% setNames(vars)
 
   # output
   return(list('betas' = betas, 'normed_betas' = normed_betas))
