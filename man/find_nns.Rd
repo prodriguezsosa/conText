@@ -10,7 +10,8 @@ find_nns(
   N = 5,
   candidates = NULL,
   norm = "l2",
-  stem = FALSE
+  stem = FALSE,
+  language = "porter"
 )
 }
 \arguments{
@@ -34,6 +35,12 @@ rownames(pre_trained) = set of features for which there is a pre-trained embeddi
 If TRUE, candidate stems are ranked by their average cosine similarity to the target.
 We recommend you remove misspelled words from candidate set \code{candidates} as these can
 significantly influence the average.}
+
+\item{language}{the name of a recognized language, as returned by
+     \code{\link[SnowballC]{getStemLanguages}}, or a two- or three-letter ISO-639
+     code corresponding to one of these languages (see references for
+     the list of codes).
+  }
 }
 \value{
 (character) vector of nearest neighbors to target

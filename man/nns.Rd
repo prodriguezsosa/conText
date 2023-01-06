@@ -11,6 +11,7 @@ nns(
   candidates = character(0),
   pre_trained,
   stem = FALSE,
+  language = "porter",
   as_list = TRUE
 )
 }
@@ -32,6 +33,12 @@ rownames(pre_trained) = set of features for which there is a pre-trained embeddi
 If TRUE, candidate stems are ranked by their average cosine similarity to the target.
 We recommend you remove misspelled words from candidate set \code{candidates} as these can
 significantly influence the average.}
+
+\item{language}{the name of a recognized language, as returned by
+     \code{\link[SnowballC]{getStemLanguages}}, or a two- or three-letter ISO-639
+     code corresponding to one of these languages (see references for
+     the list of codes).
+  }
 
 \item{as_list}{(logical) if FALSE all results are combined into a single data.frame
 If TRUE, a list of data.frames is returned with one data.frame per group.}

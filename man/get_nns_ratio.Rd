@@ -20,6 +20,7 @@ get_nns_ratio(
   permute = TRUE,
   num_permutations = 100,
   stem = FALSE,
+  language = "porter",
   verbose = TRUE
 )
 }
@@ -65,6 +66,12 @@ If \code{groups} defined, sampling is automatically stratified.}
 If TRUE, candidate stems are ranked by their average cosine similarity to the target.
 We recommend you remove misspelled words from candidate set \code{candidates} as these can
 significantly influence the average.}
+
+\item{language}{the name of a recognized language, as returned by
+     \code{\link[SnowballC]{getStemLanguages}}, or a two- or three-letter ISO-639
+     code corresponding to one of these languages (see references for
+     the list of codes).
+  }
 
 \item{verbose}{provide information on which group is the numerator}
 }

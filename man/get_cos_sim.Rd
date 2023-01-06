@@ -16,6 +16,7 @@ get_cos_sim(
   num_bootstraps = 100,
   confidence_level = 0.95,
   stem = FALSE,
+  language = "porter",
   as_list = TRUE
 )
 }
@@ -48,6 +49,12 @@ If \code{groups} defined, sampling is automatically stratified.}
 are stemmed and average cosine similarities are reported.
 We recommend you remove misspelled words from  \code{pre_trained} as these can
 significantly influence the average.}
+
+\item{language}{the name of a recognized language, as returned by
+     \code{\link[SnowballC]{getStemLanguages}}, or a two- or three-letter ISO-639
+     code corresponding to one of these languages (see references for
+     the list of codes).
+  }
 
 \item{as_list}{(logical) if FALSE all results are combined into a single data.frame
 If TRUE, a list of data.frames is returned with one data.frame per feature.}

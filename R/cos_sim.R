@@ -9,6 +9,7 @@
 #' are stemmed and average cosine similarities are reported.
 #' We recommend you remove misspelled words from  `pre_trained` as these can
 #' significantly influence the average.
+#' @inheritParams SnowballC::wordStem
 #' @param as_list (logical) if FALSE all results are combined into a single data.frame
 #' If TRUE, a list of data.frames is returned with one data.frame per feature.
 #'
@@ -50,7 +51,7 @@
 #' # compute the cosine similarity between each party's embedding and a specific set of features
 #' cos_sim(x = immig_wv_party, pre_trained = cr_glove_subset,
 #' features = c('reform', 'enforcement'), as_list = FALSE)
-cos_sim <- function(x, pre_trained, features = NULL, stem = FALSE, as_list = TRUE){
+cos_sim <- function(x, pre_trained, features = NULL, stem = FALSE, language = 'porter', as_list = TRUE){
 
   # for single numeric vectors
   if(is.null(dim(x)) && length(x) == dim(pre_trained)[2]) x <- matrix(x, nrow = 1)
@@ -80,8 +81,12 @@ cos_sim <- function(x, pre_trained, features = NULL, stem = FALSE, as_list = TRU
   if(is.null(rownames(x))) cos_sim$target <- NA
 
   # stemming
-  if(stem) result <- cos_sim %>% dplyr::mutate(feature = SnowballC::wordStem(feature)) %>% dplyr::group_by(target, feature) %>% dplyr::summarise(dplyr::across(where(is.numeric), mean), .groups = "drop") %>% dplyr::ungroup() %>% dplyr::filter(feature %in% features)
-  else result <- cos_sim %>% dplyr::filter(feature %in% features)
+  if(stem){
+    if (requireNamespace("SnowballC", quietly = TRUE)) {
+      cat('Using', language, 'for stemming. To check available languages run "SnowballC::getStemLanguages()"', '\n')
+      result <- cos_sim %>% dplyr::mutate(feature = SnowballC::wordStem(feature, language = language)) %>% dplyr::group_by(target, feature) %>% dplyr::summarise(dplyr::across(where(is.numeric), mean), .groups = "drop") %>% dplyr::ungroup() %>% dplyr::filter(feature %in% features)
+    } else warning('"SnowballC (>= 0.7.0)" package must be installed to use stemmming option. Will proceed without stemming.', call. = FALSE)
+  } else result <- cos_sim %>% dplyr::filter(feature %in% features)
 
   # if !as_list return a list object with an item for each feature data.frame
   if(as_list) result <- lapply(unique(result$feature), function(i) result[result$feature == i,] %>% dplyr::mutate(feature = as.character(feature))) %>% setNames(unique(result$feature))

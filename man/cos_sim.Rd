@@ -4,7 +4,14 @@
 \alias{cos_sim}
 \title{Compute the cosine similarity between one or more ALC embeddings and a set of features.}
 \usage{
-cos_sim(x, pre_trained, features = NULL, stem = FALSE, as_list = TRUE)
+cos_sim(
+  x,
+  pre_trained,
+  features = NULL,
+  stem = FALSE,
+  language = "porter",
+  as_list = TRUE
+)
 }
 \arguments{
 \item{x}{a (quanteda) \code{dem-class} or \code{fem-class} object.}
@@ -19,6 +26,12 @@ rownames(pre_trained) = set of features for which there is a pre-trained embeddi
 are stemmed and average cosine similarities are reported.
 We recommend you remove misspelled words from  \code{pre_trained} as these can
 significantly influence the average.}
+
+\item{language}{the name of a recognized language, as returned by
+     \code{\link[SnowballC]{getStemLanguages}}, or a two- or three-letter ISO-639
+     code corresponding to one of these languages (see references for
+     the list of codes).
+  }
 
 \item{as_list}{(logical) if FALSE all results are combined into a single data.frame
 If TRUE, a list of data.frames is returned with one data.frame per feature.}

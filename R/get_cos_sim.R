@@ -69,6 +69,7 @@ get_cos_sim <- function(x,
                         num_bootstraps = 100,
                         confidence_level = 0.95,
                         stem = FALSE,
+                        language = 'porter',
                         as_list = TRUE) {
 
   # initial checks
@@ -93,6 +94,7 @@ get_cos_sim <- function(x,
                                            features = features,
                                            pre_trained = pre_trained,
                                            stem = stem,
+                                           language = language,
                                            as_list = FALSE),
                           simplify = FALSE)
     result <- do.call(rbind, cossimdf_bs) %>%
@@ -117,7 +119,7 @@ get_cos_sim <- function(x,
     }
 
     # compute cosine similarity
-    result <- cos_sim(x = wvs, pre_trained = pre_trained, features = features, stem = stem, as_list = FALSE)
+    result <- cos_sim(x = wvs, pre_trained = pre_trained, features = features, stem = stem, language = language, as_list = FALSE)
   }
 
   # if !as_list return a list object with an item for each target data.frame
@@ -134,6 +136,7 @@ cos_sim_boostrap <- function(x,
                              features = character(0),
                              pre_trained = pre_trained,
                              stem = stem,
+                             language = language,
                              as_list = FALSE){
 
   # sample dems with replacement
@@ -147,7 +150,7 @@ cos_sim_boostrap <- function(x,
   }
 
   # compute cosine similarity
-  result <- cos_sim(x = wvs, pre_trained = pre_trained, features = features, stem = stem, as_list = as_list)
+  result <- cos_sim(x = wvs, pre_trained = pre_trained, features = features, stem = stem, language = language, as_list = as_list)
 
   return(result)
 

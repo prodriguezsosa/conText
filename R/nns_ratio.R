@@ -24,6 +24,7 @@
 #' If TRUE, candidate stems are ranked by their average cosine similarity to the target.
 #' We recommend you remove misspelled words from candidate set `candidates` as these can
 #' significantly influence the average.
+#' @inheritParams SnowballC::wordStem
 #' @param verbose report which group is the numerator and which group is the denominator.
 #'
 #' @return a `data.frame` with following columns:
@@ -66,7 +67,7 @@
 #' nns_ratio(x = immig_wv_party, N = 10, numerator = "R",
 #' candidates = immig_wv_party@features,
 #' pre_trained = cr_glove_subset, stem = TRUE, verbose = FALSE)
-nns_ratio <- function(x, N = 10, numerator = NULL, candidates = character(0), pre_trained, stem = FALSE, verbose = TRUE){
+nns_ratio <- function(x, N = 10, numerator = NULL, candidates = character(0), pre_trained, stem = FALSE, language = 'porter', verbose = TRUE){
 
   # check
   if(nrow(x)!=2) stop('nns_ratio can only be applied to a pair of embeddings i.e. nrow(x) must equal 2')
@@ -78,8 +79,8 @@ nns_ratio <- function(x, N = 10, numerator = NULL, candidates = character(0), pr
   if(length(candidates) > 0) candidates <- intersect(candidates, rownames(pre_trained))
 
   # get nns
-  nnsdf1 <- nns(x = x[1,], N = Inf, candidates = candidates, pre_trained = pre_trained, stem = stem, as_list = FALSE)
-  nnsdf2 <- nns(x = x[2,], N = Inf, candidates = candidates, pre_trained = pre_trained, stem = stem, as_list = FALSE)
+  nnsdf1 <- nns(x = x[1,], N = Inf, candidates = candidates, pre_trained = pre_trained, stem = stem, language = language, as_list = FALSE)
+  nnsdf2 <- nns(x = x[2,], N = Inf, candidates = candidates, pre_trained = pre_trained, stem = stem, language = language, as_list = FALSE)
 
   # get union of top N nns (if N is NULL, use all features)
   if(is.null(N)){union_nns <- union(nnsdf1$feature, nnsdf2$feature)}else{union_nns <- union(nnsdf1$feature[1:N], nnsdf2$feature[1:N])}

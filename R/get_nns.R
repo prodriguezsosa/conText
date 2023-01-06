@@ -72,6 +72,7 @@ get_nns <- function(x,
                     num_bootstraps = 100,
                     confidence_level = 0.95,
                     stem = FALSE,
+                    language = 'porter',
                     as_list = TRUE) {
 
   # initial checks
