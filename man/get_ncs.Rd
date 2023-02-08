@@ -74,14 +74,18 @@ library(quanteda)
 toks <- tokens(cr_sample_corpus)
 
 # build a tokenized corpus of contexts sorrounding a target term
-immig_toks <- tokens_context(x = toks, pattern = "immigr*",
+immig_toks <- tokens_context(x = toks, pattern = "immigration",
 window = 6L, rm_keyword = FALSE)
+
+# sample 100 instances of the target term, stratifying by party (only for example purposes)
+set.seed(2022L)
+immig_toks <- tokens_sample(immig_toks, size = 100, by = docvars(immig_toks, 'party'))
 
 # compare nearest contexts between groups
 set.seed(2021L)
 immig_party_ncs <- get_ncs(x = immig_toks,
                            N = 10,
-                           groups = docvars(immig_toks)$party,
+                           groups = docvars(immig_toks, 'party'),
                            pre_trained = cr_glove_subset,
                            transform = TRUE,
                            transform_matrix = cr_transform,

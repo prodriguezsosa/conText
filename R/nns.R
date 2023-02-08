@@ -17,6 +17,7 @@
 #' @inheritParams SnowballC::wordStem
 #' @param as_list (logical) if FALSE all results are combined into a single data.frame
 #' If TRUE, a list of data.frames is returned with one data.frame per group.
+#' @param show_language (logical) if TRUE print out message with language used for stemming.
 #'
 #' @return a `data.frame` or list of data.frames (one for each target)
 #' with the following columns:
@@ -56,7 +57,7 @@
 #' # results into a single tibble (useful for joint plotting)
 #' immig_nns <- nns(immig_wv_party, pre_trained = cr_glove_subset,
 #' N = 5, candidates = immig_wv_party@features, stem = TRUE, as_list = TRUE)
-nns <- function(x, N = 10, candidates = character(0), pre_trained, stem = FALSE, language = 'porter', as_list = TRUE){
+nns <- function(x, N = 10, candidates = character(0), pre_trained, stem = FALSE, language = 'porter', as_list = TRUE, show_language = TRUE){
 
   # for single numeric vectors
   if(is.null(dim(x)) && length(x) == dim(pre_trained)[2]) x <- matrix(x, nrow = 1)
@@ -81,10 +82,10 @@ nns <- function(x, N = 10, candidates = character(0), pre_trained, stem = FALSE,
   # stemming
   if(stem){
     if (requireNamespace("SnowballC", quietly = TRUE)) {
-      cat('Using', language, 'for stemming. To check available languages run "SnowballC::getStemLanguages()"', '\n')
+      if(show_language) cat('Using', language, 'for stemming. To check available languages run "SnowballC::getStemLanguages()"', '\n')
       cos_sim <- cos_sim %>% dplyr::mutate(feature = SnowballC::wordStem(feature, language = language)) %>% dplyr::group_by(feature) %>% dplyr::summarise(dplyr::across(where(is.numeric), mean)) %>% dplyr::ungroup()
       }
-    else warning('"SnowballC (>= 0.7.0)" package must be installed to use stemmming option. Will proceed without stemming.', call. = FALSE)
+    else stop('"SnowballC (>= 0.7.0)" package must be installed to use stemmming option.')
   }
 
   # reshape data

@@ -184,7 +184,7 @@ immig_ncs <- ncs(x = immig_wv_party, contexts_dem = immig_dem, contexts = immig_
 immig_ncs[["R"]]
 
 # you can limit candidate contexts to those of a specific party
-immig_ncs <- ncs(x = immig_wv_party["R",], contexts_dem = immig_dem[immig_dem@docvars$party == "R",], contexts = immig_toks, N = 5, as_list = TRUE)
+immig_ncs <- ncs(x = immig_wv_party["R",], contexts_dem = immig_dem[immig_dem@docvars$party == "R",], contexts = immig_toks, N = 5, as_list = FALSE)
 
 ```
 

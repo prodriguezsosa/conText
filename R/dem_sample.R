@@ -4,9 +4,9 @@
 #' with the option to group by a variable in `dem@docvars`.
 #'
 #' @param x a (`dem-class`) document-embedding-matrix
-#' @inheritParams dplyr::sample_n
+#' @inheritParams dplyr::sample_frac
 #' @param weight (numeric) Sampling weights. Vector of non-negative numbers of length `nrow(x)`.
-#' Weights are automatically standardised to sum to 1 (see `dplyr::sample_n`).
+#' Weights are automatically standardised to sum to 1 (see `dplyr::sample_frac`).
 #' May not be applied when `by` is used.
 #' @param by (character or factor vector) either of length 1 with the name of grouping variable for sampling.
 #' Refer to the variable WITH QUOTATIONS e.g. `"party"`. Must be a variable in `dem@docvars`. OR of length
@@ -55,7 +55,7 @@ dem_sample <- function(x, size = NULL, replace = FALSE, weight = NULL, by = NULL
     # check grouping variable is of appropriate length
     if((length(by)==1 && !(by %in% colnames(x@docvars))) || (length(by)!=1 && length(by) != nrow(x))) stop("by must either be a character vector of length 1, referring to a variable present in @docvars, or a vector of length equal to nrow(x)", call. = FALSE)
 
-    # if a vector of lenght > 1
+    # if a vector of length > 1
     if(length(by) == nrow(x)){
 
       # add to docvars
@@ -65,7 +65,7 @@ dem_sample <- function(x, size = NULL, replace = FALSE, weight = NULL, by = NULL
       sample_docs <- x@docvars %>%
         dplyr::mutate(docid = seq_len(nrow(.))) %>%
         dplyr::group_by(tmp_by) %>%
-        dplyr::sample_n(size = size, replace = replace) %>%
+        dplyr::sample_frac(size = size, replace = replace) %>%
         dplyr::pull(docid)
 
       # remove from docvars
@@ -76,7 +76,7 @@ dem_sample <- function(x, size = NULL, replace = FALSE, weight = NULL, by = NULL
       sample_docs <- x@docvars %>%
         dplyr::mutate(docid = seq_len(nrow(.))) %>%
         dplyr::group_by_at(by) %>%
-        dplyr::sample_n(size = size, replace = replace) %>%
+        dplyr::sample_frac(size = 1, replace = replace) %>%
         dplyr::pull(docid)
     }
 
@@ -84,11 +84,11 @@ dem_sample <- function(x, size = NULL, replace = FALSE, weight = NULL, by = NULL
 
     if(is.null(weight)){
 
-      sample_docs <- data.frame(docid = seq_len(nrow(x))) %>% dplyr::sample_n(size = size, replace = replace) %>% dplyr::pull(docid)
+      sample_docs <- data.frame(docid = seq_len(nrow(x))) %>% dplyr::sample_frac(size = size, replace = replace) %>% dplyr::pull(docid)
 
     } else{
 
-      sample_docs <- data.frame(docid = seq_len(nrow(x))) %>% dplyr::sample_n(size = size, replace = replace, weight = weight) %>% dplyr::pull(docid)
+      sample_docs <- data.frame(docid = seq_len(nrow(x))) %>% dplyr::sample_frac(size = size, replace = replace, weight = weight) %>% dplyr::pull(docid)
 
     }
 

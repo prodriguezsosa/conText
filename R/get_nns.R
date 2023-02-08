@@ -41,7 +41,11 @@
 #' toks <- tokens(cr_sample_corpus)
 #'
 #' # build a tokenized corpus of contexts sorrounding a target term
-#' immig_toks <- tokens_context(x = toks, pattern = "immigr*", window = 6L)
+#' immig_toks <- tokens_context(x = toks, pattern = "immigration", window = 6L)
+#'
+#' # sample 100 instances of the target term, stratifying by party (only for example purposes)
+#' set.seed(2022L)
+#' immig_toks <- tokens_sample(immig_toks, size = 100, by = docvars(immig_toks, 'party'))
 #'
 #' # we limit candidates to features in our corpus
 #' feats <- featnames(dfm(immig_toks))
@@ -77,8 +81,15 @@ get_nns <- function(x,
 
   # initial checks
   if(bootstrap && (confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
-  if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100', call. = FALSE) # check num_bootstraps >= 100
+  if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100') # check num_bootstraps >= 100
   if(class(x)[1] != "tokens") stop("data must be of class tokens")
+
+  # stemming check
+  if(stem){
+    if (requireNamespace("SnowballC", quietly = TRUE)) {
+      cat('Using', language, 'for stemming. To check available languages run "SnowballC::getStemLanguages()"', '\n')
+    } else stop('"SnowballC (>= 0.7.0)" package must be installed to use stemmming option.')
+  }
 
   # add grouping variable to docvars
   if(!is.null(groups)) quanteda::docvars(x) <- NULL; quanteda::docvars(x, "group") <- groups
@@ -129,7 +140,7 @@ get_nns <- function(x,
   }
 
   # find nearest neighbors
-  result <- nns(x = wvs, N = N, candidates = candidates, pre_trained = pre_trained, stem = stem, as_list = FALSE)
+  result <- nns(x = wvs, N = N, candidates = candidates, pre_trained = pre_trained, stem = stem, as_list = FALSE, show_language = FALSE)
   }
 
   # if !as_list return a list object with an item for each target data.frame
@@ -150,7 +161,7 @@ nns_boostrap <- function(x,
                          as_list = FALSE){
 
   # sample dems with replacement
-  x_sample_dem <- dem_sample(x = x, size = nrow(x), replace = TRUE, by = groups)
+  x_sample_dem <- dem_sample(x = x, size = 1, replace = TRUE, by = groups)
 
   # aggregate dems by group var if defined
   if(!is.null(by)){
@@ -160,7 +171,7 @@ nns_boostrap <- function(x,
   }
 
   # find nearest neighbors
-  result <- nns(x = wvs, N = Inf, candidates = candidates, pre_trained = pre_trained, stem = stem, as_list = as_list)
+  result <- nns(x = wvs, N = Inf, candidates = candidates, pre_trained = pre_trained, stem = stem, as_list = as_list, show_language = FALSE)
 
   return(result)
 

@@ -50,7 +50,7 @@ D = dimensions of pretrained embeddings.}
 \item{bootstrap}{(logical) if TRUE, use bootstrapping -- sample from texts with replacement and
 re-run regression on each sample. Required to get std. errors.}
 
-\item{num_bootstraps}{(numeric) number of bootstraps to use.}
+\item{num_bootstraps}{(numeric) number of bootstraps to use (at least 100)}
 
 \item{confidence_level}{(numeric in (0,1)) confidence level e.g. 0.95}
 
@@ -109,10 +109,11 @@ model1 <- conText(formula = immigration ~ party + gender,
                  data = toks,
                  pre_trained = cr_glove_subset,
                  transform = TRUE, transform_matrix = cr_transform,
-                 bootstrap = TRUE, num_bootstraps = 100,
+                 bootstrap = TRUE,
+                 num_bootstraps = 100,
                  confidence_level = 0.95,
                  stratify = FALSE,
-                 permute = TRUE, num_permutations = 100,
+                 permute = TRUE, num_permutations = 10,
                  window = 6, case_insensitive = TRUE,
                  verbose = FALSE)
 

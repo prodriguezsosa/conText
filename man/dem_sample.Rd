@@ -17,7 +17,7 @@ If \code{tbl} is grouped, \code{size} applies to each group.}
 \item{replace}{Sample with or without replacement?}
 
 \item{weight}{(numeric) Sampling weights. Vector of non-negative numbers of length \code{nrow(x)}.
-Weights are automatically standardised to sum to 1 (see \code{dplyr::sample_n}).
+Weights are automatically standardised to sum to 1 (see \code{dplyr::sample_frac}).
 May not be applied when \code{by} is used.}
 
 \item{by}{(character or factor vector) either of length 1 with the name of grouping variable for sampling.

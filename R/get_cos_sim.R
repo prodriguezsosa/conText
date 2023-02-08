@@ -43,7 +43,11 @@
 #' toks <- tokens(cr_sample_corpus)
 #'
 #' # build a tokenized corpus of contexts sorrounding a target term
-#' immig_toks <- tokens_context(x = toks, pattern = "immigr*", window = 6L)
+#' immig_toks <- tokens_context(x = toks, pattern = "immigration", window = 6L)
+#'
+#' # sample 100 instances of the target term, stratifying by party (only for example purposes)
+#' set.seed(2022L)
+#' immig_toks <- tokens_sample(immig_toks, size = 100, by = docvars(immig_toks, 'party'))
 #'
 #' # compute the cosine similarity between each group's embedding
 #' # and a specific set of features
@@ -74,8 +78,15 @@ get_cos_sim <- function(x,
 
   # initial checks
   if(bootstrap && (confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
-  if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100', call. = FALSE) # check num_bootstraps >= 100
+  if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100') # check num_bootstraps >= 100
   if(class(x)[1] != "tokens") stop("data must be of class tokens", call. = FALSE)
+
+  # stemming check
+  if(stem){
+    if (requireNamespace("SnowballC", quietly = TRUE)) {
+      cat('Using', language, 'for stemming. To check available languages run "SnowballC::getStemLanguages()"', '\n')
+    } else stop('"SnowballC (>= 0.7.0)" package must be installed to use stemmming option.')
+  }
 
   # add grouping variable to docvars
   if(!is.null(groups)) quanteda::docvars(x) <- NULL; quanteda::docvars(x, "group") <- groups
@@ -95,7 +106,8 @@ get_cos_sim <- function(x,
                                            pre_trained = pre_trained,
                                            stem = stem,
                                            language = language,
-                                           as_list = FALSE),
+                                           as_list = FALSE,
+                                           show_language = FALSE),
                           simplify = FALSE)
     result <- do.call(rbind, cossimdf_bs) %>%
       dplyr::group_by(target, feature) %>%
@@ -119,7 +131,7 @@ get_cos_sim <- function(x,
     }
 
     # compute cosine similarity
-    result <- cos_sim(x = wvs, pre_trained = pre_trained, features = features, stem = stem, language = language, as_list = FALSE)
+    result <- cos_sim(x = wvs, pre_trained = pre_trained, features = features, stem = stem, language = language, as_list = as_list, show_language = FALSE)
   }
 
   # if !as_list return a list object with an item for each target data.frame
@@ -133,14 +145,15 @@ get_cos_sim <- function(x,
 # sub-function
 cos_sim_boostrap <- function(x,
                              by = NULL,
-                             features = character(0),
-                             pre_trained = pre_trained,
-                             stem = stem,
-                             language = language,
-                             as_list = FALSE){
+                             features = NULL,
+                             pre_trained,
+                             stem = FALSE,
+                             language = 'porter',
+                             as_list = FALSE,
+                             show_language = FALSE){
 
   # sample dems with replacement
-  x_sample_dem <- dem_sample(x = x, size = nrow(x), replace = TRUE, by = by)
+  x_sample_dem <- dem_sample(x = x, size = 1, replace = TRUE, by = by)
 
   # aggregate dems by group var if defined
   if(!is.null(by)){
@@ -150,7 +163,7 @@ cos_sim_boostrap <- function(x,
   }
 
   # compute cosine similarity
-  result <- cos_sim(x = wvs, pre_trained = pre_trained, features = features, stem = stem, language = language, as_list = as_list)
+  result <- cos_sim(x = wvs, pre_trained = pre_trained, features = features, stem = stem, language = language, as_list = as_list, show_language = show_language)
 
   return(result)
 

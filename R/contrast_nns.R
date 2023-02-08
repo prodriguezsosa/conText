@@ -39,14 +39,19 @@
 #' immig_toks <- tokens_context(x = cr_toks,
 #' pattern = "immigration", window = 6L, hard_cut = FALSE, verbose = TRUE)
 #'
+#' # sample 100 instances of the target term, stratifying by party (only for example purposes)
+#' set.seed(2022L)
+#' immig_toks <- tokens_sample(immig_toks, size = 100, by = docvars(immig_toks, 'party'))
+#'
 #' set.seed(42L)
 #' party_nns <- contrast_nns(x = immig_toks,
 #' groups = docvars(immig_toks, 'party'),
 #' pre_trained = cr_glove_subset,
 #' transform = TRUE, transform_matrix = cr_transform,
-#' bootstrap = TRUE, num_bootstraps = 100,
+#' bootstrap = TRUE,
+#' num_bootstraps = 100,
 #' confidence_level = 0.95,
-#' permute = TRUE, num_permutations = 100,
+#' permute = TRUE, num_permutations = 10,
 #' candidates = NULL, N = 20,
 #' verbose = FALSE)
 #'
@@ -55,7 +60,7 @@ contrast_nns <- function(x, groups = NULL, pre_trained = NULL, transform = TRUE,
 
   # checks
   if(bootstrap && (confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
-  if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100', call. = FALSE) # check num_bootstraps >= 100
+  if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100') # check num_bootstraps >= 100
   if(class(x)[1] != "tokens") stop("data must be of class tokens")
   groupvals <- unique(groups)
   if(length(groupvals)!=2) stop("groups must be binary")

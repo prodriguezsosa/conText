@@ -199,10 +199,7 @@ defined by one or a combination of the ‘docvars’. We do this using
 `conText::dem_group()` (very similar in flavor to quanteda’s
 [`dfm_group()`](https://tutorials.quanteda.io/basic-operations/dfm/dfm_group/)).
 In our example below, this results in an ALC embedding of “immigration”
-for each party, hence the dimensions
-![2](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;2 "2")
-by
-![300](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;300 "300").
+for each party, hence the dimensions $2$ by $300$.
 
 ``` r
 # to get group-specific embeddings, average within party
@@ -275,12 +272,11 @@ cosine similarities between group embeddings and features –that is, for
 any given feature it first computes the similarity between that feature
 and each group embedding, and then takes the ratio of these two
 similarities. This ratio captures how “discriminant” a feature is of a
-given group. Values larger (smaller) than
-![1](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;1 "1")
-mean the feature is more (less) discriminant of the group in the
-numerator (denominator). Use the `numerator` argument to define which
-group represents the numerator in this ratio. If `N` is defined, this
-ratio is computed for union of the top `N` nearest neighbors.
+given group. Values larger (smaller) than $1$ mean the feature is more
+(less) discriminant of the group in the numerator (denominator). Use the
+`numerator` argument to define which group represents the numerator in
+this ratio. If `N` is defined, this ratio is computed for union of the
+top `N` nearest neighbors.
 
 ``` r
 # compute the cosine similarity between each party's embedding and a specific set of features
@@ -376,7 +372,11 @@ if (requireNamespace("hunspell", quietly = TRUE)) {
 ``` r
 # find nearest neighbors by party using stemming
 immig_nns_stem <- nns(immig_wv_party, pre_trained = cr_glove_subset, N = 5, candidates = immig_feats, stem = TRUE, as_list = TRUE)
+```
 
+    ## Using porter for stemming. To check available languages run "SnowballC::getStemLanguages()"
+
+``` r
 # check out results for Republican party
 immig_nns_stem[["R"]]
 ```
@@ -451,6 +451,8 @@ topical_wvs <- dem_group(topical_dem, groups = topical_dem@docvars$party)
 # find nearest neighbors for each keyword
 nns(topical_wvs, pre_trained = cr_glove_subset, N = 5, candidates = topical_wvs@features, stem = TRUE, as_list = FALSE)
 ```
+
+    ## Using porter for stemming. To check available languages run "SnowballC::getStemLanguages()"
 
     ## # A tibble: 10 × 4
     ##    target feature     rank value
@@ -533,16 +535,16 @@ immig_party_nns[["R"]]
     ## # A tibble: 10 × 7
     ##    target feature      rank value std.error lower.ci upper.ci
     ##    <chr>  <chr>       <int> <dbl>     <dbl>    <dbl>    <dbl>
-    ##  1 R      immigration     1 0.842   0.00690    0.830    0.853
-    ##  2 R      illegal         2 0.765   0.00708    0.754    0.775
-    ##  3 R      immigrants      3 0.731   0.00978    0.714    0.743
-    ##  4 R      illegally       4 0.662   0.00633    0.653    0.672
-    ##  5 R      amnesty         5 0.655   0.00726    0.640    0.667
-    ##  6 R      laws            6 0.595   0.0112     0.578    0.613
-    ##  7 R      enforcement     7 0.594   0.0103     0.575    0.610
-    ##  8 R      enforce         8 0.586   0.0110     0.570    0.605
-    ##  9 R      border          9 0.570   0.0109     0.551    0.587
-    ## 10 R      legal          10 0.566   0.00826    0.552    0.579
+    ##  1 R      immigration     1 0.838   0.0100     0.822    0.855
+    ##  2 R      illegal         2 0.762   0.0101     0.745    0.779
+    ##  3 R      immigrants      3 0.728   0.0149     0.706    0.750
+    ##  4 R      illegally       4 0.660   0.00957    0.643    0.676
+    ##  5 R      amnesty         5 0.654   0.0120     0.635    0.673
+    ##  6 R      laws            6 0.595   0.0151     0.570    0.620
+    ##  7 R      enforcement     7 0.592   0.0139     0.568    0.610
+    ##  8 R      enforce         8 0.586   0.0155     0.564    0.618
+    ##  9 R      border          9 0.568   0.0156     0.534    0.594
+    ## 10 R      legal          10 0.565   0.0134     0.541    0.583
 
 ### Cosine similarity
 
@@ -573,10 +575,10 @@ get_cos_sim(x = immig_toks,
     ## # A tibble: 4 × 6
     ##   target feature value std.error lower.ci upper.ci
     ##   <fct>  <fct>   <dbl>     <dbl>    <dbl>    <dbl>
-    ## 1 D      reform  0.593   0.0123     0.574    0.614
-    ## 2 D      enforce 0.486   0.00887    0.471    0.500
-    ## 3 R      reform  0.428   0.0109     0.411    0.446
-    ## 4 R      enforce 0.586   0.0110     0.570    0.605
+    ## 1 D      reform  0.591    0.0186    0.557    0.618
+    ## 2 D      enforce 0.484    0.0126    0.461    0.503
+    ## 3 R      reform  0.424    0.0169    0.396    0.451
+    ## 4 R      enforce 0.586    0.0155    0.564    0.618
 
 ### Nearest neighbors cosine similarity ratio
 
@@ -591,23 +593,19 @@ in this case of the cosine similarity ratios.
 
 Finally, `get_nns_ratio()` allows us to make inferences using a
 permutation test, specifically around the *absolute deviation of the
-observed cosine similarity ratio from
-![1](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;1 "1")*
-(this captures how discriminant a given nearest neighbor is).
-Specifically, for each permutation, the grouping variable is randomly
-shuffled and the absolute deviation of the cosine similarity ratios from
-![1](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;1 "1")
-is computed. The empirical p.value is then the proportion of these
-“permuted” deviations that are larger than the observed deviation.
+observed cosine similarity ratio from $1$* (this captures how
+discriminant a given nearest neighbor is). Specifically, for each
+permutation, the grouping variable is randomly shuffled and the absolute
+deviation of the cosine similarity ratios from $1$ is computed. The
+empirical p.value is then the proportion of these “permuted” deviations
+that are larger than the observed deviation.
 
 The output of `get_nns_ratio()` contains three additional columns
 (relative to `nns_ratio()`) if `bootstrap = TRUE` and `permute = TRUE`.
 These are the standard errors around the cosine similarity ratios, the
 corresponding (empirical) `p.value` and a `group` variable identifying
 which group the nearest neighbor belonged to – `shared` means it
-appeared in both groups’ top
-![N](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;N "N")
-nearest neighbors.
+appeared in both groups’ top $N$ nearest neighbors.
 
 ``` r
 # we limit candidates to features in our corpus
@@ -642,26 +640,25 @@ head(immig_nns_ratio)
     ## # A tibble: 6 × 7
     ##   feature   value std.error lower.ci upper.ci p.value group 
     ##   <chr>     <dbl>     <dbl>    <dbl>    <dbl>   <dbl> <chr> 
-    ## 1 enforce    1.21    0.0332    1.16      1.27    0    R     
-    ## 2 illegal    1.18    0.0225    1.15      1.21    0    shared
-    ## 3 amnesty    1.17    0.0204    1.14      1.21    0    R     
-    ## 4 illegally  1.12    0.0223    1.08      1.16    0    shared
-    ## 5 laws       1.09    0.0290    1.04      1.13    0.03 R     
-    ## 6 legal      1.02    0.0219    0.987     1.06    0.54 R
+    ## 1 enforce    1.21    0.0456    1.14      1.28    0    R     
+    ## 2 illegal    1.18    0.0289    1.13      1.23    0    shared
+    ## 3 amnesty    1.17    0.0315    1.11      1.22    0    R     
+    ## 4 illegally  1.12    0.0290    1.08      1.18    0    shared
+    ## 5 laws       1.09    0.0351    1.03      1.15    0    R     
+    ## 6 legal      1.03    0.0341    0.973     1.08    0.39 R
 
 **conText** also includes a plotting function, `plot_nns_ratio`,
 specific to `get_nns_ratio()`, providing a nice visualization of its
 output. `alpha` defines the desired significance threshold to denote
-“significant” results on the plot (indicated by a
-![\*](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%2A "*")
-next to the feature). Also, you can choose between two different
-visualizations of the same results using the `horizontal` argument.
+“significant” results on the plot (indicated by a $*$ next to the
+feature). Also, you can choose between two different visualizations of
+the same results using the `horizontal` argument.
 
 ``` r
 plot_nns_ratio(x = immig_nns_ratio, alpha = 0.01, horizontal = TRUE)
 ```
 
-![](/private/var/folders/f6/yb9q7mnn2yv1k1bl9vqxb09h0000gn/T/RtmpcMrYRQ/preview-9c423fcf2d5.dir/quickstart_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](/private/var/folders/f6/yb9q7mnn2yv1k1bl9vqxb09h0000gn/T/RtmprFJFAa/preview-b8197dca9787.dir/quickstart_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
 ### Nearest contexts
 
@@ -693,18 +690,19 @@ immig_party_ncs[["R"]]
 ```
 
     ## # A tibble: 10 × 7
-    ##    target context                         rank value std.error lower.ci upper.ci
-    ##    <chr>  <chr>                          <int> <dbl>     <dbl>    <dbl>    <dbl>
-    ##  1 R      america suggest immigration c…     1 0.815   0.00781    0.804    0.828
-    ##  2 R      immigration can good thing im…     2 0.786   0.00806    0.772    0.799
-    ##  3 R      immigration law prior illegal…     3 0.784   0.00819    0.770    0.796
-    ##  4 R      good thing immigration illega…     4 0.772   0.00711    0.760    0.785
-    ##  5 R      going cost hardworking taxpay…     5 0.758   0.00781    0.745    0.770
-    ##  6 R      actually increase illegal imm…     6 0.734   0.00562    0.724    0.743
-    ##  7 R      immigration enforcement along…     7 0.732   0.00793    0.718    0.744
-    ##  8 R      late right thing hold preside…     8 0.723   0.00981    0.708    0.738
-    ##  9 R      responsible immigration polic…     9 0.722   0.00921    0.707    0.736
-    ## 10 R      backlog met likely lead reduc…    10 0.718   0.00778    0.706    0.729
+    ##    target context                             rank value std.e…¹ lower…² upper…³
+    ##    <chr>  <chr>                              <int> <dbl>   <dbl>   <dbl>   <dbl>
+    ##  1 R      america suggest immigration can g…     1 0.812 0.00956   0.796   0.828
+    ##  2 R      immigration can good thing immigr…     2 0.781 0.0101    0.765   0.799
+    ##  3 R      immigration law prior illegal imm…     3 0.780 0.0119    0.760   0.797
+    ##  4 R      good thing immigration illegal im…     4 0.768 0.00887   0.754   0.782
+    ##  5 R      going cost hardworking taxpayers …     5 0.754 0.0101    0.737   0.770
+    ##  6 R      actually increase illegal immigra…     6 0.731 0.00739   0.720   0.743
+    ##  7 R      immigration enforcement along sou…     7 0.729 0.0108    0.711   0.746
+    ##  8 R      responsible immigration policies …     8 0.721 0.0116    0.703   0.740
+    ##  9 R      late right thing hold president r…     9 0.721 0.0131    0.695   0.743
+    ## 10 R      backlog met likely lead reduction…    10 0.715 0.00989   0.696   0.730
+    ## # … with abbreviated variable names ¹​std.error, ²​lower.ci, ³​upper.ci
 
 # Embedding regression
 
@@ -721,8 +719,8 @@ that allows us to do just that. The corresponding package function is
 functions. `data` must be a quanteda tokens object with covariates
 stored as document variables (`docvars`). We next specify a formula
 consisting of the target word of interest, e.g. “immigration” and the
-set of covariates. To use all covariates in `data`, we can specify
-`immigration ~ .`. Note that `formula` can also take vectors of target words
+set of covariates. To use all covariates in `data`, we can speficy
+`immigration ~ .`. `formula` can also take vectors of target words
 e.g. `c("immigration", "immigrants") ~ party + gender` and phrases
 e.g. `"immigration reform" ~ party + gender` – place phrases in
 quotation marks.
@@ -740,9 +738,9 @@ model1 <- conText(formula = immigration ~ party + gender,
                   verbose = FALSE)
 ```
 
-    ##   coefficient normed.estimate  std.error  lower.ci  upper.ci p.value
-    ## 1     party_R       0.6100437 0.05993146 0.5090822 0.7178218       0
-    ## 2    gender_M       0.5278585 0.05693682 0.4413191 0.6418341       0
+    ##   coefficient normed.estimate std.error lower.ci upper.ci p.value
+    ## 1     party_R        3.386745 0.2279633 2.996087 3.734473       0
+    ## 2    gender_M        2.956320 0.2333038 2.604478 3.323050       0
 
 ``` r
 # notice, non-binary covariates are automatically "dummified"
@@ -812,9 +810,9 @@ To access the normed coefficients for plotting:
 model1@normed_coefficients
 ```
 
-    ##   coefficient normed.estimate  std.error  lower.ci  upper.ci p.value
-    ## 1     party_R       0.6100437 0.05993146 0.5090822 0.7178218       0
-    ## 2    gender_M       0.5278585 0.05693682 0.4413191 0.6418341       0
+    ##   coefficient normed.estimate std.error lower.ci upper.ci p.value
+    ## 1     party_R        3.386745 0.2279633 2.996087 3.734473       0
+    ## 2    gender_M        2.956320 0.2333038 2.604478 3.323050       0
 
 `conText` can also take continuous covariates. In the example below we
 estimate a model using the first dimension of the NOMINATE
@@ -840,8 +838,8 @@ model2 <- conText(formula = immigration ~ nominate_dim1,
                   verbose = FALSE)
 ```
 
-    ##     coefficient normed.estimate  std.error  lower.ci  upper.ci p.value
-    ## 1 nominate_dim1       0.6640346 0.07038282 0.5523477 0.7860009       0
+    ##     coefficient normed.estimate std.error lower.ci upper.ci p.value
+    ## 1 nominate_dim1        3.738801 0.2343684 3.319705 4.092368       0
 
 ``` r
 # look at percentiles of nominate
@@ -916,16 +914,16 @@ wv_main <- glove$fit_transform(toks_fcm, n_iter = 10,
                                n_threads = 2) # set to 'parallel::detectCores()' to use all available cores
 ```
 
-    ## INFO  [16:07:29.474] epoch 1, loss 0.2268 
-    ## INFO  [16:07:30.342] epoch 2, loss 0.0768 
-    ## INFO  [16:07:31.193] epoch 3, loss 0.0497 
-    ## INFO  [16:07:32.042] epoch 4, loss 0.0375 
-    ## INFO  [16:07:32.887] epoch 5, loss 0.0303 
-    ## INFO  [16:07:33.731] epoch 6, loss 0.0256 
-    ## INFO  [16:07:34.584] epoch 7, loss 0.0223 
-    ## INFO  [16:07:35.431] epoch 8, loss 0.0198 
-    ## INFO  [16:07:36.276] epoch 9, loss 0.0178 
-    ## INFO  [16:07:37.140] epoch 10, loss 0.0163
+    ## INFO  [15:25:39.480] epoch 1, loss 0.2268
+    ## INFO  [15:25:40.445] epoch 2, loss 0.0768
+    ## INFO  [15:25:41.377] epoch 3, loss 0.0497
+    ## INFO  [15:25:42.361] epoch 4, loss 0.0375
+    ## INFO  [15:25:43.302] epoch 5, loss 0.0303
+    ## INFO  [15:25:44.246] epoch 6, loss 0.0256
+    ## INFO  [15:25:45.190] epoch 7, loss 0.0223
+    ## INFO  [15:25:46.145] epoch 8, loss 0.0198
+    ## INFO  [15:25:47.101] epoch 9, loss 0.0178
+    ## INFO  [15:25:48.104] epoch 10, loss 0.0163
 
 ``` r
 wv_context <- glove$components
@@ -1086,5 +1084,5 @@ model3 <- conText(formula = . ~ party,
                   verbose = FALSE)
 ```
 
-    ##   coefficient normed.estimate  std.error lower.ci  upper.ci p.value
-    ## 1     party_R       0.6628125 0.07988763 0.555887 0.8079034       0
+    ##   coefficient normed.estimate std.error lower.ci upper.ci p.value
+    ## 1     party_R        3.878352 0.3682709  3.29526 4.493428       0

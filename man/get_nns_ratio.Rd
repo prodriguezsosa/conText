@@ -21,7 +21,8 @@ get_nns_ratio(
   num_permutations = 100,
   stem = FALSE,
   language = "porter",
-  verbose = TRUE
+  verbose = TRUE,
+  show_language = TRUE
 )
 }
 \arguments{
@@ -74,6 +75,8 @@ significantly influence the average.}
   }
 
 \item{verbose}{provide information on which group is the numerator}
+
+\item{show_language}{(logical) if TRUE print out message with language used for stemming.}
 }
 \value{
 a \code{data.frame} with following columns:
@@ -107,7 +110,11 @@ library(quanteda)
 toks <- tokens(cr_sample_corpus)
 
 # build a tokenized corpus of contexts sorrounding a target term
-immig_toks <- tokens_context(x = toks, pattern = "immigr*", window = 6L)
+immig_toks <- tokens_context(x = toks, pattern = "immigration", window = 6L)
+
+# sample 100 instances of the target term, stratifying by party (only for example purposes)
+set.seed(2022L)
+immig_toks <- tokens_sample(immig_toks, size = 100, by = docvars(immig_toks, 'party'))
 
 # we limit candidates to features in our corpus
 feats <- featnames(dfm(immig_toks))

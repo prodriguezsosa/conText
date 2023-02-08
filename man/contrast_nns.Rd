@@ -79,14 +79,19 @@ cr_toks <- tokens(cr_sample_corpus)
 immig_toks <- tokens_context(x = cr_toks,
 pattern = "immigration", window = 6L, hard_cut = FALSE, verbose = TRUE)
 
+# sample 100 instances of the target term, stratifying by party (only for example purposes)
+set.seed(2022L)
+immig_toks <- tokens_sample(immig_toks, size = 100, by = docvars(immig_toks, 'party'))
+
 set.seed(42L)
 party_nns <- contrast_nns(x = immig_toks,
 groups = docvars(immig_toks, 'party'),
 pre_trained = cr_glove_subset,
 transform = TRUE, transform_matrix = cr_transform,
-bootstrap = TRUE, num_bootstraps = 100,
+bootstrap = TRUE,
+num_bootstraps = 100,
 confidence_level = 0.95,
-permute = TRUE, num_permutations = 100,
+permute = TRUE, num_permutations = 10,
 candidates = NULL, N = 20,
 verbose = FALSE)
 

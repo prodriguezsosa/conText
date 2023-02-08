@@ -14,7 +14,7 @@ build_dem <- function(Class = 'em',
                      features = character(),
                      Dimnames = list()){
   result <-  new(Class = Class,
-                 as(x_dem, "dgCMatrix"),
+                 as(x_dem, "CsparseMatrix"),
                  docvars = docvars,
                  features = features,
                  Dimnames = Dimnames)
@@ -35,7 +35,7 @@ build_fem <- function(Class = 'fem',
                       counts = numeric(),
                       Dimnames = list()){
   result <-  new(Class = Class,
-                 as(x_fem, "dgCMatrix"),
+                 as(x_fem, "CsparseMatrix"),
                  features = features,
                  counts = counts,
                  Dimnames = Dimnames)
@@ -58,7 +58,7 @@ build_conText <- function(Class = 'conText',
                       features = character(),
                       Dimnames = list()){
   result <-  new(Class = Class,
-                 as(x_conText, "dgCMatrix"),
+                 as(x_conText, "CsparseMatrix"),
                  normed_coefficients = normed_coefficients,
                  features = features,
                  Dimnames = Dimnames)

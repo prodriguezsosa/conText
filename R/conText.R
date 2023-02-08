@@ -17,7 +17,7 @@
 #' @inheritParams dem
 #' @param bootstrap (logical) if TRUE, use bootstrapping -- sample from texts with replacement and
 #' re-run regression on each sample. Required to get std. errors.
-#' @param num_bootstraps (numeric) number of bootstraps to use.
+#' @param num_bootstraps (numeric) number of bootstraps to use (at least 100)
 #' @param confidence_level (numeric in (0,1)) confidence level e.g. 0.95
 #' @param stratify (logical) if TRUE, stratify by discrete covariates when bootstrapping.
 #' @param permute (logical) if TRUE, compute empirical p-values using permutation test
@@ -55,10 +55,11 @@
 #'                  data = toks,
 #'                  pre_trained = cr_glove_subset,
 #'                  transform = TRUE, transform_matrix = cr_transform,
-#'                  bootstrap = TRUE, num_bootstraps = 100,
+#'                  bootstrap = TRUE,
+#'                  num_bootstraps = 100,
 #'                  confidence_level = 0.95,
 #'                  stratify = FALSE,
-#'                  permute = TRUE, num_permutations = 100,
+#'                  permute = TRUE, num_permutations = 10,
 #'                  window = 6, case_insensitive = TRUE,
 #'                  verbose = FALSE)
 #'
@@ -78,7 +79,7 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
   if(!transform && !is.null(transform_matrix)) warning('Warning: transform = FALSE means transform_matrix argument was ignored. If that was not your intention, use transform = TRUE.', call. = FALSE)
   if(any(grepl("factor\\(", formula))) stop('It seems you are using factor() in "formula" to create a factor variable. \n Please create it directly in "data" and re-run conText.', call. = FALSE) # pre-empt users using lm type notation
   if(bootstrap && (confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
-  if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100', call. = FALSE) # check num_bootstraps >= 100
+  if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100') # check num_bootstraps >= 100
 
 
   # extract dependent variable

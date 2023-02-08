@@ -13,7 +13,8 @@ nns_ratio(
   pre_trained,
   stem = FALSE,
   language = "porter",
-  verbose = TRUE
+  verbose = TRUE,
+  show_language = TRUE
 )
 }
 \arguments{
@@ -46,6 +47,8 @@ significantly influence the average.}
   }
 
 \item{verbose}{report which group is the numerator and which group is the denominator.}
+
+\item{show_language}{(logical) if TRUE print out message with language used for stemming.}
 }
 \value{
 a \code{data.frame} with following columns:

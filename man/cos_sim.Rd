@@ -10,7 +10,8 @@ cos_sim(
   features = NULL,
   stem = FALSE,
   language = "porter",
-  as_list = TRUE
+  as_list = TRUE,
+  show_language = TRUE
 )
 }
 \arguments{
@@ -35,6 +36,8 @@ significantly influence the average.}
 
 \item{as_list}{(logical) if FALSE all results are combined into a single data.frame
 If TRUE, a list of data.frames is returned with one data.frame per feature.}
+
+\item{show_language}{(logical) if TRUE print out message with language used for stemming.}
 }
 \value{
 a \code{data.frame} or list of data.frames (one for each target)
