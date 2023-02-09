@@ -76,7 +76,7 @@ dem_sample <- function(x, size = NULL, replace = FALSE, weight = NULL, by = NULL
       sample_docs <- x@docvars %>%
         dplyr::mutate(docid = seq_len(nrow(.))) %>%
         dplyr::group_by_at(by) %>%
-        dplyr::sample_frac(size = 1, replace = replace) %>%
+        dplyr::sample_frac(size = size, replace = replace) %>%
         dplyr::pull(docid)
     }
 

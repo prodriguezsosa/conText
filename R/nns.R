@@ -56,37 +56,49 @@
 #' # setting as_list = FALSE combines each group's
 #' # results into a single tibble (useful for joint plotting)
 #' immig_nns <- nns(immig_wv_party, pre_trained = cr_glove_subset,
-#' N = 5, candidates = immig_wv_party@features, stem = TRUE, as_list = TRUE)
+#' N = 5, candidates = immig_wv_party@features, stem = FALSE, as_list = TRUE)
 nns <- function(x, N = 10, candidates = character(0), pre_trained, stem = FALSE, language = 'porter', as_list = TRUE, show_language = TRUE){
 
   # for single numeric vectors
   if(is.null(dim(x)) && length(x) == dim(pre_trained)[2]) x <- matrix(x, nrow = 1)
 
-  # subset candidates to features present in pre-trained embeddings provided
-  if(length(candidates) > 0) candidates <- intersect(candidates, rownames(pre_trained))
+  # stem pre_trained embeddings if TRUE
+  if(stem){
+    if (requireNamespace("SnowballC", quietly = TRUE)) {
+      if(show_language) cat('Using', language, 'for stemming. To check available languages run "SnowballC::getStemLanguages()"', '\n')
+      pre_trained_feats <- SnowballC::wordStem(rownames(pre_trained))
+    } else stop('"SnowballC (>= 0.7.0)" package must be installed to use stemmming option.')
+  } else pre_trained_feats <- rownames(pre_trained)
+
+  # rename features in pre_trained (only changes if stem)
+  rownames(pre_trained) <- pre_trained_feats
+
+  # if candidates are provided
+  if(length(candidates) > 0) {
+    if(stem) candidates <- SnowballC::wordStem(candidates) # stem
+
+    # check which, if any candidates, are present
+    candidate_check <- candidates %in% pre_trained_feats
+    if(!any(candidate_check)) stop('none of canidates appear to have an embedding in the set of pre-trained embeddings provided, please select other candidates', call. = FALSE)
+    if(!all(candidate_check)) warning('the following canidates do not appear to have an embedding in the set of pre-trained embeddings provided: ', paste(candidates[which(!candidate_check)], collapse = ', '))
+    candidates_present <- candidates[candidate_check]
+
+    # subset pre-trained embeddings to candidates of interest
+    pre_trained <- pre_trained[rownames(pre_trained) %in% candidates_present,]
+  }
 
   ## compute cosine similarity
-  # if no candidates are provided, use full set of features
-  if(length(candidates) == 0) cos_sim <- text2vec::sim2(x = as.matrix(pre_trained), y = as.matrix(x), method = "cosine", norm = "l2") %>% data.frame()
-
-  # if candidates are provided, subset pre-trained
-  if(length(candidates) > 0) cos_sim <- text2vec::sim2(x = as.matrix(pre_trained)[candidates,], y = as.matrix(x), method = "cosine", norm = "l2") %>% data.frame()
+  cos_sim <- text2vec::sim2(x = as.matrix(pre_trained), y = as.matrix(x), method = "cosine", norm = "l2") %>% data.frame()
 
   # name columns
   if(!is.null(rownames(x))) colnames(cos_sim) <- rownames(x)
   if(is.null(rownames(x))) colnames(cos_sim) <- 'target'
 
   # add a column with feature names
-  cos_sim <- cos_sim %>% dplyr::mutate(feature = rownames(cos_sim))
+  cos_sim <- cos_sim %>% dplyr::mutate(feature = gsub(pattern = '.[[:digit:]]+', x = rownames(cos_sim), ""))
 
-  # stemming
-  if(stem){
-    if (requireNamespace("SnowballC", quietly = TRUE)) {
-      if(show_language) cat('Using', language, 'for stemming. To check available languages run "SnowballC::getStemLanguages()"', '\n')
-      cos_sim <- cos_sim %>% dplyr::mutate(feature = SnowballC::wordStem(feature, language = language)) %>% dplyr::group_by(feature) %>% dplyr::summarise(dplyr::across(where(is.numeric), mean)) %>% dplyr::ungroup()
-      }
-    else stop('"SnowballC (>= 0.7.0)" package must be installed to use stemmming option.')
-  }
+  # if stem, average over stems
+  if(stem) cos_sim <- cos_sim %>% dplyr::group_by(feature) %>% dplyr::summarise(dplyr::across(where(is.numeric), mean)) %>% dplyr::ungroup()
 
   # reshape data
   result <- reshape2::melt(cos_sim, id.vars = 'feature') %>%
