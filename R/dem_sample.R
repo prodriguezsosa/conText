@@ -1,7 +1,8 @@
 #' Randomly sample documents from a dem
 #'
 #' Take a random sample of documents from a `dem` with/without replacement and
-#' with the option to group by a variable in `dem@docvars`.
+#' with the option to group by a variable in `dem@docvars`. Note: `dem_sample` uses `dplyr::sample_frac`
+#' underneath the hood, as such `size` refers to the fraction of total obs.
 #'
 #' @param x a (`dem-class`) document-embedding-matrix
 #' @inheritParams dplyr::sample_frac

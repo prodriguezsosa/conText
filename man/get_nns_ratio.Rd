@@ -131,8 +131,8 @@ immig_nns_ratio <- get_nns_ratio(x = immig_toks,
                                  transform_matrix = cr_transform,
                                  bootstrap = TRUE,
                                  num_bootstraps = 100,
-                                 permute = TRUE,
-                                 num_permutations = 10,
+                                 permute = FALSE,
+                                 num_permutations = 5,
                                  verbose = FALSE)
 
 head(immig_nns_ratio)

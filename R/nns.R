@@ -88,14 +88,15 @@ nns <- function(x, N = 10, candidates = character(0), pre_trained, stem = FALSE,
   }
 
   ## compute cosine similarity
-  cos_sim <- text2vec::sim2(x = as.matrix(pre_trained), y = as.matrix(x), method = "cosine", norm = "l2") %>% data.frame()
+  cos_sim <- text2vec::sim2(x = as.matrix(pre_trained), y = as.matrix(x), method = "cosine", norm = "l2") %>% t() %>% as.data.frame() %>% t()
 
   # name columns
   if(!is.null(rownames(x))) colnames(cos_sim) <- rownames(x)
   if(is.null(rownames(x))) colnames(cos_sim) <- 'target'
 
   # add a column with feature names
-  cos_sim <- cos_sim %>% dplyr::mutate(feature = gsub(pattern = '.[[:digit:]]+', x = rownames(cos_sim), ""))
+  cos_sim <- cos_sim %>% as.data.frame() %>% dplyr::mutate(feature = rownames(cos_sim))
+  rownames(cos_sim) <- NULL
 
   # if stem, average over stems
   if(stem) cos_sim <- cos_sim %>% dplyr::group_by(feature) %>% dplyr::summarise(dplyr::across(where(is.numeric), mean)) %>% dplyr::ungroup()

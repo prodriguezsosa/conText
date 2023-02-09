@@ -85,6 +85,6 @@ immig_wv_party <- dem_group(immig_dem, groups = immig_dem@docvars$party)
 # setting as_list = FALSE combines each group's
 # results into a single tibble (useful for joint plotting)
 immig_nns <- nns(immig_wv_party, pre_trained = cr_glove_subset,
-N = 5, candidates = immig_wv_party@features, stem = TRUE, as_list = TRUE)
+N = 5, candidates = immig_wv_party@features, stem = FALSE, as_list = TRUE)
 }
 \keyword{nns}

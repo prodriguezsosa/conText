@@ -32,7 +32,8 @@ sampled call the attribute: \verb{@Dimnames$docs}.
 }
 \description{
 Take a random sample of documents from a \code{dem} with/without replacement and
-with the option to group by a variable in \code{dem@docvars}.
+with the option to group by a variable in \code{dem@docvars}. Note: \code{dem_sample} uses \code{dplyr::sample_frac}
+underneath the hood, as such \code{size} refers to the fraction of total obs.
 }
 \examples{
 

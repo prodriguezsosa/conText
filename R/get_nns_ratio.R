@@ -75,8 +75,8 @@
 #'                                  transform_matrix = cr_transform,
 #'                                  bootstrap = TRUE,
 #'                                  num_bootstraps = 100,
-#'                                  permute = TRUE,
-#'                                  num_permutations = 10,
+#'                                  permute = FALSE,
+#'                                  num_permutations = 5,
 #'                                  verbose = FALSE)
 #'
 #' head(immig_nns_ratio)
@@ -101,7 +101,7 @@ get_nns_ratio <- function(x,
   # initial checks
   if(class(x)[1] != "tokens") stop("data must be of class tokens")
   if(bootstrap && (confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
-  if(bootstrap && num_bootstraps < 100) warning('num_bootstraps must be at least 100') # check num_bootstraps >= 100
+  if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100') # check num_bootstraps >= 100
 
   # stemming check
   if(stem){

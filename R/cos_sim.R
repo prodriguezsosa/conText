@@ -82,7 +82,7 @@ cos_sim <- function(x, pre_trained, features = NULL, stem = FALSE, language = 'p
   pre_trained_subset <- pre_trained[rownames(pre_trained) %in% features_present,]
 
   # compute cosine similarity
-  cos_sim <- text2vec::sim2(x, pre_trained_subset, method = 'cosine', norm = 'l2')
+  cos_sim <- text2vec::sim2(as.matrix(x), as.matrix(pre_trained_subset), method = 'cosine', norm = 'l2')
 
   # convert to dataframe
   cos_sim <- reshape2::melt(as.matrix(cos_sim)) %>% setNames(c('target', 'feature', 'value'))
