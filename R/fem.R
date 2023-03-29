@@ -75,8 +75,8 @@ fem <- function(x, pre_trained, transform = TRUE, transform_matrix, verbose = TR
   # create `fem` class object
   result <- build_fem(Class = 'fem',
                      x_fem = result,
-                     features = overlapping_features,
-                     counts = x@meta$object$margin[overlapping_features],
+                     features = rownames(context_embedding),
+                     counts = x@meta$object$margin[rownames(context_embedding)],
                      Dimnames = list(
                        rows = rownames(x)[included],
                        columns = NULL))
