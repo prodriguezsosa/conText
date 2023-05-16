@@ -51,7 +51,8 @@ compute_transform <- function(x, pre_trained, weighting = 500){
 
   # extract feature frequency from fcm object
   feature_frequency <- x@meta$object$margin
-  feature_frequency <- feature_frequency[intersect(names(feature_frequency), attr(context_embeddings, 'features'))]
+  feature_frequency <- feature_frequency[intersect(names(feature_frequency), rownames(context_embeddings))]
+  feature_frequency <- feature_frequency[intersect(names(feature_frequency), rownames(pre_trained))] # only use overlap btw pretrained and context embeddings (when pretrained embeddings are not trained on local corpus)
   if(weighting == 'log') feature_frequency <- feature_frequency[feature_frequency >= 1] # avoid negatives when taking logs
 
   # apply weighting if given
