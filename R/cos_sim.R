@@ -79,7 +79,7 @@ cos_sim <- function(x, pre_trained, features = NULL, stem = FALSE, language = 'p
   features_present <- features[feature_check]
 
   # subset pre-trained embeddings to features of interest
-  pre_trained_subset <- pre_trained[rownames(pre_trained) %in% features_present,]
+  pre_trained_subset <- pre_trained[rownames(pre_trained) %in% features_present,, drop = FALSE]
 
   # compute cosine similarity
   cos_sim <- text2vec::sim2(as.matrix(x), as.matrix(pre_trained_subset), method = 'cosine', norm = 'l2')
