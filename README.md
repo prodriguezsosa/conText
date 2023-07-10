@@ -22,3 +22,10 @@ To use **conText** you will need three objects:
 
 Check out this [Quick Start Guide](https://github.com/prodriguezsosa/conText/blob/master/vignettes/quickstart.md) to get going with `conText`.
 
+# Latest Updates
+
+We've pushed an alternative version of the `conText` function, `conText_jackknife` that implements jackknife debiasing of the norm of coefficient estimates to mitigate finite sample bias, a concern when samples sizes are small and/or class-ratios are highly skewed towards one group. To illustrate the advantages of using jackknife debiasing, below we showcase the results of simulations using real data where we know the true value of coefficient norm, varying both sample size and class ratios.
+
+We observe that using OLS with bootstrapped standard errors can be problematic (i.e. resulting in a notable bias) for cases with small samples and highly skewed class ratios, especially when the true norm of the coefficient is 0. Jackknife debiasing clearly helps mitigate this bias. Nevertheless we still strongly recommend users: (1) avoid reading too much into results with highly skewed class ratios (2) benchmark their results against a random group of the same size as their group of interest and (3) always follow up any regression-based results with a qualitative comparison of nearest neighbors.
+
+<img width="1461" alt="Screenshot 2023-07-07 at 5 39 26 PM" src="https://github.com/prodriguezsosa/conText/assets/6556873/84fe373a-d9a0-4438-be8b-d9dc84596006">
