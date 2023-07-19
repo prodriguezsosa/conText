@@ -14,7 +14,6 @@
 #' transform any non-indicator variables into binary indicator variables (multiple if more than 2 classes),
 #' leaving out a "base" category.
 #' @inheritParams dem
-#' @jackknife (logical) if TRUE, jaccknife debiasing is implemented (required to get std. errors)
 #' @param confidence_level (numeric in (0,1)) confidence level e.g. 0.95
 #' @param permute (logical) if TRUE, compute empirical p-values using permutation test
 #' @param num_permutations (numeric) number of permutations to use
