@@ -28,6 +28,7 @@ export(permute_contrast)
 export(plot_nns_ratio)
 export(prototypical_context)
 export(tokens_context)
+export(conText_jackknife)
 
 importFrom(dplyr, "%>%")
 importFrom(stats, filter, sd, setNames, terms, qt, quantile)
