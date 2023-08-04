@@ -1,7 +1,8 @@
 #' Embedding regression
 #'
-#' Estimates an embedding regression model with options to use bootstrapping to estimate confidence
-#' intervals and a permutation test for inference (see https://github.com/prodriguezsosa/conText for details.)
+#' Estimates an embedding regression model with options to use bootstrapping (to be deprecated) or
+#' jackknife debiasing to estimate confidence intervals and a permutation test for inference
+#' (see https://github.com/prodriguezsosa/conText for details.)
 #'
 #' @param formula a symbolic description of the model to be fitted with a target word as a DV e.g.
 #' `immigrant ~ party + gender`. To use a phrase as a DV, place it in quotations e.g.
@@ -11,15 +12,16 @@
 #' on the RHS use `immigrant ~ .`. Any `character` or `factor` covariates will automatically be converted
 #' to a set of binary (`0/1`s) indicator variables for each group, leaving the first level out of the regression.
 #' @param data a quanteda `tokens-class` object with the necessary document variables. Covariates must be
-#' either binary indicator variables or "trasnformable" into binary indicator variables. conText will automatically
+#' either binary indicator variables or "transformable" into binary indicator variables. conText will automatically
 #' transform any non-indicator variables into binary indicator variables (multiple if more than 2 classes),
 #' leaving out a "base" category.
 #' @inheritParams dem
 #' @param bootstrap (logical) if TRUE, use bootstrapping -- sample from texts with replacement and
-#' re-run regression on each sample. Required to get std. errors.
+#' re-run regression on each sample.
 #' @param num_bootstraps (numeric) number of bootstraps to use (at least 100)
+##' @param stratify (logical) if TRUE, stratify by discrete covariates when bootstrapping.
+#' @param jackknife (logical) if TRUE, jackknife debiasing is implemented.
 #' @param confidence_level (numeric in (0,1)) confidence level e.g. 0.95
-#' @param stratify (logical) if TRUE, stratify by discrete covariates when bootstrapping.
 #' @param permute (logical) if TRUE, compute empirical p-values using permutation test
 #' @param num_permutations (numeric) number of permutations to use
 #' @inheritParams tokens_context
@@ -32,10 +34,10 @@
 #' a `data.frame` with the following columns:
 #' \describe{
 #'  \item{`coefficient`}{(character) name of (covariate) coefficient.}
-#'  \item{`value`}{(numeric) norm of the corresponding beta coefficient.}
-#'  \item{`std.error`}{(numeric) (if bootstrap = TRUE) std. error of the norm of the beta coefficient.}
-#'  \item{`lower.ci`}{(numeric) (if bootstrap = TRUE) lower bound of the confidence interval.}
-#'  \item{`upper.ci`}{(numeric) (if bootstrap = TRUE) upper bound of the confidence interval.}
+#'  \item{`value`}{(numeric) norm of the corresponding beta coefficient (debiased if jackknife = TRUE).}
+#'  \item{`std.error`}{(numeric) (if bootstrap = TRUE or jackknife = TRUE) std. error of the (debiased if jackknife = TRUE) norm of the beta coefficient.}
+#'  \item{`lower.ci`}{(numeric) (if bootstrap = TRUE or jackknife = TRUE) lower bound of the (debiased if jackknife = TRUE) confidence interval.}
+#'  \item{`upper.ci`}{(numeric) (if bootstrap = TRUE or jackknife = TRUE) upper bound of the (debiased if jackknife = TRUE) confidence interval.}
 #'  \item{`p.value`}{(numeric) (if permute = TRUE) empirical p.value of the norm of the coefficient.}
 #'  }
 #'
@@ -54,13 +56,15 @@
 #' model1 <- conText(formula = immigration ~ party + gender,
 #'                  data = toks,
 #'                  pre_trained = cr_glove_subset,
-#'                  transform = TRUE, transform_matrix = cr_transform,
-#'                  bootstrap = TRUE,
-#'                  num_bootstraps = 100,
+#'                  transform = TRUE,
+#'                  transform_matrix = cr_transform,
+#'                  bootstrap=FALSE,
+#'                  jackknife = TRUE,
 #'                  confidence_level = 0.95,
-#'                  stratify = FALSE,
-#'                  permute = TRUE, num_permutations = 10,
-#'                  window = 6, case_insensitive = TRUE,
+#'                  permute = TRUE,
+#'                  num_permutations = 10,
+#'                  window = 6,
+#'                  case_insensitive = TRUE,
 #'                  verbose = FALSE)
 #'
 #' # notice, character/factor covariates are automatically "dummified"
@@ -72,15 +76,16 @@
 #' # (normed) coefficient table
 #' model1@normed_coefficients
 #'
-conText <- function(formula, data, pre_trained, transform = TRUE, transform_matrix, bootstrap = TRUE, num_bootstraps = 100, confidence_level = 0.95, stratify = FALSE, permute = TRUE, num_permutations = 100, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
+conText <- function(formula, data, pre_trained, transform = TRUE, transform_matrix, bootstrap = FALSE, num_bootstraps = 100, stratify = FALSE, jackknife = TRUE, confidence_level = 0.95, permute = TRUE, num_permutations = 100, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
 
   # initial checks
   if(class(data)[1] != "tokens") stop("data must be of class tokens", call. = FALSE)
   if(!transform && !is.null(transform_matrix)) warning('Warning: transform = FALSE means transform_matrix argument was ignored. If that was not your intention, use transform = TRUE.', call. = FALSE)
   if(any(grepl("factor\\(", formula))) stop('It seems you are using factor() in "formula" to create a factor variable. \n Please create it directly in "data" and re-run conText.', call. = FALSE) # pre-empt users using lm type notation
-  if(bootstrap && (confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
+  if(confidence_level >= 1 || confidence_level<=0) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
+  if((bootstrap || jackknife) && (confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
   if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100') # check num_bootstraps >= 100
-
+  if(jackknife && bootstrap) stop("must either implement bootstrap or Jackknife (set one to TRUE, the other to FALSE), or neither (set both to FALSE), can't implement both simultaneously.") # check num_bootstraps >= 100
 
   # extract dependent variable
   target <- as.character(formula[[2]])
@@ -181,6 +186,14 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
   }
 
   # -------------------
+  # jackknife
+  # -------------------
+  if(jackknife){
+    jack_out <- run_jack_ols(X = X, Y = Y, confidence_level = confidence_level)
+    beta_coefficients <- jack_out[["beta_coefficients"]]
+    norm_tibble <- jack_out[["norm_tibble"]]
+  }
+  # -------------------
   # permutation
   # -------------------
 
@@ -215,6 +228,7 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
                             columns = NULL))
 
   # print the normed coefficient table
+  cat("Note: These values are not regression coefficients. Check out the Quick Start Guide for help with interpretation: \nhttps://github.com/prodriguezsosa/conText/blob/master/vignettes/quickstart.md\n\n")
   print(norm_tibble)
 
   return(result)
@@ -228,7 +242,7 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
 
 #' Permute OLS
 #'
-#' Estimate empirical p-value using permutated regression
+#' Estimate empirical p-value using permuted regression
 #'
 #' @param Y vector of regression model's dependent variable (embedded context)
 #' @param X data.frame of model independent variables (covariates)
@@ -246,6 +260,31 @@ permute_ols <- function(Y = NULL, X = NULL){
 
   # output
   return(ols_out)
+
+}
+
+#' Run OLS
+#'
+#' @param Y vector of regression model's dependent variable (embedded context)
+#' @param X data.frame of model independent variables (covariates)
+#'
+#' @return list with two elements, `betas` = list of beta_coefficients (D dimensional vectors);
+#' `normed_betas` = tibble with the norm of the non-intercept coefficients
+#'
+run_ols <- function(Y = NULL, X = NULL){
+
+  # convert X to a matrix
+  X_mat <- as.matrix(X, ncol = ncol(X))
+
+  # compute OLS bets hats
+  betas <- solve(t(X_mat)%*%X_mat)%*%t(X_mat)%*%Y
+
+  # normed betas
+  vars <- setdiff(colnames(X), "(Intercept)") # identify non-intercept covariates (norm of intercept is not all that informative)
+  normed_betas <- apply(matrix(betas[vars,], nrow = length(vars)), 1, function(x) norm(matrix(x, nrow = 1), type = "f")) %>% setNames(vars)
+
+  # output
+  return(list('betas' = betas, 'normed_betas' = normed_betas))
 
 }
 
@@ -299,29 +338,69 @@ bootstrap_ols <- function(Y = NULL, X = NULL, stratify = NULL){
   return(ols_out)
 }
 
-#' Run OLS
-#'
-#' Bootstrap model coefficients and standard errors
+csolver <- function(x) { chol2inv(chol(crossprod(x)))}
+
+#' Run jackknife debiased OLS
 #'
 #' @param Y vector of regression model's dependent variable (embedded context)
 #' @param X data.frame of model independent variables (covariates)
+#' @param confidence_level (numeric in (0,1)) confidence level e.g. 0.95
 #'
 #' @return list with two elements, `betas` = list of beta_coefficients (D dimensional vectors);
-#' `normed_betas` = tibble with the norm of the non-intercept coefficients
+#' `normed_betas` = tibble with the norm and CIs of the non-intercept coefficients
 #'
-run_ols <- function(Y = NULL, X = NULL){
+run_jack_ols <- function(X,Y, confidence_level = 0.95) {
+  coefficient_names <- names(X)
+  X <- as.matrix(X)
+  Y <- as.matrix(Y)
+  XtXinv <- csolver(X)
+  XtY <- crossprod(X,Y)
+  beta <- XtXinv%*%XtY
+  resid <- Y - X%*%beta
+  # compute the hat values without the entire matrix
+  H <- rowSums((X%*%XtXinv)*X)
+  # calculate all but the residual in the numerator for dfbeta
+  numX <- tcrossprod(XtXinv,X)
+  # make a residual list
+  rlist <- asplit(resid/(1-H),MARGIN=2)
+  # jackknife
+  jack <- vector(mode="list",length=length(rlist))
+  debiased <- vector(mode="list",length=length(rlist))
+  n <- nrow(Y)
+  for(i in 1:length(rlist)) {
+    # writing a loop here because we need to access and compute from multiple lists
+    b <- beta[,i] - t(t(numX)*c(rlist[[i]]))
+    jack[[i]] <- b
+    debiased[[i]] <- rowMeans(n*beta[,i] - (n-1)*b)
+  }
+  # bind lists
+  pseudo_betas <- t(do.call(rbind, debiased))
 
-  # convert X to a matrix
-  X_mat <- as.matrix(X, ncol = ncol(X))
+  # get coefficient names
+  rownames(pseudo_betas) <- coefficient_names
 
-  # compute OLS bets hats
-  betas <- solve(t(X_mat)%*%X_mat)%*%t(X_mat)%*%Y
+  # indices to separate the pseudo values for each coefficient
+  pseudo_indices <- lapply(1:ncol(X), function(i) seq(i,ncol(X)*ncol(Y), ncol(X)))
+  jack_betas <- lapply(pseudo_indices, function(i) do.call(rbind, jack)[i,]) %>% setNames(coefficient_names)
+  normed_jack_betas <- lapply(jack_betas, function(i) apply(i, 2, function(i) sqrt(sum(i^2)))) %>% do.call(rbind,.)
+  normed_betas <- apply(matrix(beta, nrow = nrow(beta)), 1, function(x) norm(matrix(x, nrow = 1), type = "f")) %>% setNames(coefficient_names)
+  pseudo_normed_betas <- lapply(1:nrow(Y), function(i) nrow(Y)*normed_betas - (nrow(Y)-1)*normed_jack_betas[,i]) %>% do.call(rbind,.)
+  avg_pseudo_normed_betas <- colMeans(pseudo_normed_betas)
 
-  # normed betas
-  vars <- setdiff(colnames(X), "(Intercept)") # identify non-intercept covariates (norm of intercept is not all that informative)
-  normed_betas <- apply(matrix(betas[vars,], nrow = length(vars)), 1, function(x) norm(matrix(x, nrow = 1), type = "f")) %>% setNames(vars)
+  # std. error and confidence intervals
+  stderr_pseudo_normed_betas <- apply(pseudo_normed_betas, 2, sd)/sqrt(nrow(pseudo_normed_betas))
+  lci_pseudo_normed_betas <- avg_pseudo_normed_betas - qt((1-confidence_level)/2,nrow(pseudo_normed_betas)-1, lower.tail = FALSE)*stderr_pseudo_normed_betas
+  uci_pseudo_normed_betas <- avg_pseudo_normed_betas + qt((1-confidence_level)/2,nrow(pseudo_normed_betas)-1, lower.tail = FALSE)*stderr_pseudo_normed_betas
 
-  # output
-  return(list('betas' = betas, 'normed_betas' = normed_betas))
-
+  return(list(
+    "beta_coefficients" = pseudo_betas,
+    "norm_tibble" = dplyr::tibble(coefficient = coefficient_names,
+                                  normed.estimate = avg_pseudo_normed_betas,
+                                  std.error = stderr_pseudo_normed_betas,
+                                  lower.ci = lci_pseudo_normed_betas,
+                                  upper.ci = uci_pseudo_normed_betas) %>% dplyr::filter(coefficient!="(Intercept)")
+  )
+  )
 }
+
+

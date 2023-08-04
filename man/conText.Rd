@@ -10,10 +10,11 @@ conText(
   pre_trained,
   transform = TRUE,
   transform_matrix,
-  bootstrap = TRUE,
+  bootstrap = FALSE,
   num_bootstraps = 100,
-  confidence_level = 0.95,
   stratify = FALSE,
+  jackknife = TRUE,
+  confidence_level = 0.95,
   permute = TRUE,
   num_permutations = 100,
   window = 6L,
@@ -33,7 +34,7 @@ on the RHS use \code{immigrant ~ .}. Any \code{character} or \code{factor} covar
 to a set of binary (\code{0/1}s) indicator variables for each group, leaving the first level out of the regression.}
 
 \item{data}{a quanteda \code{tokens-class} object with the necessary document variables. Covariates must be
-either binary indicator variables or "trasnformable" into binary indicator variables. conText will automatically
+either binary indicator variables or "transformable" into binary indicator variables. conText will automatically
 transform any non-indicator variables into binary indicator variables (multiple if more than 2 classes),
 leaving out a "base" category.}
 
@@ -48,13 +49,15 @@ if FALSE ouput untransformed averaged embeddings.}
 D = dimensions of pretrained embeddings.}
 
 \item{bootstrap}{(logical) if TRUE, use bootstrapping -- sample from texts with replacement and
-re-run regression on each sample. Required to get std. errors.}
+re-run regression on each sample.}
 
 \item{num_bootstraps}{(numeric) number of bootstraps to use (at least 100)}
 
-\item{confidence_level}{(numeric in (0,1)) confidence level e.g. 0.95}
-
 \item{stratify}{(logical) if TRUE, stratify by discrete covariates when bootstrapping.}
+
+\item{jackknife}{(logical) if TRUE, jackknife debiasing is implemented.}
+
+\item{confidence_level}{(numeric in (0,1)) confidence level e.g. 0.95}
 
 \item{permute}{(logical) if TRUE, compute empirical p-values using permutation test}
 
@@ -85,16 +88,17 @@ The object also includes various informative attributes, importantly
 a \code{data.frame} with the following columns:
 \describe{
 \item{\code{coefficient}}{(character) name of (covariate) coefficient.}
-\item{\code{value}}{(numeric) norm of the corresponding beta coefficient.}
-\item{\code{std.error}}{(numeric) (if bootstrap = TRUE) std. error of the norm of the beta coefficient.}
-\item{\code{lower.ci}}{(numeric) (if bootstrap = TRUE) lower bound of the confidence interval.}
-\item{\code{upper.ci}}{(numeric) (if bootstrap = TRUE) upper bound of the confidence interval.}
+\item{\code{value}}{(numeric) norm of the corresponding beta coefficient (debiased if jackknife = TRUE).}
+\item{\code{std.error}}{(numeric) (if bootstrap = TRUE or jackknife = TRUE) std. error of the (debiased if jackknife = TRUE) norm of the beta coefficient.}
+\item{\code{lower.ci}}{(numeric) (if bootstrap = TRUE or jackknife = TRUE) lower bound of the (debiased if jackknife = TRUE) confidence interval.}
+\item{\code{upper.ci}}{(numeric) (if bootstrap = TRUE or jackknife = TRUE) upper bound of the (debiased if jackknife = TRUE) confidence interval.}
 \item{\code{p.value}}{(numeric) (if permute = TRUE) empirical p.value of the norm of the coefficient.}
 }
 }
 \description{
-Estimates an embedding regression model with options to use bootstrapping to estimate confidence
-intervals and a permutation test for inference (see https://github.com/prodriguezsosa/conText for details.)
+Estimates an embedding regression model with options to use bootstrapping (to be deprecated) or
+jackknife debiasing to estimate confidence intervals and a permutation test for inference
+(see https://github.com/prodriguezsosa/conText for details.)
 }
 \examples{
 
@@ -108,13 +112,15 @@ set.seed(2021L)
 model1 <- conText(formula = immigration ~ party + gender,
                  data = toks,
                  pre_trained = cr_glove_subset,
-                 transform = TRUE, transform_matrix = cr_transform,
-                 bootstrap = TRUE,
-                 num_bootstraps = 100,
+                 transform = TRUE,
+                 transform_matrix = cr_transform,
+                 bootstrap=FALSE,
+                 jackknife = TRUE,
                  confidence_level = 0.95,
-                 stratify = FALSE,
-                 permute = TRUE, num_permutations = 10,
-                 window = 6, case_insensitive = TRUE,
+                 permute = TRUE,
+                 num_permutations = 10,
+                 window = 6,
+                 case_insensitive = TRUE,
                  verbose = FALSE)
 
 # notice, character/factor covariates are automatically "dummified"

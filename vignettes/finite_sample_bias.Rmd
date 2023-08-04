@@ -1,0 +1,294 @@
+---
+title: "Finite Sample Bias"
+output: rmarkdown::github_document
+vignette: >
+  %\VignetteIndexEntry{Finite Sample Bias}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(collapse = FALSE,
+                      comment = "##",
+                      tidy = FALSE)
+```
+
+## Summary: tl;dr
+
+- As noted in the original article, some of the estimated quantities described in Rodriguez et al (2023) can exhibit statistical biases as is common with estimation of distances.
+- This is **especially** true in small and unbalanced samples (i.e. where groups to be compared are very different sizes and/or the total number of observations are small).
+- So, we have added a bias correction to the software to partially mitigate this. Also the permutation test described in our paper and implemented in the package still controls false discovery correctly.
+- Because the magnitude of the bias is related to sample size, users should understand comparisons between words with very different frequencies can be misleading. Be sure to always look at nearest neighbors and understand the nature of the semantic change being estimated.
+- We have also made some other changes to alert users in cases where extra care is required when making inferences.
+
+We describe this all in more detail below, but the key for applied researchers is that **for now we recommend the use of the jackknife bias correction, which is now built into to our main `conText()` function**. 
+
+We are hugely thankful to Will Hobbs and Breanna Green for bringing to our attention clear examples where the bias was larger than we had anticipated.  We are actively collaborating with them to propose additional fixes.
+
+## Reminder: Rodriguez et al (2023)
+
+`conText`'s regression framework allows users to estimate the "semantic" shift in the usage of a term between two or more groups, while controlling for other group covariates. The resulting coefficients will be *D*-dimensional, where *D* equals the dimensionality of the pre-trained embeddings used (say, 300). In Rodriguez et al. (2023) we propose using the *Euclidean* norm to summarize the magnitude of these coefficients, noting however that:
+
+_"...estimates of the norms have a finite-sample bias for rare words. Thus care is needed when comparing words or groups with substantially different amounts of available data."_
+
+We now give more precise discussion of the potential problems---and a way to mitigate these issues. 
+
+## The Problem: Bias in Small Unbalanced Samples
+
+While the *D*-dimensional OLS coefficients resulting from a `conText` regression are approximately *unbiased*, functions of these coefficients, such as the norm, are not. The magnitude of the bias, and hence potential for mistaken inferences, increases with the variance of the embedding position.  Thus, the magnitude of the bias is a function of sample size. 
+
+As one might expect: the smaller the sample---for any of the slices of the data resulting from the set of covariates---the higher the variance, the larger the bias. In the case of `conText`, a multivariate multiple regression, the problem is more acute the larger the dimensionality of the *embedding space*, with higher dimensionality (say 500 instead of 100 length vectors) resulting in higher variance in small samples, all else equal.
+
+## Solutions: Use the jackknife
+
+Re-sampling methods offer one way to quantify and correct for (or at least mitigate) this bias. These include 
+- permutation
+- bootstrapping
+- jackknife cross-validation
+
+Re-sampling approaches to bias correction all work by leveraging sub-samples of the observed data (contexts in our case) to estimate the magnitude of the bias. The methods differ in how these sub-samples are generated. **Ultimately, we currently suggest and implement the jackknife in our software.**  And we do that in light of experimental evaluations we report below. 
+
+We emphasize though that with small samples and highly imbalanced groups, non-trivial amounts of bias will remain.
+
+### Evaluation Setup
+
+For our evaluations we employ simulated data, representative of the type of data---numeric vectors i.e. embeddings---we feed into `conText`. In particular, we proceed as follows: 
+
+1. sample *D*-dimensional (*D* = 100) vectors from two multivariate normal distributions, each representing a hypothetical population of interest (covariate groups in the data, say Republicans and Democrats). Our interest is in *estimating the norm of the difference* in (row)means of the two populations.
+   
+2. Within this sampling arrangement we then vary...
+- the overall sample size---i.e. the *sum* of the two sample sizes (*n*=150, 250, 500, 1000, 2500),
+- the class ratio---i.e. the ratio of the two sample sizes to each other (1:100 (meaning one group is one percent the size of the other), 1:10, 1:2, 1:1 (meaning equal sized groups))
+- the means of the underlying multivariate normals.  Specifically, we fix one of them to 0, and vary the other to be 0 (equal to the other group) or 1 (different to other group).
+3. For each specification, run 100 simulations, and plot the means, along with the 2.5% and 97.5% percentile values (95\% empirical confidence interval).
+
+For more details on this scheme, see the code at the end of this vignette.
+
+### Evaluation Results
+
+Figure 1 plots our results. The plots on the left capture results for when θ, the true difference in means, equals 0.  For these plots, if the estimator was *unbiased* the point estimate would be on the red "zero" line. The plots on the right capture results for when θ equals 1. For these plots, if the estimator was *unbiased* the point estimate would on the red "one" line.
+
+There are several takeaways:
+
+1. The bias, with **no correction** (top row), is particularly problematic in the case of no differences (θ = 0); and the bias is worse given small, highly unbalanced samples (e.g. *n*=150, class ratio 1:100). Specifically, we are more likely to incorrectly reject the null (commit a *Type 1* error). That is, the point estimate is sometimes far from zero, and the confidence interval does not cover zero. As expected, the bias decreases as we increase sample size and/or both groups are more equally balanced. 
+
+2. When comparing the various re-sampling-based bias correction methods, we observe **bootstrapping** performs poorly (compared to permutation and jackknife) in the *absence* of a true difference between the two population means.  That is, given a true θ of 0, bootstrapping shows a remaining strong positive bias post-correction, for small, highly unbalanced samples.
+
+3. The **permutation-based correction** on the other hand performs relatively poorly in the *presence* of a true difference between the two population means (θ = 1). That is, permutation shows a strong negative bias for small, highly unbalanced samples. And surprisingly this persists even for larger, more balanced samples. The permutation-based correction is however the best-performer in the case of no true differences (θ = 0). While the permutation-based correction does not perform well generally, it still correctly controls the *Type 1* error when used as a test.
+
+4. The **jackknife** performs relatively well in *both*  scenarios, although it does *not* entirely eliminate the bias in the case of θ = 0 (under performing the permutation-based correction).
+
+**Figure 1**:
+
+![](https://github.com/prodriguezsosa/conText/blob/master/vignettes/toy_sim_out_100.png)
+
+## conText Updates and Recommendations
+
+Given the above results, we proceeded to **update `conText` to allow users to implement jackknife bias-correction**, see [Quick Start Guide](https://github.com/prodriguezsosa/conText/blob/master/vignettes/quickstart.md) for examples. Specifically: 
+- the permutation argument in `conText` remains unchanged, implementing a permutation-test to estimate empirical *p*-values.
+- we recommend users combine the Jackknife bias correction with the permutation test when evaluating the significance of the norm of the coefficients.
+- we further recommend users avoid relying on results with small samples (for any of the slices of the data implicit in the regression model) and *always follow up any regression-based results with a qualitative comparison of nearest neighbors*.
+
+**Note:** The current version of `conText` continues to allow for bootstrapping, this argument however does not implement any bias correction and will eventually be deprecated.
+
+## Code Appendix
+
+```{r, message = FALSE, eval=FALSE}
+
+# load libraries
+library(dplyr)
+library(progress)
+library(ggplot2)
+library(gridExtra)
+library(furrr)
+
+# ---------------------
+# Functions
+# ---------------------
+rmse <- function(x) {sqrt(mean(x^2))}
+
+plugin <- function(x,y) {
+  rmse(rowMeans(x) - rowMeans(y))
+}
+
+permute <- function(z,nx,ny) {
+  ind <- sample(1:(nx+ny),nx)
+  xtilde <- z[,ind]
+  ytilde <- z[,-ind]
+  plugin(xtilde,ytilde)
+}
+
+permutation <- function(x,y) {
+  z <- cbind(x,y)
+  plugin(x,y) - mean(replicate(100,permute(z,ncol(x),ncol(y))))
+}
+
+jackknife <- function(x,y) {
+  cov <- c(rep(1,ncol(x)),rep(0, ncol(y)))
+  z <- t(cbind(x,y))
+  xbar <- rowMeans(x)
+  ybar <- rowMeans(y)
+  jhat <- mean(sapply(1:nrow(z),jk1, z=z,cov=cov,xbar=xbar,ybar=ybar,nx=ncol(x),ny=ncol(y)))
+  thetahat <- plugin(x,y)
+  return(nrow(z)*thetahat - (nrow(z)-1)*jhat)
+}
+
+jk1 <- function(z,cov,i,xbar,ybar,nx,ny) {
+  if(cov[i]==0) {
+    #y case
+    ytilde <- (ybar*ny - z[i,])/(ny-1)
+    return(rmse(xbar - ytilde))
+  } else {
+    #x case
+    xtilde <- (xbar*nx - z[i,])/(nx-1)
+    return(rmse(xtilde - ybar))
+  }
+  #rmse(colMeans(zni[covni==1,]) - colMeans(zni[covni==0,]))
+}
+
+boot <- function(x,y,strat=TRUE) {
+  if(strat) {
+    indx <- sample(1:ncol(x), ncol(x), replace=TRUE)
+    indy <- sample(1:ncol(y), ncol(y), replace=TRUE)
+    return(rmse(rowMeans(x[,indx]) - rowMeans(y[,indy])))
+  } else {
+    cov <- c(rep(1,ncol(x)),rep(0, ncol(y)))
+    z <- cbind(x,y)
+    covb <- c(1,1)
+    while(length(unique(covb))==1) {
+      ind <- sample(1:ncol(z),ncol(z),replace=TRUE)
+      covb <- cov[ind]
+    }
+    zb <- z[,ind]
+    return(rmse(rowMeans(zb[,covb==1, drop=FALSE]) - rowMeans(zb[,covb==0,drop=FALSE])))
+  }
+}
+
+bootstrap <- function(x,y,strat=TRUE) {
+  2*plugin(x,y) - mean(replicate(500, boot(x,y,strat=strat)))
+}
+
+# sampling function
+samp_function <- function(mux, muy, samp_size, class_ratio,D) {
+
+  # set sample size
+  nx <- ceiling(class_ratio*samp_size/(1+class_ratio))
+  ny <- samp_size-nx
+
+  # sample
+  x <- replicate(nx,rnorm(D,mean=mux))
+  y <- replicate(ny,rnorm(D,mean=muy))
+  out <- data.frame(
+    samp_size = samp_size,
+    class_ratio = class_ratio,
+    #method = c("none", "Jackknife", "permutation", "bootstrap", "bootstrap (stratified)"),
+    method = c("none", "Jackknife", "permutation", "bootstrap"),
+    value = c(
+      plugin(x,y),
+      jackknife(x,y),
+      permutation(x,y),
+      #bootstrap(x,y,strat=FALSE),
+      bootstrap(x,y)
+    )
+  )
+  return(out)
+}
+
+# ---------------------
+# Simulations
+# ---------------------
+
+sim_function <- function(theta, D, samp_size, class_ratio) {
+
+  mux <- rep(0,D)
+  muy <- rep(theta,D)
+
+  # set sample size
+  nx <- ceiling(class_ratio*samp_size/(1+class_ratio))
+  ny <- samp_size-nx
+
+  # sample
+  x <- replicate(nx,rnorm(D,mean=mux))
+  y <- replicate(ny,rnorm(D,mean=muy))
+  out <- data.frame(
+    D = D,
+    theta = theta,
+    samp_size = samp_size,
+    class_ratio = class_ratio,
+    method = c("none", "Jackknife", "permutation", "bootstrap"),
+    value = c(
+      plugin(x,y),
+      jackknife(x,y),
+      permutation(x,y),
+      bootstrap(x,y)
+    )
+  )
+  return(out)
+}
+
+params <- expand.grid(
+  samp_size=c(150, 250, 500, 1000, 2500),
+  class_ratio=c(0.01, 0.1, 0.5, 1),
+  theta=c(0, 1),
+  D = c(10,100)
+)
+
+plan(multisession, workers = 12)
+sim_out_df <- 1:100 %>%
+  future_map_dfr(
+    ~params %>%
+      pmap(
+        sim_function
+      ),
+    .progress=TRUE,
+    .options =furrr_options(seed = 2023L)
+  )
+
+# ---------------------
+# Plot
+# ---------------------
+plot_df <- sim_out_df %>%
+  mutate(method = factor(method, levels = c("none", "bootstrap", "permutation", "Jackknife"))) %>%
+  group_by(D, theta, samp_size, class_ratio, method) %>%
+  summarize(avg = mean(value), p025 = quantile(value, 0.025), p975 = quantile(value, 0.975), .groups = "drop_last")
+
+# new facet label names
+ratio.labs <- c("class ratio\n1:100", "class ratio\n1:10", "class ratio\n1:2", "class ratio\n1:1")
+names(ratio.labs) <- c("0.01", "0.1", "0.5", "1")
+
+# plot w. theta = 0
+plot1 <- ggplot(subset(plot_df, theta == 0 & D == 100), aes(x = factor(samp_size), y = avg, group =1)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = p025 , ymax = p975), width = 0.2) +
+  geom_hline(aes(yintercept = 0), color = 'red', linetype = 'dashed') +
+  facet_grid(method~class_ratio, labeller = labeller(class_ratio = ratio.labs)) +
+  labs(title = paste0("\u03b8"," = 0\n"), y = expression(hat(theta)), x = "Sample Size", caption = paste0("Note: red dashed line =  ", "\u03b8.")) +
+  theme(
+    strip.text.x = element_text(size=16, face = 'bold'),
+    strip.text.y = element_text(size=16, face = 'bold'),
+    axis.text.x = element_text(angle=90, vjust = 0.5, hjust = 1, size = 14),
+    axis.text.y = element_text(size = 14),
+    axis.title.y = element_text(size=16, margin = margin(t = 0, r = 15, b = 0, l = 15), face = 'bold'),
+    axis.title.x = element_text(size=16, margin = margin(t = 15, r = 0, b = 15, l = 0), face = 'bold'),
+    plot.caption = element_text(hjust = 0, size = 16),
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 18))
+
+# plot w. theta = 1
+plot2 <- ggplot(subset(plot_df, theta == 1 & D == 100), aes(x = factor(samp_size), y = avg, group =1)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = p025 , ymax = p975), width = 0.2) +
+  geom_hline(aes(yintercept = 1), color = 'red', linetype = 'dashed') +
+  facet_grid(method~class_ratio, labeller = labeller(class_ratio = ratio.labs)) +
+  labs(title = paste0("\u03b8"," = 1"), y = expression(hat(theta)), x = "Sample Size") +
+  theme(
+    strip.text.x = element_text(size=16, face = 'bold'),
+    strip.text.y = element_text(size=16, face = 'bold'),
+    axis.text.x = element_text(angle=90, vjust = 0.5, hjust = 1, size = 14),
+    axis.text.y = element_text(size = 14),
+    axis.title.y = element_text(size=16, margin = margin(t = 0, r = 15, b = 0, l = 15), face = 'bold'),
+    axis.title.x = element_text(size=16, margin = margin(t = 15, r = 0, b = 15, l = 0), face = 'bold'),
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 18))
+
+grid.arrange(plot1, plot2, ncol=2)
+```
+

@@ -52,7 +52,7 @@ To use **conText** you will need three objects:
 2. A set of (GloVe) **pre-trained embeddings**.
 3. A **transformation matrix** specific to the pre-trained embeddings.
 
-In this guide we will use the sample objects included in the package: `cr_sample_corpus`, `cr_glove_subset` and `cr_transform`. Note, these are only meant to illustrate function implementations, keep in mind their (small) size when interepreting results. We've made available the full versions of these objects [here](https://www.dropbox.com/sh/6dfr3i6no6nzvm0/AADqk6HFTvZJGNyu3FuO62kGa?dl=0).
+In this guide we will use the sample objects included in the package: `cr_sample_corpus`, `cr_glove_subset` and `cr_transform`. Note, these are only meant to illustrate function implementations, keep in mind their (small) size when interpreting results. We've made available the full versions of these objects [here](https://www.dropbox.com/sh/6dfr3i6no6nzvm0/AADqk6HFTvZJGNyu3FuO62kGa?dl=0).
 
 ## Pre-processing
 
@@ -81,7 +81,7 @@ Suppose we are interested in the semantics surrounding the word "immigration" in
 We begin by identifying all instances of the _target_ term --"immigration"-- in our corpus and, for each instance, store it's context-- the N words (N = 6 in this example) preceding and following the instance, and tokenize. Given our tokenized corpus, `toks_nostop_feats`, we can do this in one step using `conText::tokens_context()` --a wrapper function for quanteda::kwic(). Notice, both the input, `x`, and the output are a quanteda `tokens` objects. Each document in `immig_toks` --tokens of a context around an instance of _immigration_-- inherits the document variables (`docvars`) of the document from whence it came, along with a column registering the corresponding pattern. This information can be retrieved using `docvars()`.
 
 ```{r, message = FALSE}
-# build a tokenized corpus of contexts sorrounding the target term "immigration"
+# build a tokenized corpus of contexts surrounding the target term "immigration"
 immig_toks <- tokens_context(x = toks_nostop_feats, pattern = "immigr*", window = 6L)
 head(docvars(immig_toks), 3)
 ```
@@ -100,7 +100,7 @@ immig_dfm[1:3,1:3]
 
 Given a 'dfm', `immig_dfm`, a set of pre-trained embeddings, `cr_glove_subset` and a corresponding transformation matrix, `cr_transform`, we can proceed to embed each document --i.e. context-- '_a la carte_'. We embed a document by multiplying each of it's feature counts with their corresponding pre-trained feature-embeddings, column-averaging the resulting vectors, and multiplying by the transformation matrix. This "transforms" a _sparse_ V-dimensional vector (a vector of feature counts, with V = number of features in the corpus) into a _dense_ D-dimensional vector (a D-dimensional embedding, with D = dimensions of the pre-trained embeddings). We do this using `conText::dem()`--'dem' standing for _document-embedding-matrix_. Each row in this matrix represents an 'a la carte' (ALC) embedding of a single instance of "immigration".
 
-Keep in mind, only those features that appear in the set of pre-trained embeddings will be used in computing a document's embedding. Documents with no features overlapping with the pre-trained provided are dropped. `dem()` --outputs a 'dem-class' object which is similar in many ways to 'dfm-class' object. Importantly, a 'dem-class' object inherits all the documenta variables, 'docvars', from the 'dfm' used to compute it (except those of documents that could not be embedded). Additionally, a 'dem-class' object will store other useful attributes, including the names of the documents that were embedded and the vector of features used.
+Keep in mind, only those features that appear in the set of pre-trained embeddings will be used in computing a document's embedding. Documents with no features overlapping with the pre-trained provided are dropped. `dem()` --outputs a 'dem-class' object which is similar in many ways to 'dfm-class' object. Importantly, a 'dem-class' object inherits all the document variables, 'docvars', from the 'dfm' used to compute it (except those of documents that could not be embedded). Additionally, a 'dem-class' object will store other useful attributes, including the names of the documents that were embedded and the vector of features used.
 
 ```{r, message = FALSE}
 # build a document-embedding-matrix
@@ -172,7 +172,7 @@ nns_ratio(x = immig_wv_party, N = 10, numerator = "R", candidates = immig_wv_par
 
 ### Nearest contexts
 
-We are used to hearing about "nearet neighbors" when it comes to interpreting word embeddings. However, it is often the case that nearest neighbors --i.e. single words-- without any context are hard to interpret. For this reason we introduce "nearest contexts" -- contexts around a target term that are semantically close --i.e. high cosine similarity-- to the ALC embedding of that term. To explore nearest contexts we use the `ncs()` function. `ncs()` computes the cosine similarities between the ALC (group) embeddings and the single-instance ALC embeddings of the underlying contexts.
+We are used to hearing about "nearest neighbors" when it comes to interpreting word embeddings. However, it is often the case that nearest neighbors --i.e. single words-- without any context are hard to interpret. For this reason we introduce "nearest contexts" -- contexts around a target term that are semantically close --i.e. high cosine similarity-- to the ALC embedding of that term. To explore nearest contexts we use the `ncs()` function. `ncs()` computes the cosine similarities between the ALC (group) embeddings and the single-instance ALC embeddings of the underlying contexts.
 
 ```{r}
 
@@ -198,7 +198,7 @@ immig_feats <- immig_wv_party@features
 
 # check spelling. toupper avoids names being considered misspelled
 if (requireNamespace("hunspell", quietly = TRUE)) { 
-  library(hunspell) # spellcheck library
+  library(hunspell) # spell check library
   spellcheck <-  hunspell_check(toupper(immig_feats), dict = hunspell::dictionary("en_US"))
   immig_feats <- immig_feats[spellcheck]
   }
@@ -215,7 +215,7 @@ immig_nns_stem[["R"]]
 In the above example we had one target word, "immigration". However, we can also explore the semantics of multiple targets simultaneously, including phrases! We simply provide a vector of patterns in the `pattern` argument of `tokens_context()`.
 
 ```{r, message = FALSE}
-# build a corpus of contexts sorrounding the target term "immigration"
+# build a corpus of contexts surrounding the target term "immigration"
 mkws_toks <- tokens_context(x = toks_nostop_feats, pattern = c("immigration", "welfare", "immigration reform", "economy"), window = 6L, verbose = FALSE)
 
 # create document-feature matrix
@@ -237,7 +237,7 @@ mkws_nns[["immigration reform"]]
 This can also be useful if we wanted to explore _group differences_ in the semantics of a given _topic_ where we define a _topic_ by a vector of _topical_ target words. Note, these _topical_ embeddings are computed off of the collection of contexts around the set of pattern words provided. So, in the example below, the contexts around each of "immigration", "immigrant" and "immigration reform" are treated as a single collection of contexts for the purposes of computing each party's _topical_ embedding.
 
 ```{r, message = FALSE}
-# build a corpus of contexts sorrounding the immigration related words
+# build a corpus of contexts surrounding the immigration related words
 topical_toks <- tokens_context(x = toks_nostop_feats, pattern = c("immigration", "immigrant", "immigration reform"), window = 6L, verbose = FALSE)
 
 # create document-feature matrix
@@ -257,7 +257,7 @@ nns(topical_wvs, pre_trained = cr_glove_subset, N = 5, candidates = topical_wvs@
 
 The above functions give users a lot of flexibility, however, it can be cumbersome to write each step every time one wants to do some exploratory analysis on a corpus. In this section we'll look into a collection of wrapper functions that allow users to go straight from a tokenized corpus to results. Each of the four exploratory analysis functions --`nns()`, `cos_sim()`, `nns_ratio()` and `ncs()`-- described above has its corresponding wrapper function.
 
-An key advantage of the wrapper functions is that they make it easy to obtain standard errors and confidence intervals around the sample statistics of interest via _bootstrapping_. Bootstrapping works by sampling with replacement documents from our tokenized corpus of contexts (within group if the argument `groups` is specified) and going through the above steps for each of our exploratory analysis functions (i.e. computing an 'a la carte' embedding on each bootstrapped sample, then computing the cosine similarities etc.). Let's start with `conText::get_nns()`, a wrapper function for `nns()`.
+A key advantage of the wrapper functions is that they make it easy to obtain standard errors and confidence intervals around the sample statistics of interest via _bootstrapping_. Bootstrapping works by sampling with replacement documents from our tokenized corpus of contexts (within group if the argument `groups` is specified) and going through the above steps for each of our exploratory analysis functions (i.e. computing an 'a la carte' embedding on each bootstrapped sample, then computing the cosine similarities etc.). Let's start with `conText::get_nns()`, a wrapper function for `nns()`.
 
 ### Nearest neighbors
 
@@ -367,7 +367,7 @@ immig_party_ncs[["R"]]
 
 The above framework allows us to explore semantic differences over one grouping variable at a time. However, we often want to look at covariate effects while controlling for other covariates or indeed go beyond discrete covariates. In [Rodriguez, Spirling and Stewart (2021)](https://github.com/prodriguezsosa/EmbeddingRegression) we show how `a la carte` embeddings can be used within a regression-framework that allows us to do just that. The corresponding package function is `conText::conText()`.
 
-`conText()` tries to follow a similar syntax as R's `lm()` and `glm()` functions. `data` must be a quanteda tokens object with covariates stored as document variables (`docvars`). We next specify a formula consisting of the target word of interest, e.g. "immigration" and the set of covariates. To use all covariates in `data`, we can speficy `immigration ~ .`. `formula` can also take vectors of target words e.g. `c("immigration", "immigrants") ~ party + gender` and phrases e.g. `"immigration reform" ~ party + gender` -- place phrases in quotation marks.
+`conText()` tries to follow a similar syntax as R's `lm()` and `glm()` functions. `data` must be a quanteda tokens object with covariates stored as document variables (`docvars`). We next specify a formula consisting of the target word of interest, e.g. "immigration" and the set of covariates. To use all covariates in `data`, we can specify `immigration ~ .`. `formula` can also take vectors of target words e.g. `c("immigration", "immigrants") ~ party + gender` and phrases e.g. `"immigration reform" ~ party + gender` -- place phrases in quotation marks.
 
 ```{r, message = FALSE}
 
@@ -377,7 +377,7 @@ model1 <- conText(formula = immigration ~ party + gender,
                   data = toks_nostop_feats,
                   pre_trained = cr_glove_subset,
                   transform = TRUE, transform_matrix = cr_transform,
-                  bootstrap = TRUE, num_bootstraps = 100,
+                  jackknife = TRUE, confidence_level = 0.95,
                   permute = TRUE, num_permutations = 100,
                   window = 6, case_insensitive = TRUE,
                   verbose = FALSE)
@@ -386,7 +386,11 @@ model1 <- conText(formula = immigration ~ party + gender,
 rownames(model1)
 ```
 
-`conText()` outputs a `conText-class` object which is simply a `dgCMatrix class` matrix corresponding to the beta coefficients (ALC embeddings) with additional attributes including: a table (automatically printed) with the normed coefficients (excluding the intercept), their std. errors and p-values, `@normed_coefficients`, and the set of features used when creating the embeddings `@features`.
+`conText()` outputs a `conText-class` object which is simply a `dgCMatrix class` matrix corresponding to the beta coefficients (ALC embeddings). These coefficients will be D-dimensional, where D equals the dimensionality of the pre-trained embeddings used. To summarize the magnitude of these coefficients we employ the Euclidean norm. A downside of using the norm is that it's sensitive to finite sample bias, increasing the likelihood of a type 2 error in very small (high variance) samples. In order to mitigate this potential bias, we use Jackknife debiasing (default option). For more details on this issue see [Finite Sample Bias](https://github.com/prodriguezsosa/conText/blob/master/vignettes/finite_sample_bias.md).
+
+The `conText-class`contains two important attributes: (1) `@normed_coefficients`: a table with the norm of the coefficients (excluding the intercept), the std. errors (of the normed coefficients) and their empirical (permutation-based) p-values, and (2) `@features`: the set of features used when creating the embeddings. If `jackknife = TRUE` (default), then the norms of the coefficients, along with the std. errors and CIs of the norms, all correspond to their jackknife debiased values. An alternative approach to computing std. errors and CIs is to set `bootstrap = TRUE` (default is `bootstrap = FALSE`), however this does not implement any debiasing, hence we no longer recommend this option and will eventually deprecate it.
+
+## From regression coefficients to ALC embeddings
 
 We can combine the coefficients to compute the ALC embeddings for the various combinations of the covariates (see [Rodriguez, Spirling and Stewart (2021)](https://github.com/prodriguezsosa/EmbeddingRegression) for details).
 
@@ -420,7 +424,7 @@ model2 <- conText(formula = immigration ~ nominate_dim1,
                   data = toks_nostop_feats,
                   pre_trained = cr_glove_subset,
                   transform = TRUE, transform_matrix = cr_transform,
-                  bootstrap = TRUE, num_bootstraps = 100,
+                  jackknife = TRUE, confidence_level = 0.95,
                   permute = TRUE, num_permutations = 100,
                   window = 6, case_insensitive = TRUE,
                   verbose = FALSE)
@@ -494,7 +498,7 @@ immig_dem_local <- dem(x = immig_dfm, pre_trained = local_glove, transform = TRU
 # take the column average to get a single "corpus-wide" embedding
 immig_wv_local <- colMeans(immig_dem_local)
 
-# find nearest neighbors for overall immigraiton embedding
+# find nearest neighbors for overall immigration embedding
 find_nns(immig_wv_local, pre_trained = local_glove, N = 10, candidates = immig_dem_local@features)
 
 # we can also compare to corresponding pre-trained embedding
@@ -553,7 +557,7 @@ model3 <- conText(formula = . ~ party,
                   data = short_toks,
                   pre_trained = cr_glove_subset,
                   transform = TRUE, transform_matrix = cr_transform,
-                  bootstrap = TRUE, num_bootstraps = 100,
+                  jackknife = TRUE, confidence_level = 0.95,
                   permute = TRUE, num_permutations = 100,
                   window = 6, case_insensitive = TRUE,
                   verbose = FALSE)
