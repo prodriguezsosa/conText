@@ -51,11 +51,12 @@ D = dimensions of pretrained embeddings.}
 \item{bootstrap}{(logical) if TRUE, use bootstrapping -- sample from texts with replacement and
 re-run regression on each sample.}
 
-\item{num_bootstraps}{(numeric) number of bootstraps to use (at least 100)}
+\item{num_bootstraps}{(numeric) number of bootstraps to use (at least 100). Ignored if bootstrap = FALSE.}
 
 \item{stratify}{(logical) if TRUE, stratify by discrete covariates when bootstrapping.}
 
-\item{jackknife}{(logical) if TRUE, jackknife debiasing is implemented.}
+\item{jackknife}{(logical) if TRUE (default), jackknife (leave one out) debiasing is implemented.
+Implies n resamples.}
 
 \item{confidence_level}{(numeric in (0,1)) confidence level e.g. 0.95}
 

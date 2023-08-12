@@ -18,9 +18,10 @@
 #' @inheritParams dem
 #' @param bootstrap (logical) if TRUE, use bootstrapping -- sample from texts with replacement and
 #' re-run regression on each sample.
-#' @param num_bootstraps (numeric) number of bootstraps to use (at least 100)
+#' @param num_bootstraps (numeric) number of bootstraps to use (at least 100). Ignored if bootstrap = FALSE.
 ##' @param stratify (logical) if TRUE, stratify by discrete covariates when bootstrapping.
-#' @param jackknife (logical) if TRUE, jackknife debiasing is implemented.
+#' @param jackknife (logical) if TRUE (default), jackknife (leave one out) debiasing is implemented.
+#' Implies n resamples.
 #' @param confidence_level (numeric in (0,1)) confidence level e.g. 0.95
 #' @param permute (logical) if TRUE, compute empirical p-values using permutation test
 #' @param num_permutations (numeric) number of permutations to use
@@ -85,7 +86,7 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
   if(confidence_level >= 1 || confidence_level<=0) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
   if((bootstrap || jackknife) && (confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
   if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100') # check num_bootstraps >= 100
-  if(jackknife && bootstrap) stop("must either implement bootstrap or Jackknife (set one to TRUE, the other to FALSE), or neither (set both to FALSE), can't implement both simultaneously.") # check num_bootstraps >= 100
+  if(jackknife && bootstrap) stop("implement bootstrap or jackknife (set one to TRUE, the other to FALSE), or neither (set both to FALSE), can't implement both simultaneously.") # check num_bootstraps >= 100
 
   # extract dependent variable
   target <- as.character(formula[[2]])
