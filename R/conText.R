@@ -382,7 +382,7 @@ run_jack_ols <- function(X,Y, confidence_level = 0.95) {
 
   # indices to separate the pseudo values for each coefficient
   pseudo_indices <- lapply(1:ncol(X), function(i) seq(i,ncol(X)*ncol(Y), ncol(X)))
-  jack_betas <- lapply(pseudo_indices, function(i) do.call(rbind, jack)[i,]) %>% setNames(coefficient_names)
+  jack_betas <- lapply(pseudo_indices, function(i, jack_df) jack_df[i,], jack_df = do.call(rbind, jack)) %>% setNames(coefficient_names)
   normed_jack_betas <- lapply(jack_betas, function(i) apply(i, 2, function(i) sqrt(sum(i^2)))) %>% do.call(rbind,.)
   normed_betas <- apply(matrix(beta, nrow = nrow(beta)), 1, function(x) norm(matrix(x, nrow = 1), type = "f")) %>% setNames(coefficient_names)
   pseudo_normed_betas <- lapply(1:nrow(Y), function(i) nrow(Y)*normed_betas - (nrow(Y)-1)*normed_jack_betas[,i]) %>% do.call(rbind,.)
