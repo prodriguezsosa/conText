@@ -25,3 +25,7 @@ Check out this [Quick Start Guide](https://github.com/prodriguezsosa/conText/blo
 # Latest Updates
 
 We are hugely thankful to Will Hobbs and Breanna Green for bringing to our attention clear examples where finite sample bias was larger than we had anticipated when implementing our main estimation routine, `conText`. We are actively collaborating with them to evaluate alternative fixes. In the meantime we've implemented and recommend using Jackknife debiasing. Please refer to the [Finite Sample Bias](https://github.com/prodriguezsosa/conText/blob/master/vignettes/finite_sample_bias.md) vignette for additional information on the issue and simulation results using various debiasing methods.
+
+# Multilanguage Resources
+
+For those working in languages other than English, we have a set of data and code resources here: https://alcembeddings.org/
