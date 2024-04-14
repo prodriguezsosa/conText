@@ -17,7 +17,7 @@
 #' leaving out a "base" category.
 #' @inheritParams dem
 #' @param bootstrap (logical) if TRUE, use bootstrapping -- sample from texts with replacement and
-#' re-run regression on each sample.
+#' re-run regression on each sample. (Depracated)
 #' @param num_bootstraps (numeric) number of bootstraps to use (at least 100). Ignored if bootstrap = FALSE.
 ##' @param stratify (logical) if TRUE, stratify by discrete covariates when bootstrapping.
 #' @param jackknife (logical) if TRUE (default), jackknife (leave one out) debiasing is implemented.
