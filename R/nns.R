@@ -66,7 +66,7 @@ nns <- function(x, N = 10, candidates = character(0), pre_trained, stem = FALSE,
   if(stem){
     if (requireNamespace("SnowballC", quietly = TRUE)) {
       if(show_language) cat('Using', language, 'for stemming. To check available languages run "SnowballC::getStemLanguages()"', '\n')
-      pre_trained_feats <- SnowballC::wordStem(rownames(pre_trained))
+      pre_trained_feats <- SnowballC::wordStem(rownames(pre_trained), language = language)
     } else stop('"SnowballC (>= 0.7.0)" package must be installed to use stemmming option.')
   } else pre_trained_feats <- rownames(pre_trained)
 
@@ -75,7 +75,7 @@ nns <- function(x, N = 10, candidates = character(0), pre_trained, stem = FALSE,
 
   # if candidates are provided
   if(length(candidates) > 0) {
-    if(stem) candidates <- SnowballC::wordStem(candidates) # stem
+    if(stem) candidates <- SnowballC::wordStem(candidates, language = language) # stem
 
     # check which, if any candidates, are present
     candidate_check <- candidates %in% pre_trained_feats
