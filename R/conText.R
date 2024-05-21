@@ -74,13 +74,12 @@
 #' model1@normed_coefficients
 #'
 
-conText <- function(formula, data, pre_trained, transform = TRUE, transform_matrix, jackknife=TRUE, bootstrap=FALSE, confidence_level = 0.95, stratify = FALSE, permute = TRUE, num_permutations = 100, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE, cluster_variable = NULL){
+conText <- function(formula, data, pre_trained, transform = TRUE, transform_matrix, jackknife=TRUE, confidence_level = 0.95, stratify = FALSE, permute = TRUE, num_permutations = 100, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE, cluster_variable = NULL){
   # initial checks
   if(class(data)[1] != "tokens") stop("data must be of class tokens", call. = FALSE)
   if(!transform && !is.null(transform_matrix)) warning('Warning: transform = FALSE means transform_matrix argument was ignored. If that was not your intention, use transform = TRUE.', call. = FALSE)
   if(any(grepl("factor\\(", formula))) stop('It seems you are using factor() in "formula" to create a factor variable. \n Please create it directly in "data" and re-run conText.', call. = FALSE) # pre-empt users using lm type notation
-  if(bootstrap && (confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
-  if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100') # check num_bootstraps >= 100
+  if((confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
   ## if(bootstrap) stop("bootstrap doesn't work -- it requires extra deflation -- sorry") # bootstrap doesn't work with deflation
 
   # extract dependent variable
@@ -137,22 +136,19 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
   toks_dem <- dem(x = toks_dfm, pre_trained = pre_trained, transform_matrix = transform_matrix, transform = transform, verbose = verbose)
   Y <- toks_dem
   if(verbose) cat('total observations included in regression:', nrow(Y), '\n')
-
   # regressors
   X <- toks_dem@docvars
   if (!is.null(cluster_variable)) {
     ids <- X[,which(names(X)==cluster_variable)]
     X <- X[,-which(names(X)==cluster_variable),drop=F]
-    # run full sample ols
-    full_sample_out <- run_ols(Y = Y, X = X, ids=ids)
   }else{
-    # run full sample ols
-    full_sample_out <- run_ols(Y = Y, X = X)
+    ids = NULL
   }
-
+  full_sample_out <- run_ols(Y = Y, X = X, ids=ids)
 
   # outputs
   beta_coefficients <- full_sample_out$betas
+
   norm_tibble <- dplyr::tibble(
     coefficient = names(full_sample_out$normed_betas_deflated),
     normed.estimate.orig = unname(full_sample_out$normed_betas_orig),
@@ -167,13 +163,43 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
     ))## unname(full_sample_out$covariate_mean)
   )
 
+  # -------------------
+  # jackknife
+  # -------------------
+
+  if(jackknife){
+    #return(list('X'=X,'Y'=Y))
+    print('Getting standard errors...')
+    theta = norm_tibble$normed.estimate.deflated
+    n = nrow(X)
+    partials <- foreach(
+      i = 1:n,
+      .combine = 'rbind'
+    ) %dopar% {
+      print(i)
+      curr_X = as.data.frame(X[-i,])
+      curr_Y = Y[-i,]
+      run_ols(Y = curr_Y, X = curr_X, ids=ids)$normed_betas_deflated
+    }
+    partials = t(partials)
+    theta_n = n*theta
+    partials = (n-1)*partials
+    pseudos = sweep(partials*-1,1,theta_n,'+')
+    jack.se <- apply(pseudos,1,function(x) sqrt(var(x)/n))
+    alpha = 1 - confidence_level
+    ci = qt(alpha/2,n-1,lower.tail = F)*jack.se
+    upper.ci = theta + ci
+    lower.ci = theta - ci
+    norm_tibble = cbind(norm_tibble, std.error = jack.se, lower.ci = lower.ci, upper.ci = upper.ci)
+
+  }
+
 
   # -------------------
   # permutation
   # -------------------
 
   if(permute){
-
     if (!is.null(ids)) {
       weights <- 1/as.vector(table(ids)[ids])
       uncorrected_betas <- run_ols_uncorrected(X=X, Y=Y, weights=weights)
@@ -182,7 +208,6 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
       uncorrected_betas <- run_ols_uncorrected(X=X, Y=Y)
       permute_out <- replicate(num_permutations, permute_ols(X=X, Y=uncorrected_betas$resids), simplify = FALSE)
     }
-
     # compute empirical p-value
     permuted_normed_betas <- lapply(permute_out, '[[', 'normed_betas') %>% do.call(rbind,.)
     empirical_pvalue <- sweep(permuted_normed_betas, 2, 1/uncorrected_betas$normed_betas, '*')
@@ -198,6 +223,7 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
   # -------------------
   # build conText object
   # -------------------
+  rownames(norm_tibble) = NULL
   result <- conText:::build_conText(Class = 'conText',
                                     x_conText = beta_coefficients,
                                     normed_coefficients = norm_tibble,
@@ -234,10 +260,11 @@ run_ols <- function(Y = NULL, X = NULL, ids = NULL){
   # observations for the same ID sum up to 1
   # TO DO: Implement version that allows user to also specify weights.
   if(is.null(ids)){
-    weights <- rep(1,nrow(X))
+    weights <- rep(1,nrow(Y))
   }else{
     weights <- 1/as.vector(table(ids)[ids])
   }
+  print(ids)
 
   mod_list <- 1:ncol(Y) %>%
     purrr::map(
