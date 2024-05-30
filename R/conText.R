@@ -74,14 +74,18 @@
 #' model1@normed_coefficients
 #'
 
-conText <- function(formula, data, pre_trained, transform = TRUE, transform_matrix, jackknife=TRUE, confidence_level = 0.95, stratify = FALSE, permute = TRUE, num_permutations = 100, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE, cluster_variable = NULL){
+conText <- function(formula, data, pre_trained, transform = TRUE, transform_matrix, jackknife=TRUE, confidence_level = 0.95, stratify = FALSE, permute = TRUE, num_permutations = 100, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE, cluster_variable = NULL,new_run_ols = F,testing=F,c=0.5){
   # initial checks
   if(class(data)[1] != "tokens") stop("data must be of class tokens", call. = FALSE)
   if(!transform && !is.null(transform_matrix)) warning('Warning: transform = FALSE means transform_matrix argument was ignored. If that was not your intention, use transform = TRUE.', call. = FALSE)
   if(any(grepl("factor\\(", formula))) stop('It seems you are using factor() in "formula" to create a factor variable. \n Please create it directly in "data" and re-run conText.', call. = FALSE) # pre-empt users using lm type notation
   if((confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
-  ## if(bootstrap) stop("bootstrap doesn't work -- it requires extra deflation -- sorry") # bootstrap doesn't work with deflation
 
+  if(new_run_ols){
+    run_ols = run_ols_2
+  }else{
+    run_ols = run_ols_1
+  }
   # extract dependent variable
   target <- as.character(formula[[2]])
   # mirror lm convention: if DV is "." then full text is embedded, ow find and embed the context around DV
@@ -144,8 +148,24 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
   }else{
     ids = NULL
   }
-  full_sample_out <- run_ols(Y = Y, X = X, ids=ids)
 
+
+  c = 0.5
+  n_1 = 500
+  n_2 = 500
+  cov_mtx_1 = diag(rchisq(50,df=1,ncp=1))
+  cov_mtx_2 = diag(rchisq(50,df=1,ncp=1))
+  mu_1 = rep(0,50)
+  mu_2 = c(rep(c,25),rep(0,25))
+  g1 = mvrnorm(n_1,mu_1,cov_mtx_1)
+  g2 = mvrnorm(n_2,mu_2,cov_mtx_2)
+  X = data.frame(as.matrix(c(rep(1,500),rep(0,500))))
+  Y = rbind(g1,g2)
+
+
+
+  full_sample_out <- run_ols(Y = Y, X = X, ids=ids)
+  print(5)
   # outputs
   beta_coefficients <- full_sample_out$betas
 
@@ -162,7 +182,7 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
       na.rm=T
     ))## unname(full_sample_out$covariate_mean)
   )
-
+  #return(list('X'=X,'Y'=Y))
   # -------------------
   # jackknife
   # -------------------
@@ -170,13 +190,13 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
   if(jackknife){
     #return(list('X'=X,'Y'=Y))
     print('Getting standard errors...')
+    print('Corrections went through')
     theta = norm_tibble$normed.estimate.deflated
     n = nrow(X)
     partials <- foreach(
       i = 1:n,
       .combine = 'rbind'
     ) %dopar% {
-      print(i)
       curr_X = as.data.frame(X[-i,])
       curr_Y = Y[-i,]
       run_ols(Y = curr_Y, X = curr_X, ids=ids)$normed_betas_deflated
@@ -255,7 +275,7 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
 #' @return list with two elements, `betas` = list of beta_coefficients (D dimensional vectors);
 #' `normed_betas` = tibble with the norm of the non-intercept coefficients
 #'
-run_ols <- function(Y = NULL, X = NULL, ids = NULL){
+run_ols_1 <- function(Y = NULL, X = NULL, ids = NULL){
 
   # observations for the same ID sum up to 1
   # TO DO: Implement version that allows user to also specify weights.
@@ -264,7 +284,6 @@ run_ols <- function(Y = NULL, X = NULL, ids = NULL){
   }else{
     weights <- 1/as.vector(table(ids)[ids])
   }
-  print(ids)
 
   mod_list <- 1:ncol(Y) %>%
     purrr::map(
@@ -286,6 +305,54 @@ run_ols <- function(Y = NULL, X = NULL, ids = NULL){
 
   coefs <- mod_list %>%
     bind_rows() %>%
+    dplyr::select(
+      term, estimate, std.error
+    ) %>%
+    dplyr::filter(term != "(Intercept)") %>%
+    dplyr::group_by(term = factor(term, levels=unique(term))) %>% # fix/prevent reordering!!!!!
+    dplyr::summarize(
+      original_estimate = sum(estimate^2),
+      adjusted_estimate = sum(estimate^2 - std.error^2),
+      the_null = sum(std.error^2)
+    )
+
+  return(
+    list(
+      'betas' = betas,
+      'normed_betas_orig' = coefs$original_estimate %>% setNames(coefs$term),
+      'normed_betas_deflated' = coefs$adjusted_estimate %>% setNames(coefs$term),
+      'beta_error_null' = coefs$the_null %>% setNames(coefs$term)## ,
+    )
+  )
+}
+
+run_ols_2 = function(Y = NULL, X = NULL, ids = NULL){
+
+  # observations for the same ID sum up to 1
+  # TO DO: Implement version that allows user to also specify weights.
+  if(is.null(ids)){
+    weights <- rep(1,nrow(Y))
+  }else{
+    weights <- 1/as.vector(table(ids)[ids])
+  }
+
+
+  mod_list = lm_robust(as.matrix(Y) ~ .,
+                       data=X,
+                       clusters=ids,
+                       se_type="stata",
+                       return_vcov=F, weights=weights) %>%
+    broom::tidy()
+
+
+  betas = mod_list %>%
+    dplyr::select(term,estimate) %>%
+    tidyr::pivot_wider(names_from=term, values_from=estimate,values_fn = list) %>%
+    unchop(everything()) %>%
+    t() %>%
+    as.matrix()
+
+  coefs = mod_list %>%
     dplyr::select(
       term, estimate, std.error
     ) %>%
