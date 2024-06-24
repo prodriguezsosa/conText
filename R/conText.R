@@ -73,13 +73,17 @@
 
 conText <- function(formula, data, pre_trained, transform = TRUE, transform_matrix, jackknife=TRUE, confidence_level = 0.95, permute = TRUE, num_permutations = 100, cluster_variable=NULL, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
   # initial checks
+
   if(class(data)[1] != "tokens") stop("data must be of class tokens", call. = FALSE)
+
   if(!transform && !is.null(transform_matrix)) warning('Warning: transform = FALSE means transform_matrix argument was ignored. If that was not your intention, use transform = TRUE.', call. = FALSE)
+
   if(any(grepl("factor\\(|character\\(|numeric\\(", formula))) stop('It seems you are using one of factor(), character(), numeric() in "formula" to modify a variable. \n Please modify it directly in "data" and re-run conText.', call. = FALSE) # pre-empt users using lm type notation
   if((confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
 
   # extract dependent variable
   target <- as.character(formula[[2]])
+
   # mirror lm convention: if DV is "." then full text is embedded, ow find and embed the context around DV
   if(length(target) == 1 && target == "."){
     toks <- data
@@ -286,24 +290,25 @@ run_ols = function(Y = NULL, X = NULL, ids = NULL){
 
 run_jackknife = function(theta,X,Y,ids,confidence_level,verbose=T){
   n = nrow(X)
+  print(n)
   ids = as.numeric(factor(ids))
-  if(verbose) pb = txtProgressBar(min = 0, max = max(ids),
-                                  initial = 0, char = "=", width = 50, style = 3)
+  #if(verbose) pb = txtProgressBar(min = 0, max = max(ids),
+  #                                initial = 0, char = "=", width = 50, style = 3)
   # don't have each id number
   partials = data.frame()
   partials <- foreach(
     #i = 1:n,
     i = 1:max(ids),
     .combine = 'rbind'
-  ) %do% {
+  ) %dopar% {
     idx = which(ids != i)
     curr_X = as.data.frame(X[idx,])
     curr_Y = Y[idx,]
     curr_ids = ids[idx]
     run_ols(Y = curr_Y, X = curr_X, ids=factor(curr_ids))$normed_betas_deflated
-    if(verbose) setTxtProgressBar(pb, i)
+    #if(verbose) setTxtProgressBar(pb, i)
   }
-  close(pb)
+  #close(pb)
   jack.se = apply(partials,2,function(x) sqrt(sum((x-mean(x))^2)*((n-1)/n)))
   alpha = 1 - confidence_level
   ci = qt(alpha/2,n-1,lower.tail = F)*jack.se
