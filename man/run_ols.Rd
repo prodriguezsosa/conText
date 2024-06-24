@@ -4,7 +4,7 @@
 \alias{run_ols}
 \title{Run OLS}
 \usage{
-run_ols(Y = NULL, X = NULL)
+run_ols(Y = NULL, X = NULL, ids = NULL)
 }
 \arguments{
 \item{Y}{vector of regression model's dependent variable (embedded context)}
@@ -16,5 +16,5 @@ list with two elements, \code{betas} = list of beta_coefficients (D dimensional 
 \code{normed_betas} = tibble with the norm of the non-intercept coefficients
 }
 \description{
-Run OLS
+Bootstrap model coefficients and standard errors
 }

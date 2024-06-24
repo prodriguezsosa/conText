@@ -135,10 +135,10 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
   X <- toks_dem@docvars
   if (!is.null(cluster_variable)) {
     ids <- X[,which(names(X)==cluster_variable)]
-    ids = as.numeric(factor(ids))
+    ids = factor(ids)
     X <- X[,-which(names(X)==cluster_variable),drop=F]
   }else{
-    ids = 1:nrow(X)
+    ids = factor(1:nrow(X))
   }
 
   full_sample_out <- run_ols(Y = Y, X = X, ids=ids)
@@ -166,7 +166,7 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
   if(jackknife){
     if(verbose) cat('starting jackknife \n')
     norm_tibble = cbind(norm_tibble,run_jackknife(norm_tibble$normed.estimate.deflated,
-                                                  X,Y,ids,confidence_level))
+                                                  X,Y,ids,confidence_level,verbose))
     if(verbose) cat('done with jackknife \n')
   }
 
@@ -216,7 +216,11 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
   # print the normed coefficient table
   if (verbose) print(norm_tibble)
 
-  return(result)
+  return(list('result' = result,
+              'X' = X,
+              'Y' = Y,
+              'ids' = ids))
+  #return(result)
 }
 
 # -----------------------------
@@ -238,7 +242,6 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
 #'
 
 run_ols = function(Y = NULL, X = NULL, ids = NULL){
-
   weights <- 1/as.vector(table(ids)[ids])
 
 
@@ -281,31 +284,27 @@ run_ols = function(Y = NULL, X = NULL, ids = NULL){
 # jackknife: https://bookdown.org/compfinezbook/introcompfinr/The-Jackknife.html
 # clustered: https://users.ssc.wisc.edu/~bhansen/papers/tcauchy.pdf (page 6)
 
-run_jackknife = function(theta,X,Y,ids,confidence_level){
+run_jackknife = function(theta,X,Y,ids,confidence_level,verbose=T){
   n = nrow(X)
-  print('new')
-  print(max(ids))
+  ids = as.numeric(factor(ids))
+  if(verbose) pb = txtProgressBar(min = 0, max = max(ids),
+                                  initial = 0, char = "=", width = 50, style = 3)
+  # don't have each id number
   partials = data.frame()
   partials <- foreach(
     #i = 1:n,
     i = 1:max(ids),
     .combine = 'rbind'
-  ) %dopar% {
-    #curr_X = as.data.frame(X[-i,])
-    #curr_Y = Y[-i,]
-    #curr_ids = ids[-i]
+  ) %do% {
     idx = which(ids != i)
     curr_X = as.data.frame(X[idx,])
     curr_Y = Y[idx,]
     curr_ids = ids[idx]
-    run_ols(Y = curr_Y, X = curr_X, ids=curr_ids)$normed_betas_deflated
+    run_ols(Y = curr_Y, X = curr_X, ids=factor(curr_ids))$normed_betas_deflated
+    if(verbose) setTxtProgressBar(pb, i)
   }
-  partials = t(partials)
-  theta_n = n*theta
-  partials = (n-1)*partials
-  pseudos = sweep(partials*-1,1,theta_n,'+')
-  jack.se <- apply(pseudos,1,function(x) sqrt(var(x)/n))
-  #jack.se = apply(partials,2,function(x) sqrt(sum((x-mean(x))^2)*((n-1)/n)))
+  close(pb)
+  jack.se = apply(partials,2,function(x) sqrt(sum((x-mean(x))^2)*((n-1)/n)))
   alpha = 1 - confidence_level
   ci = qt(alpha/2,n-1,lower.tail = F)*jack.se
   upper.ci = theta + ci
