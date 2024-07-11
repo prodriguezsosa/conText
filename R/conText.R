@@ -71,7 +71,7 @@
 #' model1@normed_coefficients
 #'
 
-conText <- function(formula, data, pre_trained, transform = TRUE, transform_matrix, jackknife=TRUE, confidence_level = 0.95, permute = TRUE, num_permutations = 100, cluster_variable=NULL, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
+conText <- function(formula, data, pre_trained, transform = TRUE, transform_matrix, jackknife=TRUE, confidence_level = 0.95, permute = TRUE, num_permutations = 100, cluster_variable=NULL, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE,parallel=F){
   # initial checks
 
   if(class(data)[1] != "tokens") stop("data must be of class tokens", call. = FALSE)
@@ -170,7 +170,7 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
   if(jackknife){
     if(verbose) cat('starting jackknife \n')
     norm_tibble = cbind(norm_tibble,run_jackknife(norm_tibble$normed.estimate.deflated,
-                                                  X,Y,ids,confidence_level,verbose))
+                                                  X,Y,ids,confidence_level,verbose,parallel))
     if(verbose) cat('done with jackknife \n')
   }
 
@@ -288,7 +288,16 @@ run_ols = function(Y = NULL, X = NULL, ids = NULL){
 # jackknife: https://bookdown.org/compfinezbook/introcompfinr/The-Jackknife.html
 # clustered: https://users.ssc.wisc.edu/~bhansen/papers/tcauchy.pdf (page 6)
 
-run_jackknife = function(theta,X,Y,ids,confidence_level,verbose=T){
+run_jackknife = function(theta,X,Y,ids,confidence_level,verbose=T,parallel=F){
+  print(parallel)
+  `%fun%` <- `%do%`
+  if (parallel == TRUE){
+    if(foreach::getDoParRegistered()){
+      `%fun%` <- `%dopar%`
+    }else{
+      warning('parallel = TRUE but no parallel backend registered. Use registerDoParalell() or run help("doParallel") for more information. Running jackknife sequentially...', call. = FALSE)
+    }
+  }
   n = nrow(X)
   print(n)
   ids = as.numeric(factor(ids))
@@ -300,7 +309,7 @@ run_jackknife = function(theta,X,Y,ids,confidence_level,verbose=T){
     #i = 1:n,
     i = 1:max(ids),
     .combine = 'rbind'
-  ) %dopar% {
+  ) %fun% {
     idx = which(ids != i)
     curr_X = as.data.frame(X[idx,])
     curr_Y = Y[idx,]
