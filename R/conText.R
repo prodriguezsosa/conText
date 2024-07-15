@@ -71,7 +71,7 @@
 #' model1@normed_coefficients
 #'
 
-conText <- function(formula, data, pre_trained, transform = TRUE, transform_matrix, jackknife=TRUE, confidence_level = 0.95, permute = TRUE, num_permutations = 100, cluster_variable=NULL, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE,parallel=F){
+conText <- function(formula, data, pre_trained, transform = TRUE, transform_matrix, jackknife=TRUE, confidence_level = 0.95, jackknife_fraction = 1, permute = TRUE, num_permutations = 100, cluster_variable=NULL, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE,parallel=F){
   # initial checks
 
   if(class(data)[1] != "tokens") stop("data must be of class tokens", call. = FALSE)
@@ -80,6 +80,13 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
 
   if(any(grepl("factor\\(|character\\(|numeric\\(", formula))) stop('It seems you are using one of factor(), character(), numeric() in "formula" to modify a variable. \n Please modify it directly in "data" and re-run conText.', call. = FALSE) # pre-empt users using lm type notation
   if((confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
+
+  if (parallel){
+    if(!foreach::getDoParRegistered()){
+      parallel = F
+      warning('parallel = TRUE but no parallel backend registered. Use registerDoParalell(). Executing function sequentially.', call. = FALSE)
+    }
+  }
 
   # extract dependent variable
   target <- as.character(formula[[2]])
@@ -220,11 +227,14 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
   # print the normed coefficient table
   if (verbose) print(norm_tibble)
 
+  # return statement below is useful for testing jackknife and permutation functions
   return(list('result' = result,
               'X' = X,
               'Y' = Y,
               'ids' = ids))
-  #return(result)
+  #
+
+  return(result)
 }
 
 # -----------------------------
@@ -249,7 +259,7 @@ run_ols = function(Y = NULL, X = NULL, ids = NULL){
   weights <- 1/as.vector(table(ids)[ids])
 
 
-  mod_list = lm_robust(as.matrix(Y) ~ .,
+  mod_list = estimatr::lm_robust(as.matrix(Y) ~ .,
                        data=X,
                        clusters=ids,
                        se_type="stata",
@@ -288,42 +298,53 @@ run_ols = function(Y = NULL, X = NULL, ids = NULL){
 # jackknife: https://bookdown.org/compfinezbook/introcompfinr/The-Jackknife.html
 # clustered: https://users.ssc.wisc.edu/~bhansen/papers/tcauchy.pdf (page 6)
 
-run_jackknife = function(theta,X,Y,ids,confidence_level,verbose=T,parallel=F){
-  print(parallel)
-  `%fun%` <- `%do%`
-  if (parallel == TRUE){
-    if(foreach::getDoParRegistered()){
-      `%fun%` <- `%dopar%`
-    }else{
-      warning('parallel = TRUE but no parallel backend registered. Use registerDoParalell() or run help("doParallel") for more information. Running jackknife sequentially...', call. = FALSE)
-    }
-  }
-  n = nrow(X)
-  print(n)
-  ids = as.numeric(factor(ids))
-  #if(verbose) pb = txtProgressBar(min = 0, max = max(ids),
-  #                                initial = 0, char = "=", width = 50, style = 3)
-  # don't have each id number
-  partials = data.frame()
-  partials <- foreach(
-    #i = 1:n,
-    i = 1:max(ids),
-    .combine = 'rbind'
-  ) %fun% {
-    idx = which(ids != i)
-    curr_X = as.data.frame(X[idx,])
-    curr_Y = Y[idx,]
-    curr_ids = ids[idx]
-    run_ols(Y = curr_Y, X = curr_X, ids=factor(curr_ids))$normed_betas_deflated
-    #if(verbose) setTxtProgressBar(pb, i)
-  }
-  #close(pb)
-  jack.se = apply(partials,2,function(x) sqrt(sum((x-mean(x))^2)*((n-1)/n)))
+jackknife_obs_remove = function(X,Y,ids,i){
+  idx = which(ids != i)
+  curr_X = as.data.frame(X[idx,])
+  curr_Y = Y[idx,]
+  curr_ids = ids[idx]
+  return(run_ols(Y = curr_Y, X = curr_X, ids=factor(curr_ids))$normed_betas_deflated)
+}
+
+jackknife_calculate_se = function(partials,theta,n,confidence_level,jackknife_fraction=1){
+  jack.se = apply(partials,2,function(x) sqrt((sum((x-mean(x))^2)*(jackknife_fraction))*((n-1)/n)))
   alpha = 1 - confidence_level
   ci = qt(alpha/2,n-1,lower.tail = F)*jack.se
   upper.ci = theta + ci
   lower.ci = theta - ci
   jack_tibble = data.frame(std.error = jack.se, lower.ci = lower.ci, upper.ci = upper.ci)
+}
+
+
+run_jackknife = function(theta,X,Y,ids,confidence_level,verbose=T,parallel=F,jackknife_fraction=1){
+  `%fun%` <- `%do%`
+  if (parallel == TRUE){
+    `%fun%` <- `%dopar%`
+  }
+  n = nrow(X)
+  partials = data.frame()
+  if(jackknife_fraction < 1){
+    jackknife_sample = sample(1:length(ids),size=length(ids)*jackknife_fraction,replace=F)
+    ids = ids[jackknife_sample]
+    X = as.data.frame(X[jackknife_sample,])
+    Y = Y[jackknife_sample,]
+  }
+  ids = as.numeric(factor(ids))
+  if(verbose) {
+    pb = txtProgressBar(min = 0, max = max(ids),
+                        initial = 0, char = "=", width = 50)
+  }
+  partials <- foreach(
+    i = 1:max(ids),
+    .combine = 'rbind'
+  ) %fun% {
+    if(verbose) {
+      setTxtProgressBar(pb, i)
+    }
+    jackknife_obs_remove(X,Y,ids,i)
+  }
+  if(verbose) close(pb)
+  jack_tibble = jackknife_calculate_se(partials,theta,n,confidence_level,jackknife_fraction)
   return(jack_tibble)
 }
 

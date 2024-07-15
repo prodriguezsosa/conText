@@ -70,7 +70,8 @@ dem <- function(x, pre_trained, transform = TRUE, transform_matrix, verbose = TR
   N <- Matrix::rowSums(feature_matrix)
 
   # context embeddings by instance
-  context_embedding <- Matrix::crossprod(t(as.matrix(feature_matrix)), pre_trained) # crossprod faster than %*%
+  #context_embedding <- Matrix::crossprod(t(as.matrix(feature_matrix)), pre_trained) # crossprod faster than %*%
+  context_embedding <- Matrix::crossprod(t(feature_matrix), pre_trained) # crossprod faster than %*%
 
   # adjust by number of context features
   result <- sweep(context_embedding, 1, 1/N, '*')
