@@ -23,7 +23,12 @@ Imports:
     stringr (>= 1.4.0),
     tidyr (>= 1.1.3),
     ggplot2,
-    methods
+    broom,
+    foreach,
+    methods,
+    estimatr,
+    utils,
+    stats
 URL: https://github.com/prodriguezsosa/EmbeddingRegression
 BugReports: https://github.com/prodriguezsosa/ConText/issues
 Maintainer: Pedro L. Rodriguez <pedro.rodriguezsosa@gmail.com>
@@ -39,5 +44,6 @@ Suggests:
     knitr,
     rmarkdown,
     formatR,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    doParallel
 Config/testthat/edition: 3

@@ -19,6 +19,8 @@
 #' @inheritParams dem
 #' @param jackknife (logical) if TRUE, use jackknife (leave one out) to estimate standard errors. Implies n resamples.
 #' @param confidence_level (numeric in (0,1)) confidence level e.g. 0.95
+#' @param jackknife_fraction (numeric) fraction of data to use in jackknife. Useful for large datasets.
+#' @param parallel (logical) if TRUE, use parallel processing. Requires a registered parallel backend (see doParallel() for more information).
 #' @param permute (logical) if TRUE, compute empirical p-values using permutation test
 #' @param num_permutations (numeric) number of permutations to use
 #' @param cluster_variable (character) name of the variable to use for clustering.
@@ -71,7 +73,7 @@
 #' model1@normed_coefficients
 #'
 
-conText <- function(formula, data, pre_trained, transform = TRUE, transform_matrix, jackknife=TRUE, confidence_level = 0.95, jackknife_fraction = 1, permute = TRUE, num_permutations = 100, cluster_variable=NULL, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE,parallel=F){
+conText <- function(formula, data, pre_trained, transform = TRUE, transform_matrix, jackknife=TRUE, confidence_level = 0.95, jackknife_fraction = 1, parallel=F, permute = TRUE, num_permutations = 100, cluster_variable=NULL, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
   # initial checks
 
   if(class(data)[1] != "tokens") stop("data must be of class tokens", call. = FALSE)
@@ -165,7 +167,7 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
     n_obs = nrow(X),
     ## sum_vars = sum(apply(Y, 2, var)),
     covariate_mean = c(colMeans(
-      tibble(X),#avoid conversion to vector
+      dplyr::tibble(X),#avoid conversion to vector
       na.rm=T
     ))## unname(full_sample_out$covariate_mean)
   )
@@ -216,7 +218,7 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
   # -------------------
 
   rownames(norm_tibble) = NULL
-  result <- conText:::build_conText(Class = 'conText',
+  result <- build_conText(Class = 'conText',
                                     x_conText = beta_coefficients,
                                     normed_coefficients = norm_tibble,
                                     features = toks_dem@features,
@@ -227,12 +229,7 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
   # print the normed coefficient table
   if (verbose) print(norm_tibble)
 
-  # return statement below is useful for testing jackknife and permutation functions
-  return(list('result' = result,
-              'X' = X,
-              'Y' = Y,
-              'ids' = ids))
-  #
+
 
   return(result)
 }
@@ -269,7 +266,7 @@ run_ols = function(Y = NULL, X = NULL, ids = NULL){
   betas = mod_list %>%
     dplyr::select(term,estimate) %>%
     tidyr::pivot_wider(names_from=term, values_from=estimate,values_fn = list) %>%
-    unchop(everything()) %>%
+    tidyr::unchop(everything()) %>%
     t() %>%
     as.matrix()
 
@@ -316,10 +313,10 @@ jackknife_calculate_se = function(partials,theta,n,confidence_level,jackknife_fr
 }
 
 
-run_jackknife = function(theta,X,Y,ids,confidence_level,verbose=T,parallel=F,jackknife_fraction=1){
-  `%fun%` <- `%do%`
+run_jackknife = function(theta,X,Y,ids,confidence_level,verbose=F,parallel=F,jackknife_fraction=1){
+  `%fun%` <- foreach::`%do%`
   if (parallel == TRUE){
-    `%fun%` <- `%dopar%`
+    `%fun%` <- foreach::`%dopar%`
   }
   n = nrow(X)
   partials = data.frame()
@@ -331,15 +328,15 @@ run_jackknife = function(theta,X,Y,ids,confidence_level,verbose=T,parallel=F,jac
   }
   ids = as.numeric(factor(ids))
   if(verbose) {
-    pb = txtProgressBar(min = 0, max = max(ids),
+    pb = utils::txtProgressBar(min = 0, max = max(ids),
                         initial = 0, char = "=", width = 50)
   }
-  partials <- foreach(
+  partials <- foreach::foreach(
     i = 1:max(ids),
     .combine = 'rbind'
   ) %fun% {
     if(verbose) {
-      setTxtProgressBar(pb, i)
+      utils::setTxtProgressBar(pb, i)
     }
     jackknife_obs_remove(X,Y,ids,i)
   }
@@ -355,7 +352,7 @@ permute_ols <- function(X, Y, ids=NULL, weights=NULL) {
     Y <- Y[sample(1:nrow(Y)),]
     return(run_ols_uncorrected(X,Y,resids=F))
   } else {
-    permuted_data <- tibble(
+    permuted_data <- dplyr::tibble(
       Y = as.matrix(Y),
       X = X,
       id = ids

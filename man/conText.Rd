@@ -12,6 +12,8 @@ conText(
   transform_matrix,
   jackknife = TRUE,
   confidence_level = 0.95,
+  jackknife_fraction = 1,
+  parallel = F,
   permute = TRUE,
   num_permutations = 100,
   cluster_variable = NULL,
@@ -49,6 +51,10 @@ D = dimensions of pretrained embeddings.}
 \item{jackknife}{(logical) if TRUE, use jackknife (leave one out) to estimate standard errors. Implies n resamples.}
 
 \item{confidence_level}{(numeric in (0,1)) confidence level e.g. 0.95}
+
+\item{jackknife_fraction}{(numeric) fraction of data to use in jackknife. Useful for large datasets.}
+
+\item{parallel}{(logical) if TRUE, use parallel processing. Requires a registered parallel backend (see doParallel() for more information).}
 
 \item{permute}{(logical) if TRUE, compute empirical p-values using permutation test}
 

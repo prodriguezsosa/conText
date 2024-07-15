@@ -8,6 +8,7 @@
 #' @seealso `dem`
 #' @rdname dem-class
 #' @keywords internal dem
+#' @import Matrix
 setClass("dem",
          slots = c(
            docvars = "data.frame",

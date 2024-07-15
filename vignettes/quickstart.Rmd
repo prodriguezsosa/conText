@@ -377,7 +377,7 @@ model1 <- conText(formula = immigration ~ party + gender,
                   data = toks_nostop_feats,
                   pre_trained = cr_glove_subset,
                   transform = TRUE, transform_matrix = cr_transform,
-                  jackknife = TRUE, confidence_level = 0.95,
+                  jackknife = F, confidence_level = 0.95,
                   permute = TRUE, num_permutations = 100,
                   window = 6, case_insensitive = TRUE,
                   verbose = FALSE)
