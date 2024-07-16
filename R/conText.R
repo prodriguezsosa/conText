@@ -247,7 +247,7 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
 #'
 #' @param Y vector of regression model's dependent variable (embedded context)
 #' @param X data.frame of model independent variables (covariates)
-#'
+#' @param ids vector of cluster ids
 #' @return list with two elements, `betas` = list of beta_coefficients (D dimensional vectors);
 #' `normed_betas` = tibble with the norm of the non-intercept coefficients
 #'

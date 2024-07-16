@@ -11,5 +11,7 @@
 #' @importFrom stats sd
 #' @importFrom stats setNames
 #' @importFrom stats terms
+#' @importFrom Matrix Matrix
+#' @importFrom Matrix t
 ## usethis namespace: end
 NULL

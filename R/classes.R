@@ -7,8 +7,8 @@
 #' @slot features features used in computing the document embeddings
 #' @seealso `dem`
 #' @rdname dem-class
+#' @importClassesFrom Matrix dgCMatrix
 #' @keywords internal dem
-#' @import Matrix
 setClass("dem",
          slots = c(
            docvars = "data.frame",
@@ -26,6 +26,7 @@ setClass("dem",
 #' @slot features features used in computing the document embeddings
 #' @seealso `fem`
 #' @rdname fem-class
+#' @importClassesFrom Matrix dgCMatrix
 #' @keywords internal fem
 setClass("fem",
          slots = c(
@@ -51,6 +52,7 @@ setClass("fem",
 #' @slot features features used in computing the document embeddings
 #' @seealso `conText`
 #' @rdname conText-class
+#' @importClassesFrom Matrix dgCMatrix
 #' @keywords internal conText
 setClass("conText",
          slots = c(
