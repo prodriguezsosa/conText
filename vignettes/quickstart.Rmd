@@ -336,10 +336,10 @@ immig_nns_ratio <- get_nns_ratio(x = immig_toks,
 head(immig_nns_ratio)
 ```
 
-**conText** also includes a plotting function, `plot_nns_ratio`,  specific to `get_nns_ratio()`, providing a nice visualization of its output. `alpha` defines the desired significance threshold to denote "significant" results on the plot (indicated by a $*$ next to the feature). Also, you can choose between two different visualizations of the same results using the `horizontal` argument.
+**conText** also includes a plotting function, `plot_nns_ratio`,  specific to `get_nns_ratio()`, providing a nice visualization of its output. `alpha` defines the desired significance threshold to denote "significant" results on the plot (indicated by a $*$ next to the feature). Also, you can choose between two different visualizations of the same results using the `horizontal` argument. Finally, you can specify a ggplot2 transformation with the `scale_transform` argument.
 
 ```{r, eval=TRUE}
-plot_nns_ratio(x = immig_nns_ratio, alpha = 0.01, horizontal = TRUE)
+plot_nns_ratio(x = immig_nns_ratio, alpha = 0.01, horizontal = FALSE, scale_transform = "log")
 ```
 
 ### Nearest contexts

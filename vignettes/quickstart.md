@@ -653,7 +653,7 @@ feature). Also, you can choose between two different visualizations of
 the same results using the `horizontal` argument.
 
 ``` r
-plot_nns_ratio(x = immig_nns_ratio, alpha = 0.01, horizontal = TRUE)
+plot_nns_ratio(x = immig_nns_ratio, alpha = 0.01, horizontal = FALSE, scale_transform = "log")
 ```
 
 ![](/private/var/folders/3g/g_rcryn50tjfk4j52hz39hm40000gn/T/RtmpXpaJgy/preview-14d46569abbaf.dir/quickstart_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->

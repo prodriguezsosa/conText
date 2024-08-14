@@ -4,11 +4,13 @@
 #' how "discriminant" each feature is of each embedding (group).
 #'
 #' @param x output of get_nns_ratio
-#' @param alpha (numerical) betwee 0 and 1. Significance threshold to identify significant values.
+#' @param alpha (numerical) between 0 and 1. Significance threshold to identify significant values.
 #' These are denoted by a `*` on the plot.
 #' @param horizontal (logical) defines the type of plot. if TRUE results are plotted on 1 dimension.
 #' If FALSE, results are plotted on 2 dimensions, with the second dimension catpuring the ranking
 #' of cosine ratio similarties.
+#' @param scale_transform (character) the name of a ggplot2 transformation object or the object itself.
+#' (see `transform` in ?ggplot2::scale_x_continuous)
 #'
 #' @return a `ggplot-class` object.
 #'
@@ -52,8 +54,8 @@
 #'                                  num_permutations = 10,
 #'                                  verbose = FALSE)
 #'
-#' plot_nns_ratio(x = immig_nns_ratio, alpha = 0.01, horizontal = TRUE)
-plot_nns_ratio <- function(x, alpha = 0.01, horizontal = TRUE){
+#' plot_nns_ratio(x = immig_nns_ratio, alpha = 0.01, horizontal = FALSE, scale_transform = "log")
+plot_nns_ratio <- function(x, alpha = 0.01, horizontal = TRUE, scale_transform = "identity"){
 
   # warning
   if(nrow(x) > 20) message("Consider setting plotting fewer values (<= 20), the plot may otherwise look unreadable.")
@@ -92,6 +94,7 @@ plot_nns_ratio <- function(x, alpha = 0.01, horizontal = TRUE){
       ggplot2::geom_point(ggplot2::aes(x = valueJitter, y = c(0), color = group, shape = group),
                  data = x, size = 3) +
       ggplot2::scale_color_manual(values=c("black", "gray30", "gray60")) +
+      ggplot2::scale_x_continuous(transform=scale_transform) +
       ggplot2::geom_text(ggplot2::aes(x = valueJitter, y = c(0), label=feature),
                 data = x, hjust = dplyr::if_else(x$group == "shared", -0.25, 1.2),
                 vjust = 0.5, size = 4, angle = 90) +
@@ -111,6 +114,12 @@ plot_nns_ratio <- function(x, alpha = 0.01, horizontal = TRUE){
             legend.spacing.x = ggplot2::unit(0.25, 'cm'),
             plot.margin=ggplot2::unit(c(1,1,0,0),"cm"))}else{
 
+              limits <- if (startsWith(scale_transform, "log")) {
+                c(min(x$value) / 1.5, max(x$value) * 1.5)
+              } else {
+                c(min(x$value) - 0.5, max(x$value) + 0.5)
+              }
+
               # vertical (2D) plot
               ggplot2::ggplot() +
                 ggplot2::geom_point(ggplot2::aes(x = value, y = featureID, color = group, shape = group),
@@ -121,7 +130,7 @@ plot_nns_ratio <- function(x, alpha = 0.01, horizontal = TRUE){
                 #annotate(geom = "text", x = c(0.5,1.5), y = c(nrow(x) + 8,nrow(x) + 8),
                 #         label=c(paste0("more ", group2_label), paste0("more ", group1_label)), size = 6) +
                 ggplot2::scale_color_manual(values=c("black", "gray30", "gray60")) +
-                ggplot2::xlim(min(x$value) - 0.5, max(x$value) + 0.5) +
+                ggplot2::scale_x_continuous(limits=limits, transform=scale_transform) +
                 #ylim(0,(nrow(x) + )) +
                 ggplot2::ylab('') +
                 ggplot2::xlab(paste0("cosine similarity ratio ", "(", group1_label, "/", group2_label, ")")) +

@@ -4,18 +4,21 @@
 \alias{plot_nns_ratio}
 \title{Plot output of \code{get_nns_ratio()}}
 \usage{
-plot_nns_ratio(x, alpha = 0.01, horizontal = TRUE)
+plot_nns_ratio(x, alpha = 0.01, horizontal = TRUE, scale_transform = "identity")
 }
 \arguments{
 \item{x}{output of get_nns_ratio}
 
-\item{alpha}{(numerical) betwee 0 and 1. Significance threshold to identify significant values.
+\item{alpha}{(numerical) between 0 and 1. Significance threshold to identify significant values.
 These are denoted by a \code{*} on the plot.}
 
 \item{horizontal}{(logical) defines the type of plot. if TRUE results are plotted on 1 dimension.
 If FALSE, results are plotted on 2 dimensions, with the second dimension catpuring the ranking
 of cosine ratio similarties.}
 }
+
+\item{scale_transform}{(character) the name of a ggplot2 transformation object or the object itself.
+(see `transform` in ?ggplot2::scale_x_continuous)}
 \value{
 a \code{ggplot-class} object.
 }
@@ -60,6 +63,6 @@ immig_nns_ratio <- get_nns_ratio(x = immig_toks,
                                  num_permutations = 10,
                                  verbose = FALSE)
 
-plot_nns_ratio(x = immig_nns_ratio, alpha = 0.01, horizontal = TRUE)
+plot_nns_ratio(x = immig_nns_ratio, alpha = 0.01, horizontal = FALSE, scale_transform = "log")
 }
 \keyword{plot_nns_ratio}
