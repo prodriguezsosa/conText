@@ -1,18 +1,16 @@
 ---
 title: "Statistical Bias in Distance Measures"
-output: pdf_document
+output: rmarkdown::github_document
+vignette: >
+  %\VignetteIndexEntry{Statistical Bias in Distance Measures}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r, echo = FALSE}
 knitr::opts_chunk$set(collapse = FALSE,
                       comment = "##",
                       tidy = FALSE)
-
-#output: rmarkdown::github_document
-#vignette: >
-#  %\VignetteIndexEntry{Finite Sample Bias}
-#  %\VignetteEngine{knitr::rmarkdown}
-#  %\VignetteEncoding{UTF-8}
 ```
 
 ## Summary: tl;dr
@@ -25,14 +23,6 @@ knitr::opts_chunk$set(collapse = FALSE,
 - We describe this all in more detail below, but the key for applied researchers is that **we recommend the use of the bias correction for calculating the squared norm of the coefficient estimates from the embedding regression coefficients, which is now built into to our main `conText()` function**. 
 
 The discussion below summarizes key points from [Green et al. (2025)](https://www.cambridge.org/core/journals/political-analysis/article/measuring-distances-in-high-dimensional-spaces/88126F4A48F121387D249C1856C3665B). The paper provides a deeper description of the problem and an evaluation of the bias correction methods implemented in the current version of the package.
-
-## Reminder: Rodriguez et al (2023)
-
-`conText`'s regression framework allows users to estimate the "semantic" shift in the usage of a term between two or more groups, while controlling for other group covariates. The resulting coefficients will be *D*-dimensional, where *D* equals the dimensionality of the pre-trained embeddings used (say, 300). In Rodriguez et al. (2023) we propose using the *Euclidean* norm to summarize the magnitude of these coefficients, noting however that:
-
-_"...estimates of the norms have a finite-sample bias for rare words. Thus care is needed when comparing words or groups with substantially different amounts of available data."_
-
-We now give more precise discussion of the potential problems---and a way to mitigate these issues. 
 
 ## The Problem: Bias in Small or Unbalanced Samples
 
@@ -49,8 +39,7 @@ To characterize the bias more fully and precisely, consider measuring the square
 $$
 \begin{aligned}
 E \left[\lVert\hat{\theta} - \hat{\phi}\rVert^2_2\right] &= E\left[\sum_{k=1}^K(\hat{\theta}_k - \hat{\phi}_k)^2\right] \\
-&= \sum_{k=1}^K E[(\hat{\theta}_k - \hat{\phi}_k)]^2 + V[\hat{\theta}_k - \hat{\phi}_k] \\
-&= \lVert \theta - \phi \rVert^2_2 + \underbrace{\sum_{k=1}^K V[\hat{\theta}_k-\hat{\phi}_k]}_{Bias} \\
+&= \lVert \theta - \phi \rVert^2_2 + \sum_{k=1}^K V[\hat{\theta}_k-\hat{\phi}_k] \\
 \end{aligned}
 $$
 

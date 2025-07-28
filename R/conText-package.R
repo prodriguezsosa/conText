@@ -3,6 +3,7 @@
 
 ## usethis namespace: start
 #' @importFrom dplyr %>%
+#' @importFrom tidyselect everything
 #' @importFrom methods as
 #' @importFrom methods new
 #' @importFrom stats filter

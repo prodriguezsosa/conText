@@ -6,4 +6,4 @@ utils::globalVariables(c(".", "context", "docname", "keyword",
                          "group", "featureID", "pattern", "token",
                          "contexts", "contexts_dem", "docid", "where",
                          "tmp_by", "lower.ci", "upper.ci", "tokens_subset",
-                         "coefficient"))
+                         "coefficient", "first_val", "sec_val", "val", "id", "i", "estimate", "std.error"))

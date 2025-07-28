@@ -59,7 +59,7 @@
 #'                  data = toks,
 #'                  pre_trained = cr_glove_subset,
 #'                  transform = TRUE, transform_matrix = cr_transform,
-#'                  jackknife = TRUE,
+#'                  jackknife = FALSE,
 #'                  confidence_level = 0.95,
 #'                  permute = TRUE, num_permutations = 100,
 #'                  cluster_variable = NULL,
@@ -270,7 +270,7 @@ run_ols = function(Y = NULL, X = NULL, ids = NULL){
   betas = mod_list %>%
     dplyr::select(term,estimate) %>%
     tidyr::pivot_wider(names_from=term, values_from=estimate,values_fn = list) %>%
-    tidyr::unchop(everything()) %>%
+    tidyr::unchop(tidyselect::everything()) %>%
     t() %>%
     as.matrix()
 
@@ -361,10 +361,10 @@ permute_ols <- function(X, Y, ids=NULL, weights=NULL) {
       X = X,
       id = ids
     ) %>%
-      group_by(id, X) %>%
+      dplyr::group_by(id, X) %>%
       tidyr::nest(Y=Y) %>%
-      ungroup() %>%
-      mutate(
+      dplyr::ungroup() %>%
+      dplyr::mutate(
         Y = sample(Y)
       ) %>%
       tidyr::unnest(cols=c(Y))

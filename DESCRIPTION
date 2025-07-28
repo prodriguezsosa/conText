@@ -29,7 +29,8 @@ Imports:
     methods,
     estimatr,
     utils,
-    stats
+    stats,
+    tidyselect
 URL: https://github.com/prodriguezsosa/EmbeddingRegression
 BugReports: https://github.com/prodriguezsosa/ConText/issues
 Maintainer: Sofia Avila <sofiaavila@princeton.edu>

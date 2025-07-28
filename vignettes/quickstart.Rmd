@@ -1,17 +1,19 @@
 ---
 title: "Quick Start Guide"
-output: pdf_document
+output: rmarkdown::github_document
+vignette: >
+  %\VignetteIndexEntry{Quick Start Guide}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r, echo = FALSE}
 knitr::opts_chunk$set(collapse = FALSE,
+                      dpi = 72,
+                      warning = FALSE,
+                      message = FALSE,
                       comment = "##",
                       tidy = FALSE)
-#output: rmarkdown::github_document
-#vignette: >
-#  %\VignetteIndexEntry{Quick Start Guide}
-#  %\VignetteEngine{knitr::rmarkdown}
-#  %\VignetteEncoding{UTF-8}
 ```
 
 # Preliminaries
@@ -167,7 +169,7 @@ A third exploratory function included in 'conText' is `nns_ratio()`. Given ALC e
 
 ```{r}
 # compute the cosine similarity between each party's embedding and a specific set of features
-nns_ratio(x = immig_wv_party, N = 10, numerator = "R", candidates = immig_wv_party@features, pre_trained = cr_glove_subset, verbose = FALSE)
+nns_ratio(x = immig_wv_party, N = 5, numerator = "R", candidates = immig_wv_party@features, pre_trained = cr_glove_subset, verbose = FALSE)
 ```
 
 ### Nearest contexts
@@ -192,7 +194,7 @@ immig_ncs <- ncs(x = immig_wv_party["R",], contexts_dem = immig_dem[immig_dem@do
 
 All functions to explore nearest neighbors --`nns`, `cos_sim`, `nns_ratio`-- have to option to add stemming. This can be useful to group nearest neighbors with the same stem e.g. "reform", "reforms", "reformed". Under the hood, candidate nearest neighbors are stemmed using the `Snowball` library and cosine similarities with the target embeddings are averaged across nearest neighbors with the same stem. To avoid noisy words influencing this average e.g. "reformedthesystem", we recommend you remove misspelled words from the candidate set `candidates` (you can automate this using the `hunspell` library). See example below.
 
-```{r}
+```{r, warning=F, message=F}
 # extract candidate features from the dem object
 immig_feats <- immig_wv_party@features
 
@@ -228,7 +230,7 @@ mkws_dem <- dem(x = mkws_dfm, pre_trained = cr_glove_subset, transform = TRUE, t
 mkws_wvs <- dem_group(mkws_dem, groups = mkws_dem@docvars$pattern)
 
 # find nearest neighbors for each keyword
-mkws_nns <- nns(mkws_wvs, pre_trained = cr_glove_subset, N = 5, candidates = mkws_wvs@features, as_list = TRUE)
+mkws_nns <- nns(mkws_wvs, pre_trained = cr_glove_subset, N = 3, candidates = mkws_wvs@features, as_list = TRUE)
 
 # to check results for a given pattern
 mkws_nns[["immigration reform"]]
@@ -338,7 +340,7 @@ head(immig_nns_ratio)
 
 **conText** also includes a plotting function, `plot_nns_ratio`,  specific to `get_nns_ratio()`, providing a nice visualization of its output. `alpha` defines the desired significance threshold to denote "significant" results on the plot (indicated by a $*$ next to the feature). Also, you can choose between two different visualizations of the same results using the `horizontal` argument.
 
-```{r, eval=TRUE}
+```{r, eval=FALSE}
 plot_nns_ratio(x = immig_nns_ratio, alpha = 0.01, horizontal = TRUE)
 ```
 
@@ -400,9 +402,9 @@ The `conText-class` contains two important attributes:
 
 To speed up the jackknife computation, iterations can be run in parallel by setting `parallel=TRUE`. For this functionality to work, users must register a parallel backend prior to calling `conText()`. For example, using the `doParallel` package:
 
-```{r, message=FALSE}
+```{r, message=FALSE, eval=FALSE}
 require(doParallel)
-registerDoParallel(10)
+registerDoParallel(4)
 set.seed(2021L)
 model1 <- conText(formula = immigration ~ party + gender,
                   data = toks_nostop_feats,
@@ -464,7 +466,7 @@ model2 <- conText(formula = immigration ~ nominate_dim1,
                   data = toks_nostop_feats,
                   pre_trained = cr_glove_subset,
                   transform = TRUE, transform_matrix = cr_transform,
-                  jackknife = TRUE, confidence_level = 0.95,
+                  jackknife = FALSE, confidence_level = 0.95,
                   permute = TRUE, num_permutations = 100,
                   window = 6, case_insensitive = TRUE,
                   verbose = FALSE)
@@ -475,8 +477,8 @@ percentile_wvs <- lapply(percentiles, function(i) model2["(Intercept)",] + i*mod
 percentile_sim <- cos_sim(x = percentile_wvs, pre_trained = cr_glove_subset, features = c("reform", "enforce"), as_list = TRUE)
 
 # check output
-rbind(head(percentile_sim[["reform"]], 5),tail(percentile_sim[["reform"]], 5))
-rbind(head(percentile_sim[["enforce"]], 5),tail(percentile_sim[["enforce"]], 5))
+rbind(head(percentile_sim[["reform"]], 2),tail(percentile_sim[["reform"]], 2))
+rbind(head(percentile_sim[["enforce"]], 2),tail(percentile_sim[["enforce"]], 2))
 ```
 
 # Local GloVe and transformation matrix
@@ -597,7 +599,7 @@ model3 <- conText(formula = . ~ party,
                   data = short_toks,
                   pre_trained = cr_glove_subset,
                   transform = TRUE, transform_matrix = cr_transform,
-                  jackknife = TRUE, confidence_level = 0.95,
+                  jackknife = FALSE, confidence_level = 0.95,
                   permute = TRUE, num_permutations = 100,
                   window = 6, case_insensitive = TRUE,
                   verbose = FALSE)
