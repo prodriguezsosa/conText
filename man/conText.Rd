@@ -13,7 +13,7 @@ conText(
   jackknife = TRUE,
   confidence_level = 0.95,
   jackknife_fraction = 1,
-  parallel = F,
+  parallel = FALSE,
   permute = TRUE,
   num_permutations = 100,
   cluster_variable = NULL,
@@ -87,11 +87,13 @@ The object also includes various informative attributes, importantly
 a \code{data.frame} with the following columns:
 \describe{
 \item{\code{coefficient}}{(character) name of (covariate) coefficient.}
-\item{\code{value}}{(numeric) norm of the corresponding beta coefficient.}
-\item{\code{std.error}}{(numeric) (if jackknife = TRUE) std. error of the norm of the beta coefficient.}
+\item{\code{normed.estimate.orig}}{(numeric) squared norm of the corresponding beta coefficient.}
+\item{\code{normed.estimate.deflated}}{(numeric) debiased squared norm of the corresponding beta coefficient.}
+\item{\code{normed.estimate.beta.error.null}}{(numeric) estimate of the bias term in the the original squared norm.}
+\item{\code{std.error}}{(numeric) (if jackknife = TRUE) std. error of the debiased squared norm of the beta coefficient.}
 \item{\code{lower.ci}}{(numeric) (if jackknife = TRUE) lower bound of the confidence interval.}
 \item{\code{upper.ci}}{(numeric) (if jackknife = TRUE) upper bound of the confidence interval.}
-\item{\code{p.value}}{(numeric) (if permute = TRUE) empirical p.value of the norm of the coefficient.}
+\item{\code{p.value}}{(numeric) (if permute = TRUE) empirical p.value of the debiased squared norm of the coefficient.}
 }
 }
 \description{

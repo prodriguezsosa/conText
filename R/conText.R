@@ -34,12 +34,15 @@
 #' a `data.frame` with the following columns:
 #' \describe{
 #'  \item{`coefficient`}{(character) name of (covariate) coefficient.}
-#'  \item{`value`}{(numeric) norm of the corresponding beta coefficient.}
-#'  \item{`std.error`}{(numeric) (if jackknife = TRUE) std. error of the norm of the beta coefficient.}
+#'  \item{`normed.estimate.orig`}{(numeric) squared norm of the corresponding beta coefficient.}
+#'  \item{`normed.estimate.deflated`}{(numeric) debiased squared norm of the corresponding beta coefficient.}
+#'  \item{`normed.estimate.beta.error.null`}{(numeric) estimate of the bias term in the the original squared norm.}
+#'  \item{`std.error`}{(numeric) (if jackknife = TRUE) std. error of the debiased squared norm of the beta coefficient.}
 #'  \item{`lower.ci`}{(numeric) (if jackknife = TRUE) lower bound of the confidence interval.}
 #'  \item{`upper.ci`}{(numeric) (if jackknife = TRUE) upper bound of the confidence interval.}
-#'  \item{`p.value`}{(numeric) (if permute = TRUE) empirical p.value of the norm of the coefficient.}
+#'  \item{`p.value`}{(numeric) (if permute = TRUE) empirical p.value of the debiased squared norm of the coefficient.}
 #'  }
+#'
 #'
 #' @export
 #' @rdname conText
@@ -73,7 +76,7 @@
 #' model1@normed_coefficients
 #'
 
-conText <- function(formula, data, pre_trained, transform = TRUE, transform_matrix, jackknife=TRUE, confidence_level = 0.95, jackknife_fraction = 1, parallel=F, permute = TRUE, num_permutations = 100, cluster_variable=NULL, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
+conText <- function(formula, data, pre_trained, transform = TRUE, transform_matrix, jackknife=TRUE, confidence_level = 0.95, jackknife_fraction = 1, parallel=FALSE, permute = TRUE, num_permutations = 100, cluster_variable=NULL, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
   # initial checks
 
   if(class(data)[1] != "tokens") stop("data must be of class tokens", call. = FALSE)
@@ -82,6 +85,7 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
 
   if(any(grepl("factor\\(|character\\(|numeric\\(", formula))) stop('It seems you are using one of factor(), character(), numeric() in "formula" to modify a variable. \n Please modify it directly in "data" and re-run conText.', call. = FALSE) # pre-empt users using lm type notation
   if((confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
+  if((confidence_level > 1 || confidence_level<=0)) stop('"jackknife_fraction" must be a numeric value between 0 and 1.', call. = FALSE) # check jackknife_fraction is between 0 and 1
 
   if (parallel){
     if(!foreach::getDoParRegistered()){

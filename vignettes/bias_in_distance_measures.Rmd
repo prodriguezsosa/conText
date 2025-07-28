@@ -1,0 +1,92 @@
+---
+title: "Statistical Bias in Distance Measures"
+output: pdf_document
+---
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(collapse = FALSE,
+                      comment = "##",
+                      tidy = FALSE)
+
+#output: rmarkdown::github_document
+#vignette: >
+#  %\VignetteIndexEntry{Finite Sample Bias}
+#  %\VignetteEngine{knitr::rmarkdown}
+#  %\VignetteEncoding{UTF-8}
+```
+
+## Summary: tl;dr
+
+- As noted in the original article, some of the estimated quantities described in Rodriguez et al (2023) can exhibit statistical biases as is common with estimation of distances.
+- This is **especially** true in small and unbalanced samples (i.e. where groups to be compared are very different sizes and/or the total number of observations are small).
+- So, we implemented a debiased distance estimator to the `conText()` function when calculating the squared norm of the regression coefficients. This eliminates the bias for the squared Euclidean distance and substantially reduces it for the ordinary Euclidean distance.
+- We also implemented the jackknife to estimate confidence intervals. While the jackknife outperforms bootstrapped CI estimates, it still over-covers when the true distance is close to zero.
+- The permutation test described in our paper and implemented in the package still controls false discovery correctly.
+- We describe this all in more detail below, but the key for applied researchers is that **we recommend the use of the bias correction for calculating the squared norm of the coefficient estimates from the embedding regression coefficients, which is now built into to our main `conText()` function**. 
+
+The discussion below summarizes key points from [Green et al. (2025)](https://www.cambridge.org/core/journals/political-analysis/article/measuring-distances-in-high-dimensional-spaces/88126F4A48F121387D249C1856C3665B). The paper provides a deeper description of the problem and an evaluation of the bias correction methods implemented in the current version of the package.
+
+## Reminder: Rodriguez et al (2023)
+
+`conText`'s regression framework allows users to estimate the "semantic" shift in the usage of a term between two or more groups, while controlling for other group covariates. The resulting coefficients will be *D*-dimensional, where *D* equals the dimensionality of the pre-trained embeddings used (say, 300). In Rodriguez et al. (2023) we propose using the *Euclidean* norm to summarize the magnitude of these coefficients, noting however that:
+
+_"...estimates of the norms have a finite-sample bias for rare words. Thus care is needed when comparing words or groups with substantially different amounts of available data."_
+
+We now give more precise discussion of the potential problems---and a way to mitigate these issues. 
+
+## The Problem: Bias in Small or Unbalanced Samples
+
+While the *D*-dimensional OLS coefficients resulting from a `conText` regression are approximately *unbiased*, functions of these coefficients, such as the squared norm, are not. Elements of the coefficient vector are estimated with error, yet this uncertainty is not properly incorporated into the calculation when we use a plugin estimator for the Euclidean distance. The result is an upward bias in the measurement of that distance
+
+The magnitude of the bias, and hence potential for mistaken inferences, increases with the variance of the embedding position.  Thus, the magnitude of the bias is a function of sample size. As one might expect: the smaller the sample---for any of the slices of the data resulting from the set of covariates---the higher the variance and the larger the bias. In the case of `conText`, a multivariate multiple regression, the problem is more acute the larger the dimensionality of the *embedding space*, with higher dimensionality (say 500 instead of 100 length vectors) resulting in higher variance in small samples, all else equal.
+
+Even with large sample sizes, this bias can remain in relative terms in comparisons where one group-wise distance has been estimated with greater uncertainty than another distance. This might be due to different sample sizes or sample sizes that are imbalanced across comparisons: e.g. a (very imbalanced) majority v minority group vector distance versus a (balanced) 50:50 group distance. Since the absolute size of the norm does not have a clear interpretations, these differences in bias can impact users relying on a relative scale of differences to benchmark a result (e.g. "the norm between Democrat women and men is larger than for Republican women and men") even when working with large samples. 
+
+## A Correction Based on Variance Estimation
+
+To characterize the bias more fully and precisely, consider measuring the squared Euclidean distance between two (estimated) length-$K$ vectors $\hat{\theta} \text{ and } \hat{\phi}$. This is, we are working with  $\lVert\hat{\theta} - \hat{\phi}\rVert^2_2 = \sum_{k=1}^K(\hat{\theta}_k - \hat{\phi}_k)^2$.  Taking expectations on both sides we have
+
+$$
+\begin{aligned}
+E \left[\lVert\hat{\theta} - \hat{\phi}\rVert^2_2\right] &= E\left[\sum_{k=1}^K(\hat{\theta}_k - \hat{\phi}_k)^2\right] \\
+&= \sum_{k=1}^K E[(\hat{\theta}_k - \hat{\phi}_k)]^2 + V[\hat{\theta}_k - \hat{\phi}_k] \\
+&= \lVert \theta - \phi \rVert^2_2 + \underbrace{\sum_{k=1}^K V[\hat{\theta}_k-\hat{\phi}_k]}_{Bias} \\
+\end{aligned}
+$$
+
+where line 2 follows because $E[X^2] = E[X]^2 + V[X]$ for a random variable $X$. Importantly, variance here is the variance of the (unobserved) distribution of the estimator (i.e., the squared standard error). 
+
+The point is that the bias (for the squared norm) is the (sum of) the variances of the differences between the vectors' elements.  And those variances result from uncertainty in estimation of $\phi$ and $\theta$.  Only if the elements of those vectors are estimated without error is there no bias.  
+
+When could we realistically expect the absolute bias to be small or zero? It is when we have a very large amount of data such that our estimates of the (elements of the) vectors are close to their true population values. However, even with large samples, the problem will remain in descriptive relative comparisons if measurement or sampling error is unequal across these comparisons. See [Green et al. (2025)](https://www.cambridge.org/core/journals/political-analysis/article/measuring-distances-in-high-dimensional-spaces/88126F4A48F121387D249C1856C3665B) for an example of the issue using data from a panel of Twitter users.
+
+We derive a corrected estimate of the squared Euclidean distance which we apply to the calculation of the squared norm of the regression coefficients in the `conText` package. Consider a general regression parameter $\beta$ which, in the context of two groups' embeddings would be the difference between their average vectors ($\beta=\theta - \phi$). To summarize this vector using the squared Euclidean norm, we can use the estimator,
+
+$$
+\begin{aligned}
+\widehat{\lVert\beta\rVert^2_2}= \sum_{k=1}^K (\hat{\beta_k}^2 - \hat{V}[\hat{\beta}_k] )
+\end{aligned}
+$$
+
+which is unbiased given an unbiased estimator of the variance $\hat{V}[\cdot]$ and an unbiased estimator for $\beta$. For the simplest case, for comparing embeddings of dimensions $K$, one can run $K$ separate (linear) regressions, each with $n$ observations corresponding to the number of instantiations of the term in question. One then has immediate access to the relevant $\hat{\beta}$s and the standard errors (and thus variance estimates) of the same.
+
+
+## conText Updates and Recommendations
+
+Given the above results, we proceeded to **update `conText` to implement this bias-correction**, see [Quick Start Guide](https://github.com/prodriguezsosa/conText/blob/master/vignettes/quickstart.md) for examples. 
+
+In previous versions of the package, the `conText()` function returned a conText-class object with two important attributes: (1) @features: the set of features used when creating the embeddings, and (2) @normed_coefficients: a table with the norm of the coefficients (excluding the intercept), the std. errors (of the normed coefficients), lower and upper bound of the confidence interval, and their empirical p-values. In this version, we follow a similar structure, but the normed coefficients are now the **squared** norm of the coefficient estimates and we now include A) a bias corrected version of the squared norm and B) the value of the bias term. 
+
+The `conText()` function also allows users to specify a cluster variable. For clustered observations, the software uses sandwich-style standard errors to estimate the variance and performs clustered residual permutation to calculate the distribution of the null.
+
+As with previous versions of the package, we compute the empirical p-value using a permutation test. The standard errors and confidence intervals are now computed using the jackknife. As we show in [Green et al. (2025)](https://www.cambridge.org/core/journals/political-analysis/article/measuring-distances-in-high-dimensional-spaces/88126F4A48F121387D249C1856C3665B) (SI Section C.4), the jackknife outperforms the bootstrap, but still over-covers when the true distance is close to zero. 
+
+For users working with large samples, obtaining the jackknife estimates can be slow. To speed up the process, we provide two additional functionalities:
+
+1. **parallel processing**: Users can set `parallel = TRUE` in the `conText()` function to use parallel processing for the jackknife. Note that users must register a parallel backend prior to calling the `conText()` function to use this feature. See the [Quick Start Guide](https://github.com/prodriguezsosa/conText/blob/master/vignettes/quickstart.md) for an example. The function will be executed sequentially if no parallel backend is detected.
+
+2. **subsampling**: Users can set `jackknife_fraction` to a value between 0 and 1 to perform the jackknife on a random subsample of the data of size `jackknife_fraction * n`, where `n` is the total number of observations. The default value is 1. We recommend only using this option for initial exploration of the data and obtaining the full jackknife estimates for all final results. 
+
+Additionally, users can set `verbose = TRUE` to see a progress bar during the jackknife computation. 
+
+

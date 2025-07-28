@@ -1,16 +1,17 @@
 ---
 title: "Quick Start Guide"
-output: rmarkdown::github_document
-vignette: >
-  %\VignetteIndexEntry{Quick Start Guide}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+output: pdf_document
 ---
 
 ```{r, echo = FALSE}
 knitr::opts_chunk$set(collapse = FALSE,
                       comment = "##",
                       tidy = FALSE)
+#output: rmarkdown::github_document
+#vignette: >
+#  %\VignetteIndexEntry{Quick Start Guide}
+#  %\VignetteEngine{knitr::rmarkdown}
+#  %\VignetteEncoding{UTF-8}
 ```
 
 # Preliminaries
@@ -37,7 +38,6 @@ devtools::install_github("prodriguezsosa/conText")
 
 ```{r, message=FALSE}
 library(conText)
-
 # other libraries used in this guide
 library(quanteda)
 library(dplyr)
@@ -370,25 +370,65 @@ The above framework allows us to explore semantic differences over one grouping 
 `conText()` tries to follow a similar syntax as R's `lm()` and `glm()` functions. `data` must be a quanteda tokens object with covariates stored as document variables (`docvars`). We next specify a formula consisting of the target word of interest, e.g. "immigration" and the set of covariates. To use all covariates in `data`, we can specify `immigration ~ .`. `formula` can also take vectors of target words e.g. `c("immigration", "immigrants") ~ party + gender` and phrases e.g. `"immigration reform" ~ party + gender` -- place phrases in quotation marks.
 
 ```{r, message = FALSE}
-
 # two factor covariates
 set.seed(2021L)
 model1 <- conText(formula = immigration ~ party + gender,
                   data = toks_nostop_feats,
                   pre_trained = cr_glove_subset,
                   transform = TRUE, transform_matrix = cr_transform,
-                  jackknife = F, confidence_level = 0.95,
+                  jackknife = FALSE, confidence_level = 0.95,
+                  cluster_variable = NULL,
                   permute = TRUE, num_permutations = 100,
                   window = 6, case_insensitive = TRUE,
-                  verbose = FALSE)
+                  verbose = TRUE)
 
 # notice, non-binary covariates are automatically "dummified"
 rownames(model1)
 ```
 
-`conText()` outputs a `conText-class` object which is simply a `dgCMatrix class` matrix corresponding to the beta coefficients (ALC embeddings). These coefficients will be D-dimensional, where D equals the dimensionality of the pre-trained embeddings used. To summarize the magnitude of these coefficients we employ the Euclidean norm. A downside of using the norm is that it's sensitive to finite sample bias, increasing the likelihood of a type 2 error in very small (high variance) samples. In order to mitigate this potential bias, we use Jackknife debiasing (default option). For more details on this issue see [Finite Sample Bias](https://github.com/prodriguezsosa/conText/blob/master/vignettes/finite_sample_bias.md).
+`conText()` outputs a `conText-class` object which is simply a `dgCMatrix class` matrix corresponding to the beta coefficients (ALC embeddings). These coefficients will be D-dimensional, where D equals the dimensionality of the pre-trained embeddings used. To summarize the magnitude of these coefficients we employ the squared Euclidean norm. In small and/or unbalanced samples, this measure is upwardly biased. To address this issue, we implement a bias correction as detailed in [Statistical Bias in Distance Measures](https://github.com/prodriguezsosa/conText/blob/master/vignettes/bias_in_distance_measures.md).
 
-The `conText-class`contains two important attributes: (1) `@normed_coefficients`: a table with the norm of the coefficients (excluding the intercept), the std. errors (of the normed coefficients) and their empirical (permutation-based) p-values, and (2) `@features`: the set of features used when creating the embeddings. If `jackknife = TRUE` (default), then the norms of the coefficients, along with the std. errors and CIs of the norms, all correspond to their jackknife debiased values. An alternative approach to computing std. errors and CIs is to set `bootstrap = TRUE` (default is `bootstrap = FALSE`), however this does not implement any debiasing, hence we no longer recommend this option and will eventually deprecate it.
+The `conText-class` contains two important attributes: 
+
+* `@normed_coefficients`: a table with 
+    - the uncorrected squared norm of the coefficients (excluding the intercept)
+    - the debiased squared norm of the coefficients
+    - the estimate of the bias term in the the original squared norm
+    - if `jackknife = TRUE`, the std. error (of the squared normed coefficients) and lower and upper bound of the confidence interval (where bounds are determined based on the `confidence_level`; default is 0.95)
+    - if `permute = TRUE`, the empirical p-value
+* `@features`: the set of features used when creating the embeddings. 
+
+To speed up the jackknife computation, iterations can be run in parallel by setting `parallel=TRUE`. For this functionality to work, users must register a parallel backend prior to calling `conText()`. For example, using the `doParallel` package:
+
+```{r, message=FALSE}
+require(doParallel)
+registerDoParallel(10)
+set.seed(2021L)
+model1 <- conText(formula = immigration ~ party + gender,
+                  data = toks_nostop_feats,
+                  pre_trained = cr_glove_subset,
+                  transform = TRUE, transform_matrix = cr_transform,
+                  jackknife = TRUE, confidence_level = 0.95,
+                  parallel = TRUE,
+                  cluster_variable = NULL,
+                  permute = TRUE, num_permutations = 100,
+                  window = 6, case_insensitive = TRUE,
+                  verbose = TRUE)
+```
+
+Additionally, users can set `jackknife_fraction` to a value between 0 and 1 to perform the jackknife on a random subsample of the data, where the subsample size = `jackknife_fraction * n`. While we recommend that all final estimates are computed using the full sample, this option can be useful for exploratory analysis.
+
+### Bias correction in earlier versions of package
+
+In earlier versions of the package, the `@normed_coefficients` table returned the norm (i.e. square root of the squared norm) of the coefficients. Bias in these estimates was mitigated by using the jackknife to estimate and subtract the bias term from the norm. However, some bias remained in small samples and highly imbalanced groups. As shown in [Green et al. (2025)](https://www.cambridge.org/core/journals/political-analysis/article/measuring-distances-in-high-dimensional-spaces/88126F4A48F121387D249C1856C3665B), our new bias correction method is robust to these issues. 
+
+Users interested in accessing previous versions of the package for backward compatibility or replication purposes can install an older version using the following `devtools` command:
+
+```{r, eval=FALSE}
+require(devtools)
+install_version("conText", version = "1.4.2", repos = "http://cran.us.r-project.org")
+```
+
 
 ## From regression coefficients to ALC embeddings
 

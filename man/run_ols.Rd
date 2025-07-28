@@ -10,6 +10,8 @@ run_ols(Y = NULL, X = NULL, ids = NULL)
 \item{Y}{vector of regression model's dependent variable (embedded context)}
 
 \item{X}{data.frame of model independent variables (covariates)}
+
+\item{ids}{vector of cluster ids}
 }
 \value{
 list with two elements, \code{betas} = list of beta_coefficients (D dimensional vectors);

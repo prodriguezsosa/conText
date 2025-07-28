@@ -2,11 +2,10 @@
 % Please edit documentation in R/conText-package.R
 \docType{package}
 \name{conText-package}
-\alias{conText}
 \alias{conText-package}
 \title{conText: 'a la Carte' on Text (ConText) Embedding Regression}
 \description{
-A fast, flexible and transparent framework to estimate context-specific word and short document embeddings using the 'a la carte' embeddings approach developed by Khodak et al. (2018) \href{https://arxiv.org/abs/1805.05388}{arXiv:1805.05388} and evaluate hypotheses about covariate effects on embeddings using the regression framework developed by Rodriguez et al. (2021)\url{https://github.com/prodriguezsosa/EmbeddingRegression}.
+A fast, flexible and transparent framework to estimate context-specific word and short document embeddings using the 'a la carte' embeddings approach developed by Khodak et al. (2018) <doi.org/10.48550/arXiv.1805.05388> and evaluate hypotheses about covariate effects on embeddings using the regression framework developed by Rodriguez et al. (2021)\url{https://github.com/prodriguezsosa/EmbeddingRegression}.
 }
 \seealso{
 Useful links:
@@ -17,10 +16,11 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Pedro L. Rodriguez \email{pedro.rodriguezsosa@gmail.com} (\href{https://orcid.org/0000-0003-4762-4550}{ORCID}) [copyright holder]
+\strong{Maintainer}: Sofia Avila \email{sofiaavila@princeton.edu} (\href{https://orcid.org/0009-0007-8746-6688}{ORCID})
 
 Authors:
 \itemize{
+  \item Pedro L. Rodriguez \email{pedro.rodriguezsosa@gmail.com} (\href{https://orcid.org/0000-0003-4762-4550}{ORCID}) [copyright holder]
   \item Arthur Spirling \email{as9934@nyu.edu} (\href{https://orcid.org/0000-0001-9959-1805}{ORCID})
   \item Brandon Stewart \email{bms4@princeton.edu} (\href{https://orcid.org/0000-0002-7657-3089}{ORCID})
 }
