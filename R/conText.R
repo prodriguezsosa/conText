@@ -13,7 +13,7 @@
 #' on the RHS use `immigrant ~ .`. Any `character` or `factor` covariates will automatically be converted
 #' to a set of binary (`0/1`s) indicator variables for each group, leaving the first level out of the regression.
 #' @param data a quanteda `tokens-class` object with the necessary document variables. Covariates must be
-#' either binary indicator variables or "trasnformable" into binary indicator variables. conText will automatically
+#' either binary indicator variables or "transformable" into binary indicator variables. conText will automatically
 #' transform any non-indicator variables into binary indicator variables (multiple if more than 2 classes),
 #' leaving out a "base" category.
 #' @inheritParams dem
