@@ -85,7 +85,7 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
 
   if(any(grepl("factor\\(|character\\(|numeric\\(", formula))) stop('It seems you are using one of factor(), character(), numeric() in "formula" to modify a variable. \n Please modify it directly in "data" and re-run conText.', call. = FALSE) # pre-empt users using lm type notation
   if((confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
-  if((confidence_level > 1 || confidence_level<=0)) stop('"jackknife_fraction" must be a numeric value between 0 and 1.', call. = FALSE) # check jackknife_fraction is between 0 and 1
+  if((jackknife_fraction > 1 || jackknife_fraction<=0)) stop('"jackknife_fraction" must be a numeric value between 0 and 1.', call. = FALSE) # check jackknife_fraction is between 0 and 1
 
   if (parallel){
     if(!foreach::getDoParRegistered()){
