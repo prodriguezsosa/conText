@@ -34,7 +34,7 @@ on the RHS use \code{immigrant ~ .}. Any \code{character} or \code{factor} covar
 to a set of binary (\code{0/1}s) indicator variables for each group, leaving the first level out of the regression.}
 
 \item{data}{a quanteda \code{tokens-class} object with the necessary document variables. Covariates must be
-either binary indicator variables or "trasnformable" into binary indicator variables. conText will automatically
+either binary indicator variables or "transformable" into binary indicator variables. conText will automatically
 transform any non-indicator variables into binary indicator variables (multiple if more than 2 classes),
 leaving out a "base" category.}
 
