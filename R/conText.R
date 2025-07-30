@@ -1,8 +1,9 @@
+
 #' Embedding regression
 #'
-#' Estimates an embedding regression model with options to use bootstrapping (to be deprecated) or
-#' jackknife debiasing to estimate confidence intervals and a permutation test for inference
-#' (see https://github.com/prodriguezsosa/conText for details.)
+#' Estimates an embedding regression model with options to use bootstrapping to estimate confidence
+#' intervals and a permutation test for inference (see https://github.com/prodriguezsosa/conText for details.)
+#'
 #'
 #' @param formula a symbolic description of the model to be fitted with a target word as a DV e.g.
 #' `immigrant ~ party + gender`. To use a phrase as a DV, place it in quotations e.g.
@@ -16,15 +17,13 @@
 #' transform any non-indicator variables into binary indicator variables (multiple if more than 2 classes),
 #' leaving out a "base" category.
 #' @inheritParams dem
-#' @param bootstrap (logical) if TRUE, use bootstrapping -- sample from texts with replacement and
-#' re-run regression on each sample.
-#' @param num_bootstraps (numeric) number of bootstraps to use (at least 100). Ignored if bootstrap = FALSE.
-##' @param stratify (logical) if TRUE, stratify by discrete covariates when bootstrapping.
-#' @param jackknife (logical) if TRUE (default), jackknife (leave one out) debiasing is implemented.
-#' Implies n resamples.
+#' @param jackknife (logical) if TRUE, use jackknife (leave one out) to estimate standard errors. Implies n resamples.
 #' @param confidence_level (numeric in (0,1)) confidence level e.g. 0.95
+#' @param jackknife_fraction (numeric) fraction of data to use in jackknife. Useful for large datasets.
+#' @param parallel (logical) if TRUE, use parallel processing. Requires a registered parallel backend (see doParallel() for more information).
 #' @param permute (logical) if TRUE, compute empirical p-values using permutation test
 #' @param num_permutations (numeric) number of permutations to use
+#' @param cluster_variable (character) name of the variable to use for clustering.
 #' @inheritParams tokens_context
 #'
 #' @return a `conText-class` object - a D x M matrix with D = dimensions
@@ -35,12 +34,15 @@
 #' a `data.frame` with the following columns:
 #' \describe{
 #'  \item{`coefficient`}{(character) name of (covariate) coefficient.}
-#'  \item{`value`}{(numeric) norm of the corresponding beta coefficient (debiased if jackknife = TRUE).}
-#'  \item{`std.error`}{(numeric) (if bootstrap = TRUE or jackknife = TRUE) std. error of the (debiased if jackknife = TRUE) norm of the beta coefficient.}
-#'  \item{`lower.ci`}{(numeric) (if bootstrap = TRUE or jackknife = TRUE) lower bound of the (debiased if jackknife = TRUE) confidence interval.}
-#'  \item{`upper.ci`}{(numeric) (if bootstrap = TRUE or jackknife = TRUE) upper bound of the (debiased if jackknife = TRUE) confidence interval.}
-#'  \item{`p.value`}{(numeric) (if permute = TRUE) empirical p.value of the norm of the coefficient.}
+#'  \item{`normed.estimate.orig`}{(numeric) squared norm of the corresponding beta coefficient.}
+#'  \item{`normed.estimate.deflated`}{(numeric) debiased squared norm of the corresponding beta coefficient.}
+#'  \item{`normed.estimate.beta.error.null`}{(numeric) estimate of the bias term in the the original squared norm.}
+#'  \item{`std.error`}{(numeric) (if jackknife = TRUE) std. error of the debiased squared norm of the beta coefficient.}
+#'  \item{`lower.ci`}{(numeric) (if jackknife = TRUE) lower bound of the confidence interval.}
+#'  \item{`upper.ci`}{(numeric) (if jackknife = TRUE) upper bound of the confidence interval.}
+#'  \item{`p.value`}{(numeric) (if permute = TRUE) empirical p.value of the debiased squared norm of the coefficient.}
 #'  }
+#'
 #'
 #' @export
 #' @rdname conText
@@ -51,21 +53,17 @@
 #'
 #' # tokenize corpus
 #' toks <- tokens(cr_sample_corpus)
-#'
 #' ## given the target word "immigration"
 #' set.seed(2021L)
 #' model1 <- conText(formula = immigration ~ party + gender,
 #'                  data = toks,
 #'                  pre_trained = cr_glove_subset,
-#'                  transform = TRUE,
-#'                  transform_matrix = cr_transform,
-#'                  bootstrap=FALSE,
-#'                  jackknife = TRUE,
+#'                  transform = TRUE, transform_matrix = cr_transform,
+#'                  jackknife = FALSE,
 #'                  confidence_level = 0.95,
-#'                  permute = TRUE,
-#'                  num_permutations = 10,
-#'                  window = 6,
-#'                  case_insensitive = TRUE,
+#'                  permute = TRUE, num_permutations = 100,
+#'                  cluster_variable = NULL,
+#'                  window = 6, case_insensitive = TRUE,
 #'                  verbose = FALSE)
 #'
 #' # notice, character/factor covariates are automatically "dummified"
@@ -77,23 +75,30 @@
 #' # (normed) coefficient table
 #' model1@normed_coefficients
 #'
-conText <- function(formula, data, pre_trained, transform = TRUE, transform_matrix, bootstrap = FALSE, num_bootstraps = 100, stratify = FALSE, jackknife = TRUE, confidence_level = 0.95, permute = TRUE, num_permutations = 100, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
 
+conText <- function(formula, data, pre_trained, transform = TRUE, transform_matrix, jackknife=TRUE, confidence_level = 0.95, jackknife_fraction = 1, parallel=FALSE, permute = TRUE, num_permutations = 100, cluster_variable=NULL, window = 6L, valuetype = c("glob", "regex", "fixed"), case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
   # initial checks
+
   if(class(data)[1] != "tokens") stop("data must be of class tokens", call. = FALSE)
+
   if(!transform && !is.null(transform_matrix)) warning('Warning: transform = FALSE means transform_matrix argument was ignored. If that was not your intention, use transform = TRUE.', call. = FALSE)
-  if(any(grepl("factor\\(", formula))) stop('It seems you are using factor() in "formula" to create a factor variable. \n Please create it directly in "data" and re-run conText.', call. = FALSE) # pre-empt users using lm type notation
-  if(confidence_level >= 1 || confidence_level<=0) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
-  if((bootstrap || jackknife) && (confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
-  if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100') # check num_bootstraps >= 100
-  if(jackknife && bootstrap) stop("implement bootstrap or jackknife (set one to TRUE, the other to FALSE), or neither (set both to FALSE), can't implement both simultaneously.") # check num_bootstraps >= 100
+
+  if(any(grepl("factor\\(|character\\(|numeric\\(", formula))) stop('It seems you are using one of factor(), character(), numeric() in "formula" to modify a variable. \n Please modify it directly in "data" and re-run conText.', call. = FALSE) # pre-empt users using lm type notation
+  if((confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
+  if((jackknife_fraction > 1 || jackknife_fraction<=0)) stop('"jackknife_fraction" must be a numeric value between 0 and 1.', call. = FALSE) # check jackknife_fraction is between 0 and 1
+
+  if (parallel){
+    if(!foreach::getDoParRegistered()){
+      parallel = F
+      warning('parallel = TRUE but no parallel backend registered. Use registerDoParalell(). Executing function sequentially.', call. = FALSE)
+    }
+  }
 
   # extract dependent variable
   target <- as.character(formula[[2]])
 
   # mirror lm convention: if DV is "." then full text is embedded, ow find and embed the context around DV
   if(length(target) == 1 && target == "."){
-
     toks <- data
     docvars <- quanteda::docvars(toks)
 
@@ -103,10 +108,10 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
 
     # create a corpus of contexts
     toks <- tokens_context(x = data, pattern = target, window = window, valuetype = valuetype, case_insensitive = case_insensitive, hard_cut = hard_cut, verbose = verbose)
+
     docvars <- quanteda::docvars(toks) %>% dplyr::select(-pattern)
 
   }
-
   #----------------------
   # COVARIATES
   #----------------------
@@ -117,13 +122,16 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
     covs_not_in_data <- covariates[!(covariates %in% names(docvars))]
     if(length(covs_not_in_data) > 0) stop("the following covariates could not be found in the data: ", paste0(covs_not_in_data, collapse = ", "))
   }
-
   # select covariates
+  if (!is.null(cluster_variable)) {
+    cluster_variable <- as.character(cluster_variable)
+    covariates <- c(covariates, cluster_variable)
+  }
   cov_vars <- docvars %>% dplyr::select(dplyr::all_of(covariates))
 
   # check which covariates are binary dummy variables
   numeric_vars <- c(names(which(sapply(cov_vars, is.numeric))), names(which(sapply(cov_vars, is.integer))))
-  non_numeric_vars <- setdiff(covariates, numeric_vars)
+  non_numeric_vars <- setdiff(setdiff(covariates, numeric_vars), cluster_variable)
 
   # dummify non-numeric/integer variables
   # see: https://cran.r-project.org/web/packages/fastDummies/fastDummies.pdf
@@ -131,83 +139,73 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
     cov_vars <- fastDummies::dummy_cols(cov_vars, select_columns = non_numeric_vars, remove_first_dummy = TRUE, remove_selected_columns = TRUE, ignore_na = TRUE)
   }
 
-  # add intercept
-  cov_vars <- cov_vars %>% dplyr::mutate('(Intercept)' = 1)
-
   # create new corpus
   quanteda::docvars(toks) <- cov_vars
 
   # create document-feature matrix
   toks_dfm <- quanteda::dfm(toks, tolower = FALSE)
-
   # embed toks to get dependent variable
   toks_dem <- dem(x = toks_dfm, pre_trained = pre_trained, transform_matrix = transform_matrix, transform = transform, verbose = verbose)
   Y <- toks_dem
   if(verbose) cat('total observations included in regression:', nrow(Y), '\n')
-
   # regressors
   X <- toks_dem@docvars
+  if (!is.null(cluster_variable)) {
+    ids <- X[,which(names(X)==cluster_variable)]
+    ids = factor(ids)
+    X <- X[,-which(names(X)==cluster_variable),drop=F]
+  }else{
+    ids = factor(1:nrow(X))
+  }
 
-  # run full sample ols
-  full_sample_out <- run_ols(Y = Y, X = X)
-
+  full_sample_out <- run_ols(Y = Y, X = X, ids=ids)
   # outputs
   beta_coefficients <- full_sample_out$betas
-  norm_tibble <- dplyr::tibble(coefficient = names(full_sample_out$normed_betas), normed.estimate = unname(full_sample_out$normed_betas))
 
-  # -------------------
-  # bootstrapping
-  # -------------------
-
-  if(bootstrap){
-
-    if(verbose) cat('starting bootstrapping \n')
-
-    # bootstrapped ols
-    bootstrap_out <- replicate(num_bootstraps, bootstrap_ols(Y = Y, X = X, stratify = stratify), simplify = FALSE)
-
-    # average betas
-    betas <- lapply(bootstrap_out, '[[', 'betas')
-    bs_betas <- Reduce("+",betas)/length(betas)
-
-    # summary statistics for normed betas
-    normed_betas <- lapply(bootstrap_out, '[[', 'normed_betas') %>% do.call(rbind,.)
-    mean_normed_betas <- apply(normed_betas, 2, mean)
-    stderror_normed_betas <- apply(normed_betas, 2, sd)
-    ci_normed_betas <- apply(normed_betas, 2, function(x) quantile(x, c((1-confidence_level)/2, 1 - (1-confidence_level)/2))) %>% as.matrix()
-    bs_normed_betas <- dplyr::tibble(coefficient = names(mean_normed_betas), normed.estimate = unname(mean_normed_betas), std.error = unname(stderror_normed_betas), lower.ci = unname(ci_normed_betas[1,]), upper.ci = unname(ci_normed_betas[2,]))
-
-    # output
-    beta_coefficients <- bs_betas
-    norm_tibble <- bs_normed_betas
-
-    # notice
-    if(verbose) cat('done with bootstrapping \n')
-
-  }
+  norm_tibble <- dplyr::tibble(
+    coefficient = names(full_sample_out$normed_betas_deflated),
+    normed.estimate.orig = unname(full_sample_out$normed_betas_orig),
+    normed.estimate.deflated = unname(full_sample_out$normed_betas_deflated),
+    normed.estimate.beta.error.null = unname(full_sample_out$beta_error_null),
+    n = if (is.null(cluster_variable)) { nrow(X) } else {length(unique(ids))},
+    n_obs = nrow(X),
+    ## sum_vars = sum(apply(Y, 2, var)),
+    covariate_mean = c(colMeans(
+      dplyr::tibble(X),#avoid conversion to vector
+      na.rm=T
+    ))## unname(full_sample_out$covariate_mean)
+  )
 
   # -------------------
   # jackknife
   # -------------------
+
   if(jackknife){
-    jack_out <- run_jack_ols(X = X, Y = Y, confidence_level = confidence_level)
-    beta_coefficients <- jack_out[["beta_coefficients"]]
-    norm_tibble <- jack_out[["norm_tibble"]]
+    if(verbose) cat('starting jackknife \n')
+    norm_tibble = cbind(norm_tibble,run_jackknife(norm_tibble$normed.estimate.deflated,
+                                                  X,Y,ids,confidence_level,verbose,parallel))
+    if(verbose) cat('done with jackknife \n')
   }
+
+
   # -------------------
   # permutation
   # -------------------
 
   if(permute){
-
     if(verbose) cat('starting permutations \n')
 
-    # permuted ols
-    permute_out <- replicate(num_permutations, permute_ols(Y = Y, X = X), simplify = FALSE)
-
+    if (!is.null(cluster_variable)) {
+      weights <- 1/as.vector(table(ids)[ids])
+      uncorrected_betas <- run_ols_uncorrected(X=X, Y=Y, weights=weights)
+      permute_out <- replicate(num_permutations, permute_ols(X=X, Y=uncorrected_betas$resids, ids=ids, weights=weights), simplify = FALSE)
+    } else {
+      uncorrected_betas <- run_ols_uncorrected(X=X, Y=Y)
+      permute_out <- replicate(num_permutations, permute_ols(X=X, Y=uncorrected_betas$resids), simplify = FALSE)
+    }
     # compute empirical p-value
     permuted_normed_betas <- lapply(permute_out, '[[', 'normed_betas') %>% do.call(rbind,.)
-    empirical_pvalue <- sweep(permuted_normed_betas, 2, 1/full_sample_out$normed_betas, '*')
+    empirical_pvalue <- sweep(permuted_normed_betas, 2, 1/uncorrected_betas$normed_betas, '*')
     empirical_pvalue <- apply(empirical_pvalue, 2, function(x) sum(x>1)/length(x))
 
     # bind with results
@@ -217,20 +215,25 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
 
   }
 
+
+
   # -------------------
   # build conText object
   # -------------------
+
+  rownames(norm_tibble) = NULL
   result <- build_conText(Class = 'conText',
-                          x_conText = beta_coefficients,
-                          normed_coefficients = norm_tibble,
-                          features = toks_dem@features,
-                          Dimnames = list(
-                            rows = rownames(beta_coefficients),
-                            columns = NULL))
+                                    x_conText = beta_coefficients,
+                                    normed_coefficients = norm_tibble,
+                                    features = toks_dem@features,
+                                    Dimnames = list(
+                                      rows = rownames(beta_coefficients),
+                                      columns = NULL))
 
   # print the normed coefficient table
-  cat("Note: These values are not regression coefficients. Check out the Quick Start Guide for help with interpretation: \nhttps://github.com/prodriguezsosa/conText/blob/master/vignettes/quickstart.md\n\n")
-  print(norm_tibble)
+  if (verbose) print(norm_tibble)
+
+
 
   return(result)
 }
@@ -241,167 +244,171 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
 #
 # -----------------------------
 
-#' Permute OLS
-#'
-#' Estimate empirical p-value using permuted regression
-#'
-#' @param Y vector of regression model's dependent variable (embedded context)
-#' @param X data.frame of model independent variables (covariates)
-#'
-#' @return list with two elements, `betas` = list of beta_coefficients (D dimensional vectors);
-#' `normed_betas` = tibble with the norm of the non-intercept coefficients
-#'
-permute_ols <- function(Y = NULL, X = NULL){
-
-  # shuffle Y
-  Y_permuted <- Y[sample(1:nrow(Y), replace = FALSE),]
-
-  # run ols
-  ols_out <- run_ols(Y = Y_permuted, X = X)
-
-  # output
-  return(ols_out)
-
-}
 
 #' Run OLS
-#'
-#' @param Y vector of regression model's dependent variable (embedded context)
-#' @param X data.frame of model independent variables (covariates)
-#'
-#' @return list with two elements, `betas` = list of beta_coefficients (D dimensional vectors);
-#' `normed_betas` = tibble with the norm of the non-intercept coefficients
-#'
-run_ols <- function(Y = NULL, X = NULL){
-
-  # convert X to a matrix
-  X_mat <- as.matrix(X, ncol = ncol(X))
-
-  # compute OLS bets hats
-  betas <- solve(t(X_mat)%*%X_mat)%*%t(X_mat)%*%Y
-
-  # normed betas
-  vars <- setdiff(colnames(X), "(Intercept)") # identify non-intercept covariates (norm of intercept is not all that informative)
-  normed_betas <- apply(matrix(betas[vars,], nrow = length(vars)), 1, function(x) norm(matrix(x, nrow = 1), type = "f")) %>% setNames(vars)
-
-  # output
-  return(list('betas' = betas, 'normed_betas' = normed_betas))
-
-}
-
-#' Bootstrap OLS
 #'
 #' Bootstrap model coefficients and standard errors
 #'
 #' @param Y vector of regression model's dependent variable (embedded context)
 #' @param X data.frame of model independent variables (covariates)
-#' @param stratify covariates to stratify when bootstrapping
-#'
+#' @param ids vector of cluster ids
 #' @return list with two elements, `betas` = list of beta_coefficients (D dimensional vectors);
 #' `normed_betas` = tibble with the norm of the non-intercept coefficients
 #'
-bootstrap_ols <- function(Y = NULL, X = NULL, stratify = NULL){
 
-  # label instances
-  X_bs <- cbind(obs = 1:nrow(X), X)
+run_ols = function(Y = NULL, X = NULL, ids = NULL){
+  weights <- 1/as.vector(table(ids)[ids])
 
-  # sample observations with replacement
-  if (stratify) {
 
-    # identify discrete covariates to stratify over
-    discrete_vars <- setdiff(colnames(X_bs)[sapply(X_bs, is.numeric)], c("obs", "(Intercept)"))
+  mod_list = estimatr::lm_robust(as.matrix(Y) ~ .,
+                       data=X,
+                       clusters=ids,
+                       se_type="stata",
+                       return_vcov=F, weights=weights) %>%
+    broom::tidy()
 
-    # sample with stratification if there are discrete variables to stratify over
-    if(length(discrete_vars) > 0) X_bs <- X_bs %>% dplyr::group_by_at(discrete_vars) %>% dplyr::sample_n(size = dplyr::n(), replace = TRUE) %>% dplyr::ungroup()
-    else{
-      warning('no discrete covariate to stratify over. Will proceed without stratifying.', call. = FALSE)
-      X_bs <- dplyr::sample_n(X_bs, size = nrow(X_bs), replace = TRUE)
+  betas = mod_list %>%
+    dplyr::select(term,estimate) %>%
+    tidyr::pivot_wider(names_from=term, values_from=estimate,values_fn = list) %>%
+    tidyr::unchop(tidyselect::everything()) %>%
+    t() %>%
+    as.matrix()
+
+  coefs = mod_list %>%
+    dplyr::select(
+      term, estimate, std.error
+    ) %>%
+    dplyr::filter(term != "(Intercept)") %>%
+    dplyr::group_by(term = factor(term, levels=unique(term))) %>% # fix/prevent reordering!!!!!
+    dplyr::summarize(
+      original_estimate = sum(estimate^2),
+      adjusted_estimate = sum(estimate^2 - std.error^2),
+      the_null = sum(std.error^2)
+    )
+
+  return(
+    list(
+      'betas' = betas,
+      'normed_betas_orig' = coefs$original_estimate %>% setNames(coefs$term),
+      'normed_betas_deflated' = coefs$adjusted_estimate %>% setNames(coefs$term),
+      'beta_error_null' = coefs$the_null %>% setNames(coefs$term)## ,
+    )
+  )
+}
+
+# jackknife: https://bookdown.org/compfinezbook/introcompfinr/The-Jackknife.html
+# clustered: https://users.ssc.wisc.edu/~bhansen/papers/tcauchy.pdf (page 6)
+
+jackknife_obs_remove = function(X,Y,ids,i){
+  idx = which(ids != i)
+  curr_X = as.data.frame(X[idx,])
+  curr_Y = Y[idx,]
+  curr_ids = ids[idx]
+  return(run_ols(Y = curr_Y, X = curr_X, ids=factor(curr_ids))$normed_betas_deflated)
+}
+
+jackknife_calculate_se = function(partials,theta,n,confidence_level,jackknife_fraction=1){
+  jack.se = apply(partials,2,function(x) sqrt((sum((x-mean(x))^2)*(jackknife_fraction))*((n-1)/n)))
+  alpha = 1 - confidence_level
+  ci = qt(alpha/2,n-1,lower.tail = F)*jack.se
+  upper.ci = theta + ci
+  lower.ci = theta - ci
+  jack_tibble = data.frame(std.error = jack.se, lower.ci = lower.ci, upper.ci = upper.ci)
+}
+
+
+run_jackknife = function(theta,X,Y,ids,confidence_level,verbose=F,parallel=F,jackknife_fraction=1){
+  `%fun%` <- foreach::`%do%`
+  if (parallel == TRUE){
+    `%fun%` <- foreach::`%dopar%`
+  }
+  n = nrow(X)
+  partials = data.frame()
+  if(jackknife_fraction < 1){
+    jackknife_sample = sample(1:length(ids),size=length(ids)*jackknife_fraction,replace=F)
+    ids = ids[jackknife_sample]
+    X = as.data.frame(X[jackknife_sample,])
+    Y = Y[jackknife_sample,]
+  }
+  ids = as.numeric(factor(ids))
+  if(verbose) {
+    pb = utils::txtProgressBar(min = 0, max = max(ids),
+                        initial = 0, char = "=", width = 50)
+  }
+  partials <- foreach::foreach(
+    i = 1:max(ids),
+    .combine = 'rbind'
+  ) %fun% {
+    if(verbose) {
+      utils::setTxtProgressBar(pb, i)
     }
-
-  } else{
-
-    X_bs <- dplyr::sample_n(X_bs, size = nrow(X_bs), replace = TRUE)
-
+    jackknife_obs_remove(X,Y,ids,i)
   }
-
-  #X_bs <- dplyr::sample_n(X_bs, size = nrow(X_bs), replace = TRUE)
-
-  # subset Y to sampled observations
-  Y_bs <- Y[X_bs$obs,]
-
-  # remove observation label
-  X_bs <- X_bs[,-1]
-
-  # run ols
-  ols_out <- run_ols(Y = Y_bs, X = X_bs)
-
-  # output
-  return(ols_out)
+  if(verbose) close(pb)
+  jack_tibble = jackknife_calculate_se(partials,theta,n,confidence_level,jackknife_fraction)
+  return(jack_tibble)
 }
 
-csolver <- function(x) { chol2inv(chol(crossprod(x)))}
 
-#' Run jackknife debiased OLS
-#'
-#' @param Y vector of regression model's dependent variable (embedded context)
-#' @param X data.frame of model independent variables (covariates)
-#' @param confidence_level (numeric in (0,1)) confidence level e.g. 0.95
-#'
-#' @return list with two elements, `betas` = list of beta_coefficients (D dimensional vectors);
-#' `normed_betas` = tibble with the norm and CIs of the non-intercept coefficients
-#'
-run_jack_ols <- function(X,Y, confidence_level = 0.95) {
-  coefficient_names <- names(X)
-  X <- as.matrix(X)
-  Y <- as.matrix(Y)
-  XtXinv <- csolver(X)
-  XtY <- crossprod(X,Y)
-  beta <- XtXinv%*%XtY
-  resid <- Y - X%*%beta
-  # compute the hat values without the entire matrix
-  H <- rowSums((X%*%XtXinv)*X)
-  # calculate all but the residual in the numerator for dfbeta
-  numX <- tcrossprod(XtXinv,X)
-  # make a residual list
-  rlist <- asplit(resid/(1-H),MARGIN=2)
-  # jackknife
-  jack <- vector(mode="list",length=length(rlist))
-  debiased <- vector(mode="list",length=length(rlist))
-  n <- nrow(Y)
-  for(i in 1:length(rlist)) {
-    # writing a loop here because we need to access and compute from multiple lists
-    b <- beta[,i] - t(t(numX)*c(rlist[[i]]))
-    jack[[i]] <- b
-    debiased[[i]] <- rowMeans(n*beta[,i] - (n-1)*b)
+
+permute_ols <- function(X, Y, ids=NULL, weights=NULL) {
+  if (is.null(ids)) {
+    Y <- Y[sample(1:nrow(Y)),]
+    return(run_ols_uncorrected(X,Y,resids=F))
+  } else {
+    permuted_data <- dplyr::tibble(
+      Y = as.matrix(Y),
+      X = X,
+      id = ids
+    ) %>%
+      dplyr::group_by(id, X) %>%
+      tidyr::nest(Y=Y) %>%
+      dplyr::ungroup() %>%
+      dplyr::mutate(
+        Y = sample(Y)
+      ) %>%
+      tidyr::unnest(cols=c(Y))
+    X <- permuted_data$X
+    Y <- permuted_data$Y
+    weights_permuted <- 1/as.vector(table(permuted_data$id)[permuted_data$id])
+    ## compute OLS bets hats
+    return(run_ols_uncorrected(X,Y,weights=weights_permuted,resids=F))
   }
-  # bind lists
-  pseudo_betas <- t(do.call(rbind, debiased))
-
-  # get coefficient names
-  rownames(pseudo_betas) <- coefficient_names
-
-  # indices to separate the pseudo values for each coefficient
-  pseudo_indices <- lapply(1:ncol(X), function(i) seq(i,ncol(X)*ncol(Y), ncol(X)))
-  jack_betas <- lapply(pseudo_indices, function(i, jack_df) jack_df[i,], jack_df = do.call(rbind, jack)) %>% setNames(coefficient_names)
-  normed_jack_betas <- lapply(jack_betas, function(i) apply(i, 2, function(i) sqrt(sum(i^2)))) %>% do.call(rbind,.)
-  normed_betas <- apply(matrix(beta, nrow = nrow(beta)), 1, function(x) norm(matrix(x, nrow = 1), type = "f")) %>% setNames(coefficient_names)
-  pseudo_normed_betas <- lapply(1:nrow(Y), function(i) nrow(Y)*normed_betas - (nrow(Y)-1)*normed_jack_betas[,i]) %>% do.call(rbind,.)
-  avg_pseudo_normed_betas <- colMeans(pseudo_normed_betas)
-
-  # std. error and confidence intervals
-  stderr_pseudo_normed_betas <- apply(pseudo_normed_betas, 2, sd)/sqrt(nrow(pseudo_normed_betas))
-  lci_pseudo_normed_betas <- avg_pseudo_normed_betas - qt((1-confidence_level)/2,nrow(pseudo_normed_betas)-1, lower.tail = FALSE)*stderr_pseudo_normed_betas
-  uci_pseudo_normed_betas <- avg_pseudo_normed_betas + qt((1-confidence_level)/2,nrow(pseudo_normed_betas)-1, lower.tail = FALSE)*stderr_pseudo_normed_betas
-
-  return(list(
-    "beta_coefficients" = pseudo_betas,
-    "norm_tibble" = dplyr::tibble(coefficient = coefficient_names,
-                                  normed.estimate = avg_pseudo_normed_betas,
-                                  std.error = stderr_pseudo_normed_betas,
-                                  lower.ci = lci_pseudo_normed_betas,
-                                  upper.ci = uci_pseudo_normed_betas) %>% dplyr::filter(coefficient!="(Intercept)")
-  )
-  )
 }
+
+run_ols_uncorrected <- function(X, Y, ids_numeric=NULL, weights=NULL,resids=T) {
+  ## convert X to a matrix
+  X_mat <- cbind(as.matrix(X, ncol = ncol(X)), 1)
+  colnames(X_mat)[length(colnames(X_mat))] <- "(Intercept)"
+
+  if (!is.null(weights)) {
+    sqrtW <- sqrt(weights)
+    # Weighted design matrix and response vector
+    WX <- sweep(X_mat, MARGIN=1, STATS=sqrtW, FUN="*")
+    Wy <- Y * sqrtW
+    # QR decomposition of the weighted design matrix
+    QR <- qr(WX)
+    betas <- qr.solve(QR,Wy)
+  } else {
+    ## compute OLS bets hats
+    QR <- qr(X_mat)
+    betas <- qr.solve(QR,Y)
+  }
+  if(resids){
+    residuals <- Y - (X_mat %*% betas)
+  }
+  ## normed betas
+  vars <- setdiff(colnames(X), "(Intercept)")
+  normed_betas <- apply(matrix(betas[vars,], nrow = length(vars)), 1,
+                        function(x) norm(matrix(x, nrow = 1), type = "f")) %>% setNames(vars)
+
+  ## output
+  if(resids){
+    return(list('betas' = betas, 'normed_betas' = normed_betas^2, 'resids' = residuals))}
+  else{
+    return(list('betas' = betas, 'normed_betas' = normed_betas^2))
+  }
+}
+
 
 
