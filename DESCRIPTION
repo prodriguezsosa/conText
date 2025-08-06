@@ -31,7 +31,7 @@ Imports:
     utils,
     stats,
     tidyselect
-URL: https://github.com/prodriguezsosa/EmbeddingRegression
+URL: https://github.com/prodriguezsosa/conText
 BugReports: https://github.com/prodriguezsosa/ConText/issues
 Maintainer: Sofia Avila <sofiaavila@princeton.edu>
 Encoding: UTF-8
