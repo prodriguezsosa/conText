@@ -16,7 +16,7 @@ To use **conText** you will need three objects:
 2. A set of (GloVe) **pre-trained embeddings**.
 3. A **transformation matrix** specific to the pre-trained embeddings.
 
-**conText** includes sample objects for all three but keep in mind these are just meant to illustrate function implementations. In [this Dropbox folder](https://www.dropbox.com/sh/jsyrag7opfo7l7i/AAB1z7tumLuKihGu2-FDmhmKa?dl=0) we have included the raw versions of these objects including the full Stanford GloVe 300-dimensional embeddings (labeled _glove.rds_) and its corresponding transformation matrix estimated by Khodak et al. (2018) (labeled _khodakA.rds_).
+**conText** includes sample objects for all three but keep in mind these are just meant to illustrate function implementations. In [this Dropbox folder](https://www.dropbox.com/sh/jsyrag7opfo7l7i/AAB1z7tumLuKihGu2-FDmhmKa?dl=0) we have included the raw versions of these objects including the full Stanford GloVe 300-dimensional embeddings (labeled _glove.rds_) and its corresponding transformation matrix estimated by Khodak et al. (2018) (labeled _khodakA.rds_). We provide an equivalent RDS file for the [2024 GloVe embeddings](https://nlp.stanford.edu/projects/glove/) released in July 2025 (labeled _glove_2024.rds).
 
 # Quick Start Guides
 

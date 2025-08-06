@@ -72,12 +72,12 @@ with
 $\lVert\hat{\theta} - \hat{\phi}\rVert^2_2 = \sum_{k=1}^K(\hat{\theta}_k - \hat{\phi}_k)^2$.
 Taking expectations on both sides we have
 
-$$
-\begin{aligned}
-E \left[\lVert\hat{\theta} - \hat{\phi}\rVert^2_2\right] &= E\left[\sum_{k=1}^K(\hat{\theta}_k - \hat{\phi}_k)^2\right] \\
+```math
+\begin{align}
+E \left[\lVert\hat{\theta} - \hat{\phi}\rVert^2_2\right] &= E\left[\sum_{k=1}^K(\hat{\theta}_k - \hat{\phi}_k)^2\right] \
 &= \lVert \theta - \phi \rVert^2_2 + \sum_{k=1}^K V[\hat{\theta}_k-\hat{\phi}_k] \\
-\end{aligned}
-$$
+\end{align}
+```
 
 where line 2 follows because $E[X^2] = E[X]^2 + V[X]$ for a random
 variable $X$. Importantly, variance here is the variance of the
