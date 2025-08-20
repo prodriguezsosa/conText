@@ -1,0 +1,14 @@
+* using log directory ‘/Users/sa9973/Documents/GitHub/conText/..Rcheck’
+* using R version 4.3.1 (2023-06-16)
+* using platform: aarch64-apple-darwin20 (64-bit)
+* R was compiled by
+    Apple clang version 14.0.0 (clang-1400.0.29.202)
+    GNU Fortran (GCC) 12.2.0
+* running under: macOS Sonoma 14.3.1
+* using session charset: UTF-8
+* using option ‘--as-cran’
+* checking for file ‘./DESCRIPTION’ ... ERROR
+Required field missing or empty:
+  ‘Author’
+* DONE
+Status: 1 ERROR

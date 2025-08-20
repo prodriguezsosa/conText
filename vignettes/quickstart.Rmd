@@ -388,7 +388,7 @@ model1 <- conText(formula = immigration ~ party + gender,
 rownames(model1)
 ```
 
-`conText()` outputs a `conText-class` object which is simply a `dgCMatrix class` matrix corresponding to the beta coefficients (ALC embeddings). These coefficients will be D-dimensional, where D equals the dimensionality of the pre-trained embeddings used. To summarize the magnitude of these coefficients we employ the squared Euclidean norm. In small and/or unbalanced samples, this measure is upwardly biased. To address this issue, we implement a bias correction as detailed in [Statistical Bias in Distance Measures](https://github.com/prodriguezsosa/conText/blob/master/vignettes/bias_in_distance_measures.md).
+`conText()` outputs a `conText-class` object which is simply a `dgCMatrix class` matrix corresponding to the beta coefficients (ALC embeddings). These coefficients will be D-dimensional, where D equals the dimensionality of the pre-trained embeddings used. To summarize the magnitude of these coefficients we employ the squared Euclidean norm. In small and/or unbalanced samples, this measure is upwardly biased. To address this issue, we implement a bias correction as detailed in [Statistical Bias in Distance Measures](https://github.com/prodriguezsosa/conText/blob/master/updates/bias_in_distance_measures.md).
 
 The `conText-class` contains two important attributes: 
 
