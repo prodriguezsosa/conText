@@ -5,12 +5,12 @@
 \alias{conText-package}
 \title{conText: 'a la Carte' on Text (ConText) Embedding Regression}
 \description{
-A fast, flexible and transparent framework to estimate context-specific word and short document embeddings using the 'a la carte' embeddings approach developed by Khodak et al. (2018) <doi.org/10.48550/arXiv.1805.05388> and evaluate hypotheses about covariate effects on embeddings using the regression framework developed by Rodriguez et al. (2021)\url{https://github.com/prodriguezsosa/EmbeddingRegression}.
+A fast, flexible and transparent framework to estimate context-specific word and short document embeddings using the 'a la carte' embeddings approach developed by Khodak et al. (2018) \doi{10.48550/arXiv.1805.05388} and evaluate hypotheses about covariate effects on embeddings using the regression framework developed by Rodriguez et al. (2021)\doi{10.1017/S0003055422001228}. New version of the package applies a new estimator to measure the distance between word embeddings as described in Green et al. (2025) \doi{10.1017/pan.2024.22}.
 }
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/prodriguezsosa/EmbeddingRegression}
+  \item \url{https://github.com/prodriguezsosa/conText}
   \item Report bugs at \url{https://github.com/prodriguezsosa/ConText/issues}
 }
 
