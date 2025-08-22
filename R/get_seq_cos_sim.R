@@ -21,7 +21,13 @@
 #' @examples
 #'
 #' library(quanteda)
-#' Sys.setenv("OMP_THREAD_LIMIT" = 2)
+#' Sys.setenv(
+#'   OMP_NUM_THREADS = "1",
+#'   OPENBLAS_NUM_THREADS = "1",
+#'   MKL_NUM_THREADS = "1",
+#'   VECLIB_MAXIMUM_THREADS = "1",
+#'   RCPP_PARALLEL_NUM_THREADS = "1"
+#' )
 #' # gen sequence var (here: year)
 #' docvars(cr_sample_corpus, 'year') <- rep(2011:2014, each = 50)
 #' cos_simsdf <- get_seq_cos_sim(x = cr_sample_corpus,
