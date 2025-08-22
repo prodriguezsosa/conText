@@ -73,8 +73,8 @@
 #'                                  pre_trained = cr_glove_subset,
 #'                                  transform = TRUE,
 #'                                  transform_matrix = cr_transform,
-#'                                  bootstrap = TRUE,
-#'                                  num_bootstraps = 100,
+#'                                  bootstrap = FALSE,
+#'                                  # if bootstrap = TRUE, num_bootstraps should be at least 100,
 #'                                  permute = FALSE,
 #'                                  num_permutations = 5,
 #'                                  verbose = FALSE)
