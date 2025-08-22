@@ -33,7 +33,7 @@
 #' @examples
 #'
 #' library(quanteda)
-#'
+#' Sys.setenv("OMP_THREAD_LIMIT" = 2)
 #' cr_toks <- tokens(cr_sample_corpus)
 #'
 #' immig_toks <- tokens_context(x = cr_toks,
