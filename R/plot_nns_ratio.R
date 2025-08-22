@@ -26,9 +26,9 @@
 #' # build a tokenized corpus of contexts sorrounding a target term
 #' immig_toks <- tokens_context(x = toks, pattern = "immigration", window = 6L)
 #'
-#' # sample 100 instances of the target term, stratifying by party (only for example purposes)
+#' # sample 50 instances of the target term, stratifying by party (only for example purposes)
 #' set.seed(2022L)
-#' immig_toks <- tokens_sample(immig_toks, size = 100, by = docvars(immig_toks, 'party'))
+#' immig_toks <- tokens_sample(immig_toks, size = 50, by = docvars(immig_toks, 'party'))
 #'
 #' # we limit candidates to features in our corpus
 #' feats <- featnames(dfm(immig_toks))
@@ -43,11 +43,8 @@
 #'                                  pre_trained = cr_glove_subset,
 #'                                  transform = TRUE,
 #'                                  transform_matrix = cr_transform,
-#'                                  bootstrap = TRUE,
-#'                                  # num_bootstraps should be at least 100,
-#'                                  # we use 10 here due to CRAN-imposed constraints
-#'                                  # on example execution time
-#'                                  num_bootstraps = 100,
+#'                                  bootstrap = FALSE,
+#'                                  # if bootstrap = TRUE, num_bootstraps should be at least 100,
 #'                                  permute = FALSE,
 #'                                  num_permutations = 10,
 #'                                  verbose = FALSE)
