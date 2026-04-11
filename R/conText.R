@@ -182,8 +182,12 @@ conText <- function(formula, data, pre_trained, transform = TRUE, transform_matr
 
   if(jackknife){
     if(verbose) cat('starting jackknife \n')
-    norm_tibble = cbind(norm_tibble,run_jackknife(norm_tibble$normed.estimate.deflated,
-                                                  X,Y,ids,confidence_level,verbose,parallel))
+    norm_tibble = cbind(norm_tibble,run_jackknife(theta=norm_tibble$normed.estimate.deflated,
+                                                  X=X,Y=Y,ids=ids,
+                                                  confidence_level=confidence_level,
+                                                  verbose=verbose,
+                                                  parallel=parallel,
+                                                  jackknife_fraction=jackknife_fraction))
     if(verbose) cat('done with jackknife \n')
   }
 
@@ -325,26 +329,31 @@ run_jackknife = function(theta,X,Y,ids,confidence_level,verbose=F,parallel=F,jac
   n = nrow(X)
   partials = data.frame()
   if(jackknife_fraction < 1){
-    jackknife_sample = sample(1:length(ids),size=length(ids)*jackknife_fraction,replace=F)
+    jackknife_sample = sample(1:length(ids),
+                              size=length(ids)*jackknife_fraction,
+                              replace=F)
     ids = ids[jackknife_sample]
     X = as.data.frame(X[jackknife_sample,])
     Y = Y[jackknife_sample,]
   }
   ids = as.numeric(factor(ids))
-  if(verbose) {
+  if(verbose & !parallel) {
     pb = utils::txtProgressBar(min = 0, max = max(ids),
-                        initial = 0, char = "=", width = 50)
+                        initial = 0, char = "=", width = 100)
+    utils::setTxtProgressBar(pb, ceiling(max(ids) / 100))
   }
   partials <- foreach::foreach(
     i = 1:max(ids),
     .combine = 'rbind'
   ) %fun% {
-    if(verbose) {
-      utils::setTxtProgressBar(pb, i)
+    if(verbose & !parallel) {
+      if(i > ceiling(max(ids) / 100)){
+        utils::setTxtProgressBar(pb, i)
+      }
     }
     jackknife_obs_remove(X,Y,ids,i)
   }
-  if(verbose) close(pb)
+  if(verbose & !parallel) close(pb)
   jack_tibble = jackknife_calculate_se(partials,theta,n,confidence_level,jackknife_fraction)
   return(jack_tibble)
 }

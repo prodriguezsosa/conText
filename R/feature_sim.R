@@ -18,9 +18,10 @@
 #' @rdname feature_sim
 #' @keywords feature_sim
 #' @examples
+#' \dontrun{
+#' # example exceeds CRAN CPU time to elapsed time limit
 #'
 #' library(quanteda)
-#'
 #' # tokenize corpus
 #' toks <- tokens(cr_sample_corpus)
 #'
@@ -38,6 +39,7 @@
 #'
 #' # compare "horizontal" cosine similarity
 #' feat_comp <- feature_sim(x = fem_R, y = fem_D)
+#' }
 feature_sim <- function(x, y, features = character(0)){
 
   # check if there are any overlapping tokens

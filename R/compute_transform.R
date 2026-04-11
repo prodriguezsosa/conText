@@ -26,8 +26,9 @@
 #' @keywords compute_transform
 #' @examples
 #'
+#' \dontrun{
+#' # example exceeds CRAN CPU time to elapsed time limit
 #' library(quanteda)
-#'
 #' # note, cr_sample_corpus is too small to produce sensical word vectors
 #'
 #' # tokenize
@@ -44,6 +45,7 @@
 #' # estimate transform
 #' local_transform <- compute_transform(x = toks_fcm,
 #' pre_trained = cr_glove_subset, weighting = 'log')
+#' }
 compute_transform <- function(x, pre_trained, weighting = 500){
 
   # compute un-transformed additive embedding

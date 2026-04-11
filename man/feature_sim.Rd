@@ -26,9 +26,10 @@ a \code{data.frame} with following columns:
 Efficient way of comparing two corpora along many features simultaneously.
 }
 \examples{
+\dontrun{
+# example exceeds CRAN CPU time to elapsed time limit
 
 library(quanteda)
-
 # tokenize corpus
 toks <- tokens(cr_sample_corpus)
 
@@ -46,5 +47,6 @@ transform = TRUE, transform_matrix = cr_transform, verbose = FALSE)
 
 # compare "horizontal" cosine similarity
 feat_comp <- feature_sim(x = fem_R, y = fem_D)
+}
 }
 \keyword{feature_sim}
