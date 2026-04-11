@@ -1,6 +1,8 @@
 ---
 title: "Quick Start Guide"
-output: rmarkdown::github_document
+output: rmarkdown::github_document:
+  math_method: null
+  html_preview: false
 vignette: >
   %\VignetteIndexEntry{Quick Start Guide}
   %\VignetteEngine{knitr::rmarkdown}
@@ -129,7 +131,7 @@ immig_wv <- matrix(colMeans(immig_dem), ncol = ncol(immig_dem)) %>%  `rownames<-
 dim(immig_wv)
 ```
 
-However, we are usually interested in exploring semantic differences across groups. To do so, we can average using a grouping variable defined by one or a combination of the 'docvars'. We do this using `conText::dem_group()` (very similar in flavor to quanteda's [`dfm_group()`](https://tutorials.quanteda.io/basic-operations/dfm/dfm_group/)). In our example below, this results in an ALC embedding of "immigration" for each party, hence the dimensions $2$ by $300$.
+However, we are usually interested in exploring semantic differences across groups. To do so, we can average using a grouping variable defined by one or a combination of the 'docvars'. We do this using `conText::dem_group()` (very similar in flavor to quanteda's [`dfm_group()`](https://tutorials.quanteda.io/basic-operations/dfm/dfm_group/)). In our example below, this results in an ALC embedding of "immigration" for each party, hence the dimensions 2 by 300.
 
 ```{r, message = FALSE}
 # to get group-specific embeddings, average within party
@@ -165,7 +167,7 @@ cos_sim(immig_wv_party, pre_trained = cr_glove_subset, features = c('reform', 'e
 
 ### Nearest neighbors cosine similarity ratio
 
-A third exploratory function included in 'conText' is `nns_ratio()`. Given ALC embeddings for two groups, `nns_ratio()` computes the ratio of cosine similarities between group embeddings and features --that is, for any given feature it first computes the similarity between that feature and each group embedding, and then takes the ratio of these two similarities. This ratio captures how "discriminant" a feature is of a given group. Values larger (smaller) than $1$ mean the feature is more (less) discriminant of the group in the numerator (denominator). Use the `numerator` argument to define which group represents the numerator in this ratio. If `N` is defined, this ratio is computed for union of the top `N` nearest neighbors. 
+A third exploratory function included in 'conText' is `nns_ratio()`. Given ALC embeddings for two groups, `nns_ratio()` computes the ratio of cosine similarities between group embeddings and features --that is, for any given feature it first computes the similarity between that feature and each group embedding, and then takes the ratio of these two similarities. This ratio captures how "discriminant" a feature is of a given group. Values larger (smaller) than 1 mean the feature is more (less) discriminant of the group in the numerator (denominator). Use the `numerator` argument to define which group represents the numerator in this ratio. If `N` is defined, this ratio is computed for union of the top `N` nearest neighbors. 
 
 ```{r}
 # compute the cosine similarity between each party's embedding and a specific set of features
@@ -310,9 +312,9 @@ get_cos_sim(x = immig_toks,
 
 `conText::get_nns_ratio()` is a wrapper function for `nns_ratio()`, used to gauge how discriminant nearest neighbors are of each group. Unlike `get_nns()` and `get_cos_sim()`, a `groups` argument must be provided and it must be binary. As with `nns_ratio()`, we use the `numerator` argument to control which group to use as the numerator in the underlying ratio. We again limit the candidate nearest neighbors to the set of local features and set `bootstrap = TRUE` to get standard errors, in this case of the cosine similarity ratios.
 
-Finally, `get_nns_ratio()` allows us to make inferences using a permutation test, specifically around the _absolute deviation of the observed cosine similarity ratio from $1$_ (this captures how discriminant a given nearest neighbor is). Specifically, for each permutation, the grouping variable is randomly shuffled and the absolute deviation of the cosine similarity ratios from $1$ is computed. The empirical p.value is then the proportion of these "permuted" deviations that are larger than the observed deviation.
+Finally, `get_nns_ratio()` allows us to make inferences using a permutation test, specifically around the _absolute deviation of the observed cosine similarity ratio from 1_ (this captures how discriminant a given nearest neighbor is). Specifically, for each permutation, the grouping variable is randomly shuffled and the absolute deviation of the cosine similarity ratios from 1 is computed. The empirical p.value is then the proportion of these "permuted" deviations that are larger than the observed deviation.
 
-The output of `get_nns_ratio()` contains three additional columns (relative to `nns_ratio()`) if `bootstrap = TRUE` and `permute = TRUE`. These are the standard errors around the cosine similarity ratios, the corresponding (empirical) `p.value` and  a `group` variable identifying which group the nearest neighbor belonged to -- `shared` means it appeared in both groups' top $N$ nearest neighbors.
+The output of `get_nns_ratio()` contains three additional columns (relative to `nns_ratio()`) if `bootstrap = TRUE` and `permute = TRUE`. These are the standard errors around the cosine similarity ratios, the corresponding (empirical) `p.value` and  a `group` variable identifying which group the nearest neighbor belonged to -- `shared` means it appeared in both groups' top N nearest neighbors.
 
 ```{r, message = FALSE}
 
@@ -338,7 +340,7 @@ immig_nns_ratio <- get_nns_ratio(x = immig_toks,
 head(immig_nns_ratio)
 ```
 
-**conText** also includes a plotting function, `plot_nns_ratio`,  specific to `get_nns_ratio()`, providing a nice visualization of its output. `alpha` defines the desired significance threshold to denote "significant" results on the plot (indicated by a $*$ next to the feature). Also, you can choose between two different visualizations of the same results using the `horizontal` argument.
+**conText** also includes a plotting function, `plot_nns_ratio`,  specific to `get_nns_ratio()`, providing a nice visualization of its output. `alpha` defines the desired significance threshold to denote "significant" results on the plot. Also, you can choose between two different visualizations of the same results using the `horizontal` argument.
 
 ```{r, eval=FALSE}
 plot_nns_ratio(x = immig_nns_ratio, alpha = 0.01, horizontal = TRUE)
