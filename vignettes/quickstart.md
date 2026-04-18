@@ -778,13 +778,13 @@ model1 <- conText(formula = immigration ~ party + gender,
 ```
 
 **Note:** Some users running `conText()` on high-performance computing
-(HPC) systems have reported calls with `jackknife=TRUE` jobs can hang or
+(HPC) systems have reported calls with `jackknife=TRUE` can hang or
 behave inconsistently when using parallel processing. On Unix-like
 systems, this may be related to fork-based parallel backends. If you
 encounter this issue, try using an explicit PSOCK cluster instead:
 
 ``` r
-cl <- parallel::makePSOCKcluster(16)
+cl <- parallel::makePSOCKcluster(4)
 doParallel::registerDoParallel(cl)
 ```
 
