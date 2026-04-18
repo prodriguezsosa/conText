@@ -38,7 +38,7 @@ Encoding: UTF-8
 LazyData: true
 VignetteBuilder: knitr
 Language: en-US
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
 Suggests: 
     SnowballC (>= 0.7.0),

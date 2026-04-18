@@ -1,8 +1,8 @@
 ---
 title: "Quick Start Guide"
-output: rmarkdown::github_document:
-  math_method: null
-  html_preview: false
+output:
+  rmarkdown::github_document:
+    math_method: webtex
 vignette: >
   %\VignetteIndexEntry{Quick Start Guide}
   %\VignetteEngine{knitr::rmarkdown}
@@ -418,6 +418,13 @@ model1 <- conText(formula = immigration ~ party + gender,
                   permute = TRUE, num_permutations = 100,
                   window = 6, case_insensitive = TRUE,
                   verbose = TRUE)
+```
+
+**Note:** Some users running `conText()` on high-performance computing (HPC) systems have reported calls with `jackknife=TRUE` jobs can hang or behave inconsistently when using parallel processing. On Unix-like systems, this may be related to fork-based parallel backends. If you encounter this issue, try using an explicit PSOCK cluster instead:
+
+```{r}
+cl <- parallel::makePSOCKcluster(16)
+doParallel::registerDoParallel(cl)
 ```
 
 Additionally, users can set `jackknife_fraction` to a value between 0 and 1 to perform the jackknife on a random subsample of the data, where the subsample size = `jackknife_fraction * n`. While we recommend that all final estimates are computed using the full sample, this option can be useful for exploratory analysis.

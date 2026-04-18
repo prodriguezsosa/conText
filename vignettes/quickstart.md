@@ -198,7 +198,7 @@ defined by one or a combination of the ‘docvars’. We do this using
 `conText::dem_group()` (very similar in flavor to quanteda’s
 [`dfm_group()`](https://tutorials.quanteda.io/basic-operations/dfm/dfm_group/)).
 In our example below, this results in an ALC embedding of “immigration”
-for each party, hence the dimensions $2$ by $300$.
+for each party, hence the dimensions 2 by 300.
 
 ``` r
 # to get group-specific embeddings, average within party
@@ -271,7 +271,7 @@ cosine similarities between group embeddings and features –that is, for
 any given feature it first computes the similarity between that feature
 and each group embedding, and then takes the ratio of these two
 similarities. This ratio captures how “discriminant” a feature is of a
-given group. Values larger (smaller) than $1$ mean the feature is more
+given group. Values larger (smaller) than 1 mean the feature is more
 (less) discriminant of the group in the numerator (denominator). Use the
 `numerator` argument to define which group represents the numerator in
 this ratio. If `N` is defined, this ratio is computed for union of the
@@ -571,19 +571,19 @@ in this case of the cosine similarity ratios.
 
 Finally, `get_nns_ratio()` allows us to make inferences using a
 permutation test, specifically around the *absolute deviation of the
-observed cosine similarity ratio from $1$* (this captures how
-discriminant a given nearest neighbor is). Specifically, for each
-permutation, the grouping variable is randomly shuffled and the absolute
-deviation of the cosine similarity ratios from $1$ is computed. The
-empirical p.value is then the proportion of these “permuted” deviations
-that are larger than the observed deviation.
+observed cosine similarity ratio from 1* (this captures how discriminant
+a given nearest neighbor is). Specifically, for each permutation, the
+grouping variable is randomly shuffled and the absolute deviation of the
+cosine similarity ratios from 1 is computed. The empirical p.value is
+then the proportion of these “permuted” deviations that are larger than
+the observed deviation.
 
 The output of `get_nns_ratio()` contains three additional columns
 (relative to `nns_ratio()`) if `bootstrap = TRUE` and `permute = TRUE`.
 These are the standard errors around the cosine similarity ratios, the
 corresponding (empirical) `p.value` and a `group` variable identifying
 which group the nearest neighbor belonged to – `shared` means it
-appeared in both groups’ top $N$ nearest neighbors.
+appeared in both groups’ top N nearest neighbors.
 
 ``` r
 # we limit candidates to features in our corpus
@@ -628,9 +628,9 @@ head(immig_nns_ratio)
 **conText** also includes a plotting function, `plot_nns_ratio`,
 specific to `get_nns_ratio()`, providing a nice visualization of its
 output. `alpha` defines the desired significance threshold to denote
-“significant” results on the plot (indicated by a $*$ next to the
-feature). Also, you can choose between two different visualizations of
-the same results using the `horizontal` argument.
+“significant” results on the plot. Also, you can choose between two
+different visualizations of the same results using the `horizontal`
+argument.
 
 ``` r
 plot_nns_ratio(x = immig_nns_ratio, alpha = 0.01, horizontal = TRUE)
@@ -775,6 +775,17 @@ model1 <- conText(formula = immigration ~ party + gender,
                   permute = TRUE, num_permutations = 100,
                   window = 6, case_insensitive = TRUE,
                   verbose = TRUE)
+```
+
+**Note:** Some users running `conText()` on high-performance computing
+(HPC) systems have reported calls with `jackknife=TRUE` jobs can hang or
+behave inconsistently when using parallel processing. On Unix-like
+systems, this may be related to fork-based parallel backends. If you
+encounter this issue, try using an explicit PSOCK cluster instead:
+
+``` r
+cl <- parallel::makePSOCKcluster(16)
+doParallel::registerDoParallel(cl)
 ```
 
 Additionally, users can set `jackknife_fraction` to a value between 0
@@ -947,20 +958,8 @@ glove <- GlobalVectors$new(rank = 300,
 wv_main <- glove$fit_transform(toks_fcm, n_iter = 10,
                                convergence_tol = 1e-3, 
                                n_threads = 2) # set to 'parallel::detectCores()' to use all available cores
-```
 
-    ## INFO  [18:03:51.188] epoch 1, loss 0.2279
-    ## INFO  [18:03:52.249] epoch 2, loss 0.0771
-    ## INFO  [18:03:53.245] epoch 3, loss 0.0500
-    ## INFO  [18:03:54.174] epoch 4, loss 0.0376
-    ## INFO  [18:03:55.080] epoch 5, loss 0.0304
-    ## INFO  [18:03:55.975] epoch 6, loss 0.0257
-    ## INFO  [18:03:57.039] epoch 7, loss 0.0223
-    ## INFO  [18:03:58.099] epoch 8, loss 0.0198
-    ## INFO  [18:03:59.042] epoch 9, loss 0.0179
-    ## INFO  [18:03:59.964] epoch 10, loss 0.0163
 
-``` r
 wv_context <- glove$components
 local_glove <- wv_main + t(wv_context) # word vectors
 
